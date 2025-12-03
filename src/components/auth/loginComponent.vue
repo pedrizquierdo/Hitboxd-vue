@@ -54,7 +54,7 @@ const rememberMe = ref(false)
 
 const login = () => {
   isLoading.value = true
-  const API_URL = 'https://hitboxd-production.up.railway.app/api'; 
+  const API_URL = 'https://api-proyecto-production-519c.up.railway.app/api'; 
   
   axios.post(`${API_URL}/auth/login`, {
     email: email.value,
