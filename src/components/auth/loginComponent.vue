@@ -1,19 +1,42 @@
 <template>
-  <div>
-    <h1>Login</h1>
-    <form @submit.prevent="login">
-      <label for="email">Correo Electronico</label>
-      <input type="email" id="email" name="email" v-model="email">
+  <div class="login-bar">
+    <form @submit.prevent="login" class="compact-form">
+      <button type="button" class="close-x" @click="$emit('close')">×</button>
+      <div class="field-col">
+        <label for="username" class="field-label">Username</label>
+        <input 
+          type="text" 
+          id="username" 
+          v-model="email" 
+          class="retro-input"
+        >
+      </div>
 
-      <label for="password">Contraseña</label>
-      <input type="password" id="password" name="password" v-model="password">
+      <div class="field-col">
+        <div class="label-row">
+          <label for="password" class="field-label">Password</label>
+          <a href="#" class="forgot-link">Forgotten?</a>
+        </div>
+        <input 
+          type="password" 
+          id="password" 
+          v-model="password" 
+          class="retro-input"
+        >
+      </div>
 
-      <button type="submit">Login</button>
+      <div class="actions-col">
+        <div class="remember-row">
+          <input type="checkbox" id="remember" class="retro-checkbox" v-model="rememberMe">
+          <label for="remember" class="remember-label">Remember me</label>
+        </div>
+        
+        <button type="submit" class="btn-signin" :disabled="isLoading">
+          {{ isLoading ? '...' : 'SIGN IN' }}
+        </button>
+      </div>
+
     </form>
-    <div class="register">
-      <p>No tienes una cuenta?</p>
-      <button type="button" @click="$emit('switch')">Registrarse</button>
-    </div>
   </div>
 </template>
 
@@ -21,75 +44,177 @@
 import { ref } from 'vue'
 import axios from 'axios'
 
-defineEmits(['switch'])
+defineEmits(['switch', 'close'])
+
 const email = ref('')
 const password = ref('')
+const isLoading = ref(false)
 
-const API_URL = 'https://api-proyecto-production-519c.up.railway.app/api'
+const rememberMe = ref(false) 
 
 const login = () => {
+  isLoading.value = true
+  const API_URL = 'https://hitboxd-production.up.railway.app/api'; 
+  
   axios.post(`${API_URL}/auth/login`, {
     email: email.value,
     password: password.value
   })
-    .then(response => {
-      console.log("Login exitoso", response.data)
-    })
-    .catch(error => {
-      console.error("Error de Login", error);
-      alert("Credenciales incorrectas. Por favor, intenta de nuevo.");
-    })
+  .then(response => {
+     console.log("Login exitoso", response.data);
+     const token = response.data.token;
+     if (rememberMe.value) {
+       localStorage.setItem('token', token);
+     } else {
+       sessionStorage.setItem('token', token);
+     }
+     window.location.reload(); 
+  })
+  .catch(error => {
+    console.error("Error", error);
+    alert("Usuario o contraseña incorrectos");
+  })
+  .finally(() => {
+    isLoading.value = false;
+  })
 }
-
 </script>
 
 <style scoped>
-div {
+.login-bar {
+  display: flex;
+  align-items: center;
+}
+
+.compact-form {
+  display: flex;
+  align-items: flex-end; 
+  gap: 15px;
+}
+
+.close-x {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0 5px;
+  margin-right: 5px;
+  line-height: 1;
+  align-self: center; 
+}
+.close-x:hover { color: #000; }
+
+.field-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   width: 100%;
 }
 
-h1 {
-  color: #2D2D2D;
-  text-align: center;
-  margin-bottom: 1.5rem;
-  font-size: 1.5rem;
+.field-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem; 
+  color: #666;
+  font-weight: 600;
+  text-transform: uppercase; 
 }
 
-form {
-  display: flex;
-  flex-direction: column;
-  gap: 15px; 
+.forgot-link {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
+  color: #FF4444; 
+  text-decoration: none;
+  font-weight: 600;
 }
+.forgot-link:hover { text-decoration: underline; }
 
-input {
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  background: white;
-}
-
-button[type="submit"] {
-  background-color: #00CC66; 
+.retro-input {
+  background-color: #9CA3AF; 
+  border: none;
+  border-radius: 3px;
+  height: 28px; 
+  width: 140px;
+  padding: 0 8px;
   color: white;
-  padding: 10px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
-  margin-top: 10px;
-}
-
-.login, .register {
-  margin-top: 1.5rem;
-  text-align: center;
+  font-weight: 500;
   font-size: 0.9rem;
+  outline: none;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+}
+.retro-input:focus { background-color: #88909c; }
+
+.actions-col {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 28px; 
 }
 
-.login button, .register button {
-  background: none;
-  border: none;
-  color: #00AEEF;
-  text-decoration: underline;
+.remember-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.retro-checkbox {
+  accent-color: #757575; 
   cursor: pointer;
+}
+
+.remember-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
+  color: #666;
+  white-space: nowrap;
+}
+
+.btn-signin {
+  background-color: #00AEEF; 
+  color: white;
+  border: none;
+  border-radius: 3px;
+  padding: 0 16px;
+  height: 28px; 
+  font-weight: 700;
+  font-size: 0.75rem;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  text-transform: uppercase;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+.btn-signin:hover {
+  background-color: #00CC66;
+}
+
+@media (max-width: 768px) {
+  .compact-form {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
+  .retro-input { width: 100%; height: 36px; }
+  .btn-signin { height: 36px; width: 100%; }
+  
+  .actions-col {
+    flex-direction: row;
+    justify-content: space-between;
+    height: auto;
+  }
+  
+  .close-x {
+    align-self: flex-end;
+    font-size: 1.5rem;
+    margin-bottom: -10px;
+  }
 }
 </style>

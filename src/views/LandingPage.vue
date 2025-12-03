@@ -2,13 +2,9 @@
   <div class="landing-container">
     
     <nav class="navbar">
-      <div class="logo">
-        <span class="cube-icon">
-            <img src="/assets/logo.png" alt="logo" class="logo-img"/>
-        </span> 
-        <span class="brand-name">Hitboxd</span>
-      </div>
-      <div class="nav-links">
+      <Logo />
+  
+  <div class="nav-links">
         <button @click="openModal('login')" class="nav-btn">SIGN IN</button>
         <button @click="openModal('register')" class="nav-btn">CREATE ACCOUNT</button>
         <a href="#" class="nav-link">GAMES</a>
@@ -116,6 +112,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import Logo from '../components/common/Logo.vue';
 import axios from 'axios';
 import AuthModal from '../components/auth/AuthModal.vue';
 

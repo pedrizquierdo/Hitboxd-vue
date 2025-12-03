@@ -1,18 +1,24 @@
 <template>
-  <div class="modal-overlay" @click.self="$emit('close')">
+  <div class="modal-overlay" @click.self="$emit('close')">  
     <div class="modal-content">
-      <button class="close-btn" @click="$emit('close')">×</button>
-      
-      <loginComponent v-if="currentView === 'login'" @switch="currentView = 'register'" />
-      <registerComponent v-else @switch="currentView = 'login'" />
+      <loginComponent 
+        v-if="currentView === 'login'" 
+        @switch="currentView = 'register'"
+        @close="$emit('close')" 
+      />
+      <registerComponent 
+        v-else 
+        @switch="currentView = 'login'" 
+        @close="$emit('close')" 
+      />
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
-import loginComponent from './loginComponent.vue' // Tus archivos actuales
-import registerComponent from './registerComponent.vue' // Tus archivos actuales
+import loginComponent from './loginComponent.vue'
+import registerComponent from './registerComponent.vue'
 
 const props = defineProps({
   initialView: {
@@ -22,7 +28,6 @@ const props = defineProps({
 })
 
 defineEmits(['close'])
-
 const currentView = ref(props.initialView)
 </script>
 
@@ -33,33 +38,48 @@ const currentView = ref(props.initialView)
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.6); 
-  display: flex;
-  justify-content: center;
-  align-items: center;
   z-index: 1000;
-  backdrop-filter: blur(5px);
+  background: transparent; 
 }
 
 .modal-content {
-  background: #F2F3F5; 
-  padding: 2rem;
-  border-radius: 8px;
-  width: 100%;
-  max-width: 400px;
-  position: relative;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-  border: 1px solid #d1d5db;
+  position: absolute;
+  top: 5px; 
+  right: 1rem; 
+  
+  @media (min-width: 1300px) {
+    right: calc((100vw - 1200px) / 2 + 2rem);
+  }
+
+  background: #E3E4E8 ; 
+  padding: 1.5rem;
+  width: auto;
+  animation: slideDown 0.2s ease-out;
 }
 
-.close-btn {
+.modal-content::before {
+  content: "";
   position: absolute;
-  top: 10px;
-  right: 15px;
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: #666;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+    background-image: url('/assets/bg-texture.jpg'); 
+  background-repeat: repeat;
+  background-size: 400px; 
+  opacity: 0.1; 
+  pointer-events: none;
+  z-index: 0; 
 }
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-body {
+  position: relative;
+  z-index: 1;
+}
+
 </style>

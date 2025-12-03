@@ -15,8 +15,9 @@ defineOptions({ name: 'HitboxdLogo' });
 import { computed } from 'vue';
 
 const destination = computed(() => {
-  const token = localStorage.getItem('token'); 
-  return token ? '/feed' : '/';
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token'); 
+
+    return token ? '/feed' : '/';
 });
 </script>
 
