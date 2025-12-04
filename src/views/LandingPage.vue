@@ -333,10 +333,37 @@ html, body {
           display: block;
         }
 
-        &:hover {
+        &:nth-child(4n + 1):hover {
+          transform: translateY(-5px);
+          box-shadow: 0 12px 20px rgba(0,0,0,0.5);
+          border: 2px solid var(--brand-red);
+          border-radius: 5px;
+          
+          .game-overlay { opacity: 1; }
+        }
+
+        &:nth-child(4n + 2):hover {
           transform: translateY(-5px);
           box-shadow: 0 12px 20px rgba(0,0,0,0.5);
           border: 2px solid var(--brand-cyan);
+          border-radius: 5px;
+          
+          .game-overlay { opacity: 1; }
+        }
+
+        &:nth-child(4n + 3):hover {
+          transform: translateY(-5px);
+          box-shadow: 0 12px 20px rgba(0,0,0,0.5);
+          border: 2px solid var(--brand-green);
+          border-radius: 5px;
+          
+          .game-overlay { opacity: 1; }
+        }
+
+        &:nth-child(4n):hover {
+          transform: translateY(-5px);
+          box-shadow: 0 12px 20px rgba(0,0,0,0.5);
+          border: 2px solid var(--brand-yellow);
           border-radius: 5px;
           
           .game-overlay { opacity: 1; }
@@ -378,7 +405,7 @@ html, body {
       gap: 15px;
 
       .feature-card {
-        background-color: var(--card-bg); /* Aquí se aplica el gris oscuro */
+        background-color: var(--card-bg); 
         color: var(--white);
         padding: 1.5rem;
         border-radius: 4px;
@@ -390,9 +417,21 @@ html, body {
         box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s;
 
-        &:hover {
+        &:nth-child(3n + 1):hover {
           transform: translateY(-5px);
-          background-color: #0095CC;
+          background-color: var(--brand-red);
+          box-shadow: 0 8px 12px rgba(0,0,0,0.4);
+        }
+
+        &:nth-child(3n + 2):hover {
+          transform: translateY(-5px);
+          background-color: var(--brand-cyan);
+          box-shadow: 0 8px 12px rgba(0,0,0,0.4);
+        }
+
+        &:nth-child(3n):hover {
+          transform: translateY(-5px);
+          background-color: var(--brand-green);
           box-shadow: 0 8px 12px rgba(0,0,0,0.4);
         }
 
