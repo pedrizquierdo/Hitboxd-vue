@@ -1,5 +1,9 @@
 <template>
-  <div class="modal-overlay" @click.self="$emit('close')">
+  <div 
+    class="modal-overlay" 
+    :class="{ 'is-dark': currentView === 'register' }"
+    @click.self="$emit('close')"
+  >
     <div 
       class="modal-content" 
       :class="{ 'is-centered': currentView === 'register' }"
@@ -47,6 +51,15 @@ const currentView = ref(props.initialView)
   background: transparent;
   display: flex;
   align-items: center; 
+  justify-content: center;
+  transition: background-color 0.3s ease;
+}
+
+.modal-overlay.is-dark {
+  background-color: rgba(0, 0, 0, 0.6); 
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
   justify-content: center;
 }
 

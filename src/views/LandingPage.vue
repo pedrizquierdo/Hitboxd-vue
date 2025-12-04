@@ -101,12 +101,13 @@
       </div>
     </footer>
 
-    <AuthModal 
-      v-if="showAuth" 
-      :initialView="authView" 
-      @close="showAuth = false" 
-    />
-
+    <Transition name="modal">
+      <AuthModal 
+        v-if="showAuth" 
+        :initialView="authView" 
+        @close="showAuth = false" 
+      />
+    </Transition>
   </div>
 </template>
 
@@ -164,6 +165,7 @@ html, body {
   background-color: var(--bg-color);
   font-family: 'Inter', sans-serif;
   overflow-x: hidden;
+  scroll-behavior: smooth;
 }
 
 #app {
@@ -460,7 +462,16 @@ html, body {
   }
 }
 
-/* Media Queries para móviles */
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
 @media (max-width: 768px) {
   .landing-container {
     .features-section .features-grid { grid-template-columns: 1fr; }
