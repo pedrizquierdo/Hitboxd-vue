@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const axiosInstance = axios.create({
-  baseURL: 'https://api-curso-production.up.railway.app',
+  baseURL: 'https://api-proyecto-production-519c.up.railway.app',
   withCredentials: true,
 })
 

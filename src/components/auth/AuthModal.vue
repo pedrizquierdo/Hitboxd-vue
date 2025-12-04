@@ -57,8 +57,6 @@ const currentView = ref(props.initialView)
   background-color: #E3E4E8;
   border-radius: 4px;
   padding: 10px 15px;  
-  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-  border: 1px solid rgba(0,0,0,0.1);
   position: relative; 
   overflow: hidden;
   z-index: 1; 

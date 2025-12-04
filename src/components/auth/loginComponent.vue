@@ -7,7 +7,7 @@
         <input 
           type="text" 
           id="username" 
-          v-model="email" 
+          v-model="username" 
           class="retro-input"
         >
       </div>
@@ -46,7 +46,7 @@ import axios from 'axios'
 
 defineEmits(['switch', 'close'])
 
-const email = ref('')
+const username = ref('')
 const password = ref('')
 const isLoading = ref(false)
 
@@ -57,7 +57,7 @@ const login = () => {
   const API_URL = 'https://api-proyecto-production-519c.up.railway.app/api'; 
   
   axios.post(`${API_URL}/auth/login`, {
-    email: email.value,
+    username: username.value,
     password: password.value
   })
   .then(response => {
