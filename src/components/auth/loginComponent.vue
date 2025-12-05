@@ -37,12 +37,15 @@
       </div>
 
     </form>
+    <p v-if="isUserValid" class="error-msg">Usuario no encontrado</p>
+    <p v-if="isServerError" class="error-msg">Error del servidor</p>
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
-import axios from 'axios'
+import api from '@/api/axios'
+import router from '@/router'
 
 defineEmits(['switch', 'close'])
 
@@ -52,27 +55,43 @@ const isLoading = ref(false)
 
 const rememberMe = ref(false) 
 
+const isUserValid = ref(false)
+const isServerError = ref(false)
+
 const login = () => {
   isLoading.value = true
-  const API_URL = 'https://api-proyecto-production-519c.up.railway.app/api'; 
   
-  axios.post(`${API_URL}/auth/login`, {
+  api.post('auth/login', {
     username: username.value,
     password: password.value
   })
-  .then(response => {
+  .then((response) => {
      console.log("Login exitoso", response.data);
-     const token = response.data.token;
+     const storageKey = import.meta.env.VITE_KEY_STORAGE;
      if (rememberMe.value) {
-       localStorage.setItem('token', token);
+       localStorage.setItem(storageKey, true);
      } else {
-       sessionStorage.setItem('token', token);
+       sessionStorage.setItem(storageKey, true);
      }
-     window.location.reload(); 
+     router.push('/home')
   })
-  .catch(error => {
+  .catch((error) => {
     console.error("Error", error);
     alert("Usuario o contraseña incorrectos");
+    if (error.status === 400 || error.status === 404) {
+        isUserValid.value = true
+
+        setTimeout(() => {
+          isUserValid.value = false
+        }, 3000)
+
+      }
+      if (error.status === 403) {
+        isUserValid.value = true
+      }
+      if (error.status === 500) {
+        isServerError.value = true
+      }
   })
   .finally(() => {
     isLoading.value = false;
@@ -81,6 +100,17 @@ const login = () => {
 </script>
 
 <style scoped>
+
+.error-msg {
+  color: #FF4444;
+  font-size: 0.8rem;
+  margin-top: 5px;
+  position: absolute;
+  bottom: -20px;
+  right: 0;
+  font-weight: bold;
+}
+
 .login-bar {
   display: flex;
   align-items: center;

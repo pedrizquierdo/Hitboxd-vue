@@ -1,8 +1,46 @@
+import router from '../router'
 import axios from 'axios'
 
-const axiosInstance = axios.create({
-  baseURL: 'https://api-proyecto-production-519c.up.railway.app',
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL,
   withCredentials: true,
 })
 
-export default axiosInstance
+api.interceptors.response.use(
+  (res) => res,
+  async (err) => {
+    const originalRequest = err.config
+
+    const authEndPoints = ['auth/login', 'auth/register']
+
+    const isAuthEndPoint = authEndPoints.some((endPoint) => originalRequest.url.includes(endPoint))
+
+    if (isAuthEndPoint) {
+      return Promise.reject(err)
+    }
+
+    if (err.response.status === 401 && originalRequest._retry) {
+        localStorage.removeItem(import.meta.env.VITE_KEY_STORAGE)
+        await api.post('auth/logout')
+        router.push('/')
+        return Promise.reject(err)
+    }
+    
+    if (err.response.status === 401) {
+      originalRequest._retry = true
+      try {
+        await api.post('auth/refresh-token')
+        return api(originalRequest)
+      } catch (error) {
+        localStorage.removeItem(import.meta.env.VITE_KEY_STORAGE)
+        await api.post('auth/logout')
+        router.push('/')
+        return Promise.reject(error)
+      }
+    }
+    
+    return Promise.reject(err)
+  }
+)
+
+export default api

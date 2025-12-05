@@ -55,22 +55,22 @@ const currentView = ref(props.initialView)
   transition: background-color 0.3s ease;
 }
 
+
 .modal-overlay.is-dark {
   background-color: rgba(0, 0, 0, 0.6); 
   backdrop-filter: blur(3px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .modal-content {
   position: absolute;
-  top: -30rem;
-  left: 17.5rem;
+  top: 1rem;
+  right: 2rem;
+  left: auto;  
+  bottom: auto; 
   background-color: #E3E4E8;
   border-radius: 4px;
-  padding: 10px 15px;  
-  position: relative; 
+  padding: 10px 15px;
+  position: absolute;
   overflow: hidden;
   z-index: 1; 
   transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
@@ -96,7 +96,7 @@ const currentView = ref(props.initialView)
   margin: 0;
   min-width: 420px;
   max-width: 90vw;
-  padding: 2.5rem;  
+  padding: 2.5rem;
   box-shadow: 0 20px 50px rgba(0,0,0,0.3);
 }
 
@@ -104,7 +104,6 @@ const currentView = ref(props.initialView)
 .fade-leave-active {
   transition: opacity 0.2s ease;
 }
-
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
@@ -112,8 +111,12 @@ const currentView = ref(props.initialView)
 
 @media (max-width: 768px) {
   .modal-content {
-    right: 1rem; left: 1rem; width: auto;
+    top: 80px;
+    right: 1rem; 
+    left: 1rem;
+    width: auto;
   }
+  
   .modal-content.is-centered {
     margin-top: 20px;
   }

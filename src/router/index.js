@@ -11,4 +11,19 @@ const router = createRouter({
   ],
 })
 
+
+router.beforeEach((to, from, next) => {
+  const isAuthenticated = localStorage.getItem(import.meta.env.VITE_KEY_STORAGE)
+
+  if (to.meta.requiresAuth && !isAuthenticated) {
+    next({ name: 'Auth' })
+  }
+
+  if (to.name === 'Auth' && isAuthenticated) {
+    next({ name: 'Home' })
+  }
+
+  next()
+})
+
 export default router

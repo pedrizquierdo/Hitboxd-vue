@@ -55,7 +55,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import axios from 'axios'
+import api from '@/api/axios'
 
 const emit = defineEmits(['switch', 'close'])
 
@@ -66,9 +66,8 @@ const isLoading = ref(false)
 
 const register = () => {
   isLoading.value = true
-  const API_URL = 'https://api-proyecto-production-519c.up.railway.app/api';
 
-  axios.post(`${API_URL}/auth/register`, {
+  api.post('auth/register', {
     username: username.value,
     email: email.value,
     password: password.value
