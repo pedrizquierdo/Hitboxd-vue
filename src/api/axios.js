@@ -29,7 +29,7 @@ api.interceptors.response.use(
     if (err.response.status === 401) {
       originalRequest._retry = true
       try {
-        await api.post('auth/refresh-token')
+        await api.post('auth/refresh')
         return api(originalRequest)
       } catch (error) {
         localStorage.removeItem(import.meta.env.VITE_KEY_STORAGE)
