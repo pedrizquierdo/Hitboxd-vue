@@ -77,7 +77,6 @@ const login = () => {
   })
   .catch((error) => {
     console.error("Error", error);
-    alert("Usuario o contraseña incorrectos");
     if (error.status === 400 || error.status === 404) {
         isUserValid.value = true
 

@@ -74,12 +74,10 @@ const register = () => {
   })
   .then(response => {
     console.log(response);
-    alert("Cuenta creada. Por favor inicia sesión.");
     emit('switch');
   })
   .catch(error => {
     console.error(error);
-    alert(error.response?.data?.message || "Error al registrarse");
   })
   .finally(() => {
     isLoading.value = false;
