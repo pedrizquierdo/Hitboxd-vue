@@ -31,16 +31,12 @@
       <div v-if="isLoading" class="loading-msg">Cargando juegos...</div>
 
       <div v-else class="games-grid">
-        <div 
+         <GameCard 
           v-for="game in games" 
           :key="game.igdb_id" 
-          class="game-card"
-          :style="{ backgroundImage: `url(${game.cover_url})` }"
-        >
-          <div class="game-overlay">
-            <span class="game-title">{{ game.title }}</span>
-          </div>
-        </div>
+          :game="game"
+          class="game-item"
+        />
       </div>
     </section>
 
@@ -116,6 +112,7 @@ import { ref, onMounted } from 'vue';
 import Logo from '../components/common/Logo.vue';
 import axios from 'axios';
 import AuthModal from '../components/auth/AuthModal.vue';
+import GameCard from '../components/common/GameCard.vue';
 
 const showAuth = ref(false);
 const authView = ref('login');
@@ -145,9 +142,6 @@ onMounted(() => {
 
 
 <style scoped>
-*, *::before, *::after {
-  box-sizing: border-box;
-}
 
 .landing-container {
   min-height: 100vh;
@@ -157,7 +151,6 @@ onMounted(() => {
   align-items: center;
   position: relative;
 
-  /* Textura de Fondo */
   &::before {
     content: "";
     position: absolute;
@@ -170,7 +163,6 @@ onMounted(() => {
     z-index: 0;
   }
 
-  /* Capas superiores */
   .navbar, .hero, .trending-section, .features-section, .footer {
     position: relative;
     z-index: 1;
@@ -283,84 +275,12 @@ onMounted(() => {
       gap: 20px;
       justify-content: center;
 
-      .game-card {
-        width: 100%;
-        aspect-ratio: 3/4; 
-        background-color: var(--card-bg);
-        background-position: center top;
-        background-size: cover;
-        background-repeat: no-repeat;
-        border-radius: 5px;
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        cursor: pointer;
-        transition: transform 0.2s, box-shadow 0.2s;
-
-        img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          display: block;
-        }
-
-        &:nth-child(4n + 1):hover {
-          transform: translateY(-5px);
-          box-shadow: 0 12px 20px rgba(0,0,0,0.5);
-          border: 2px solid var(--brand-red);
-          border-radius: 5px;
-          
-          .game-overlay { opacity: 1; }
-        }
-
-        &:nth-child(4n + 2):hover {
-          transform: translateY(-5px);
-          box-shadow: 0 12px 20px rgba(0,0,0,0.5);
-          border: 2px solid var(--brand-cyan);
-          border-radius: 5px;
-          
-          .game-overlay { opacity: 1; }
-        }
-
-        &:nth-child(4n + 3):hover {
-          transform: translateY(-5px);
-          box-shadow: 0 12px 20px rgba(0,0,0,0.5);
-          border: 2px solid var(--brand-green);
-          border-radius: 5px;
-          
-          .game-overlay { opacity: 1; }
-        }
-
-        &:nth-child(4n):hover {
-          transform: translateY(-5px);
-          box-shadow: 0 12px 20px rgba(0,0,0,0.5);
-          border: 2px solid var(--brand-yellow);
-          border-radius: 5px;
-          
-          .game-overlay { opacity: 1; }
-        }
-
-        .game-overlay {
-          position: absolute;
-          bottom: 0; left: 0; width: 100%; height: 100%;
-          background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
-          display: flex;
-          align-items: flex-end;
-          padding: 10px;
-          opacity: 0;
-          transition: opacity 0.2s;
-
-          .game-title {
-            color: var(--white);
-            font-size: 0.9rem;
-            font-weight: bold;
-            text-shadow: 0 2px 4px black;
-            line-height: 1.2;
-          }
-        }
-      }
-    }
+    .game-item:nth-child(4n + 1) { --hover-color: var(--brand-red); }
+    .game-item:nth-child(4n + 2) { --hover-color: var(--brand-cyan); }
+    .game-item:nth-child(4n + 3) { --hover-color: var(--brand-green); }
+    .game-item:nth-child(4n) { --hover-color: var(--brand-yellow); }
   }
+}
 
   .features-section {
     margin-top: 4rem; margin-bottom: 4rem;
