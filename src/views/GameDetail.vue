@@ -18,12 +18,12 @@
 
         <p class="info-text">
           <strong>Developer:</strong> {{ game.developer || 'Unknown' }} •
-          <strong>Year:</strong> {{ game.year || 'N/A' }}
+          <strong>Year:</strong> {{ game.release_date || 'N/A' }}
         </p>
 
         <div class="description-box card">
           <h3>GAME DESCRIPTION</h3>
-          <p>{{ game.summary || "No description available." }}</p>
+          <p>{{ game.description || "No description available." }}</p>
         </div>
       </div>
 
@@ -78,7 +78,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '@/api/axios.js'
 
-import ReviewModal from '@/components/reviews/ReviewModal.vue'
+import ReviewModal from '@/components/reviews/reviewModal.vue'
 import StarRating from '@/components/reviews/StarRating.vue'
 
 const game = ref({})
@@ -90,7 +90,7 @@ const route = useRoute()
 
 const fetchGameDetail = async () => {
   try {
-    const res = await api.get(`/games/${route.params.id}`)
+    const res = await api.get(`games/${route.params.id}`)
     game.value = res.data
   } catch (err) {
     console.error("Error loading game:", err)
@@ -99,7 +99,7 @@ const fetchGameDetail = async () => {
 
 const fetchReviews = async () => {
   try {
-    const res = await api.get(`/reviews/game/${route.params.id}`)
+    const res = await api.get(`reviews/game/${route.params.id}`)
     reviews.value = res.data
   } catch (err) {
     console.error("Error loading reviews:", err)

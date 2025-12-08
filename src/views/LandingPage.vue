@@ -110,7 +110,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import Logo from '../components/common/Logo.vue';
-import axios from 'axios';
+import api from '@/api/axios';
 import AuthModal from '../components/auth/AuthModal.vue';
 import GameCard from '../components/common/GameCard.vue';
 
@@ -126,7 +126,7 @@ const openModal = (view) => {
 
 const fetchTrendingGames = async () => {
   try {
-    const response = await axios.get('https://api-proyecto-production-519c.up.railway.app/api/games/trending?limit=12');
+    const response = await api.get('games/trending?limit=12');
     games.value = response.data;
   } catch (error) {
     console.error("Error cargando juegos:", error);

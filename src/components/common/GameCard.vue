@@ -28,7 +28,7 @@ const props = defineProps({
 })
 
 const goToDetail = () => {
-  router.push(`/game/${props.game.igdb_id}`)
+  router.push(`/game/${props.game.id_game}`)
 }
 </script>
 
