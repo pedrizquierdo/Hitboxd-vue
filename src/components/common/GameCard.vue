@@ -1,25 +1,35 @@
 <template>
-  <div class="game-card">
+  <div 
+    class="game-card"
+    @click="goToDetail"
+  >
     <img 
       :src="game.cover_url || '/assets/placeholder-game.png'" 
       :alt="game.title" 
       loading="lazy" 
     />
-    
+
     <div class="game-overlay">
       <span class="game-title">{{ game.title }}</span>
     </div>
   </div>
 </template>
 
-
 <script setup>
-defineProps({
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+const props = defineProps({
   game: {
     type: Object,
     required: true
   }
 })
+
+const goToDetail = () => {
+  router.push(`/game/${props.game.igdb_id}`)
+}
 </script>
 
 <style scoped>
