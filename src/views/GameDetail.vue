@@ -1,90 +1,97 @@
 <template>
-  <div class="game-detail-container">
+  <div class="page-wrapper">
+    
+    <div class="game-detail-container">
+      <div class="bg-texture"></div>
 
-    <!-- BACKGROUND TEXTURE -->
-    <div class="bg-texture"></div>
+      <div class="cover-box fade-in">
+        <img :src="game.cover_url" class="cover-img" alt="Game Cover" />
+      </div>
 
-    <!-- COVER -->
-    <div class="cover-box fade-in">
-      <img :src="game.cover_url" class="cover-img" alt="Game Cover" />
-    </div>
+      <div class="content-box slide-up">
 
-    <!-- INFO CONTENT -->
-    <div class="content-box slide-up">
+        <div class="left-section">
+          <h1 class="game-title">{{ game.title }}</h1>
 
-      <!-- LEFT -->
-      <div class="left-section">
-        <h1 class="game-title">{{ game.title }}</h1>
+          <p class="info-text">
+            <strong>Developer:</strong> {{ game.developer || 'Unknown' }} •
+            <strong>Release year:</strong> {{ releaseYear }}
+          </p>
 
-        <p class="info-text">
-          <strong>Developer:</strong> {{ game.developer || 'Unknown' }} •
-          <strong>Year:</strong> {{ game.release_date || 'N/A' }}
-        </p>
+          <div class="description-box card">
+            <h3>GAME DESCRIPTION</h3>
+            <p>{{ game.description || "No description available." }}</p>
+          </div>
+        </div>
 
-        <div class="description-box card">
-          <h3>GAME DESCRIPTION</h3>
-          <p>{{ game.description || "No description available." }}</p>
+        <div class="right-section card">
+          <h3 class="section-title">MY ACTIVITY</h3>
+
+          <div class="activity-buttons">
+            <button class="btn status played">Played</button>
+            <button class="btn status pending">Pending</button>
+            <button class="btn status abandoned">Abandoned</button>
+          </div>
+
+          <div class="rating-section">
+            <p>Rate</p>
+            <StarRating v-model="userRating" />
+          </div>
         </div>
       </div>
 
-      <!-- RIGHT -->
-      <div class="right-section card">
-        <h3 class="section-title">MY ACTIVITY</h3>
-
-        <div class="activity-buttons">
-          <button class="btn status played">Played</button>
-          <button class="btn status pending">Pending</button>
-          <button class="btn status abandoned">Abandoned</button>
+      <div class="reviews-section slide-up-delay">
+        <div class="reviews-header">
+          <h2>REVIEWS</h2>
+          <button class="write-review-btn" @click="showReviewModal = true">
+            WRITE A REVIEW
+          </button>
         </div>
 
-        <div class="rating-section">
-          <p>Rate</p>
-          <StarRating v-model="userRating" />
+        <div class="reviews-list">
+          <div 
+            v-for="review in reviews"
+            :key="review.id"
+            class="review-card card fade-in"
+          >
+            <p class="review-text">{{ review.text }}</p>
+            <StarRating :model-value="review.rating" disabled />
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- REVIEWS -->
-    <div class="reviews-section slide-up-delay">
-      <div class="reviews-header">
-        <h2>REVIEWS</h2>
-        <button class="write-review-btn" @click="showReviewModal = true">
-          WRITE A REVIEW
-        </button>
-      </div>
+      <ReviewModal 
+        v-if="showReviewModal"
+        @close="showReviewModal = false"
+        @submit="submitReview"
+      />
 
-      <div class="reviews-list">
-        <div 
-          v-for="review in reviews"
-          :key="review.id"
-          class="review-card card fade-in"
-        >
-          <p class="review-text">{{ review.text }}</p>
-          <StarRating :model-value="review.rating" disabled />
-        </div>
-      </div>
-    </div>
-
-    <ReviewModal 
-      v-if="showReviewModal"
-      @close="showReviewModal = false"
-      @submit="submitReview"
-    />
+    </div> <Footer />
+    
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '@/api/axios.js'
 
 import ReviewModal from '@/components/reviews/reviewModal.vue'
 import StarRating from '@/components/reviews/StarRating.vue'
+import Footer from '@/components/common/Footer.vue'
 
 const game = ref({})
 const reviews = ref([])
 const userRating = ref(0)
 const showReviewModal = ref(false)
+
+const releaseYear = computed(() => {
+  const date = game.value?.release_date;
+  if (!date) return "N/A";
+  
+  const year = new Date(date).getFullYear();
+  return isNaN(year) ? "N/A" : year;
+});
 
 const route = useRoute()
 
@@ -109,7 +116,7 @@ const fetchReviews = async () => {
 const submitReview = async (data) => {
   try {
     await api.post('/reviews', {
-      game_id: route.params.id,
+      id_game: route.params.id,
       ...data
     })
 
@@ -127,13 +134,23 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* Wrapper opcional para asegurar flujo */
+.page-wrapper {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
 .game-detail-container {
   width: 100%;
   max-width: 1100px;
   margin: auto;
-  padding: 2rem;
+  padding: 2rem; /* Este padding ya no afectará al footer */
+  padding-bottom: 4rem; /* Espacio extra antes del footer si quieres */
   position: relative;
   color: var(--text-main);
+  flex: 1; /* Esto empuja el footer hacia abajo si hay poco contenido */
 }
 
 /* --- BACKGROUND --- */
@@ -201,7 +218,7 @@ onMounted(() => {
   margin-bottom: 1.5rem;
 }
 
-/* — CARDS (same style as Landing Page) — */
+/* — CARDS —*/
 .card {
   background-color: var(--card-bg);
   padding: 1.5rem;
@@ -248,8 +265,8 @@ onMounted(() => {
 
 .reviews-list {
   margin-top: 1rem;
-  max-height: 350px;     /* límite para que no crezca infinito */
-  overflow-y: auto;      /* scroll interno */
+  max-height: 350px;    
+  overflow-y: auto;      
   padding-right: 10px;
 }
 
@@ -309,5 +326,4 @@ onMounted(() => {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
-
 </style>
