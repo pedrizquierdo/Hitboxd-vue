@@ -21,18 +21,31 @@
             <span class="line"></span>
           </div>
 
-          <div v-if="friendsActivity.length > 0" class="horizontal-scroll">
-            <ActivityCard 
-              v-for="(act, index) in friendsActivity" 
-              :key="index" 
-              :activity="act"
-              class="scroll-item"
-            />
-          </div>
+          <div class="carousel-wrapper">
+            <button class="nav-btn prev" @click="scrollList(friendsScroll, 'left')">
+              <i class="fas fa-chevron-left">&lt;</i>
+            </button>
+            
+            <div class="fade-left"></div>
+            
+            <div v-if="friendsActivity.length > 0" class="horizontal-scroll" ref="friendsScroll">
+              <ActivityCard 
+                v-for="(act, index) in friendsActivity" 
+                :key="index" 
+                :activity="act"
+                class="scroll-item"
+              />
+            </div>
+            
+             <div v-else class="empty-state">
+                <p>It's quiet here...</p>
+             </div>
 
-          <div v-else class="empty-state">
-            <p>It's quiet here...</p>
-            <span>Follow other players to see their updates on your feed.</span>
+            <div class="fade-right"></div>
+            
+            <button class="nav-btn next" @click="scrollList(friendsScroll, 'right')">
+              <i class="fas fa-chevron-right">&gt;</i>
+            </button>
           </div>
         </section>
 
@@ -41,8 +54,17 @@
             <h3>New Releases</h3>
             <span class="line"></span>
           </div>
-          <div class="horizontal-scroll">
-            <GameCard v-for="game in newGames" :key="game.igdb_id" :game="game" class="scroll-item" />
+          
+          <div class="carousel-wrapper">
+            <button class="nav-btn prev" @click="scrollList(newGamesScroll, 'left')">&lt;</button>
+            <div class="fade-left"></div>
+            
+            <div class="horizontal-scroll" ref="newGamesScroll">
+              <GameCard v-for="game in newGames" :key="game.igdb_id" :game="game" class="scroll-item" />
+            </div>
+            
+            <div class="fade-right"></div>
+            <button class="nav-btn next" @click="scrollList(newGamesScroll, 'right')">&gt;</button>
           </div>
         </section>
 
@@ -51,8 +73,17 @@
             <h3>Popular on Hitboxd</h3>
             <span class="line"></span>
           </div>
-          <div class="horizontal-scroll">
-            <GameCard v-for="game in popularGames" :key="game.igdb_id" :game="game" class="scroll-item" />
+          
+          <div class="carousel-wrapper">
+            <button class="nav-btn prev" @click="scrollList(popularScroll, 'left')">&lt;</button>
+            <div class="fade-left"></div>
+            
+            <div class="horizontal-scroll" ref="popularScroll">
+              <GameCard v-for="game in popularGames" :key="game.igdb_id" :game="game" class="scroll-item" />
+            </div>
+            
+            <div class="fade-right"></div>
+            <button class="nav-btn next" @click="scrollList(popularScroll, 'right')">&gt;</button>
           </div>
         </section>
 
@@ -75,6 +106,20 @@ const userName = ref('Player');
 const newGames = ref([]);
 const popularGames = ref([]);
 const friendsActivity = ref([]);
+const friendsScroll = ref(null);
+const newGamesScroll = ref(null);
+const popularScroll = ref(null);
+const scrollList = (elementRef, direction) => {
+  if (!elementRef) return;
+  
+  const scrollAmount = 300;
+  const target = direction === 'left' ? -scrollAmount : scrollAmount;
+  
+  elementRef.scrollBy({
+    left: target,
+    behavior: 'smooth'
+  });
+};
 
 const fetchData = async () => {
   loading.value = true;
@@ -82,9 +127,7 @@ const fetchData = async () => {
     try {
         const userRes = await api.get('/users/me');
         if (userRes.data?.username) userName.value = userRes.data.username;
-    } catch (error) {
-        console.error("Error fetching user data:", error);
-    }
+    } catch (error) { console.error("Error user", error); }
 
     const results = await Promise.allSettled([
         api.get('/games/new?limit=20'),
@@ -94,9 +137,7 @@ const fetchData = async () => {
 
     if (results[0].status === 'fulfilled') newGames.value = results[0].value.data;
     if (results[1].status === 'fulfilled') popularGames.value = results[1].value.data;
-    if (results[2].status === 'fulfilled') {
-        friendsActivity.value = results[2].value.data;
-    }
+    if (results[2].status === 'fulfilled') friendsActivity.value = results[2].value.data;
 
   } catch (error) {
     console.error("Error cargando feed:", error);
@@ -165,15 +206,14 @@ h3 {
   display: flex;
   gap: 20px;
   overflow-x: auto;
-  padding-bottom: 20px; 
+  padding: 10px 0 20px 0; 
   scroll-behavior: smooth;
   scroll-snap-type: x mandatory; 
-  
-  scrollbar-width: thin;
-  scrollbar-color: #ccc transparent;
+  scrollbar-width: none;
+  scrollbar-color: none;
 }
 
-.horizontal-scroll::-webkit-scrollbar { height: 6px; }
+.horizontal-scroll::-webkit-scrollbar { display: none; }
 .horizontal-scroll::-webkit-scrollbar-thumb { background-color: #ccc; border-radius: 4px; }
 .horizontal-scroll::-webkit-scrollbar-track { background-color: transparent; }
 
@@ -182,9 +222,11 @@ h3 {
   width: 160px;
   flex-shrink: 0;
   scroll-snap-align: start; 
+  transition: transform 0.2s;
 }
 .carousel-wrapper {
   position: relative;
+  width: 100%;
 }
 
 .nav-btn {
@@ -201,7 +243,7 @@ h3 {
   box-shadow: 0 2px 5px rgba(0,0,0,0);
   display: flex; align-items: center; justify-content: center;
   transition: all 0.2s ease;
-  color: #333;
+  color: hsl(0, 0%, 20%);
 }
 
 .nav-btn:hover {
@@ -216,7 +258,7 @@ h3 {
 .fade-left, .fade-right {
   position: absolute;
   top: 0; bottom: 0;
-  width: 30px;
+  width: 20px;
   height: 95%; 
   z-index: 5;
   pointer-events: none; 
