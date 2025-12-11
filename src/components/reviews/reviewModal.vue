@@ -23,7 +23,7 @@
 
 <script setup>
 import { ref } from 'vue';
-import StarRating from './StarRating.vue';
+import StarRating from './starRating.vue';
 
 const emit = defineEmits(["close", "submit"]);
 

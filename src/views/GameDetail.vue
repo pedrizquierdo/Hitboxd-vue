@@ -1,6 +1,6 @@
 <template>
   <div class="page-wrapper">
-    
+
     <div class="game-detail-container">
       <div class="bg-texture"></div>
 
@@ -49,7 +49,7 @@
         </div>
 
         <div class="reviews-list">
-          <div 
+          <div
             v-for="review in reviews"
             :key="review.id"
             class="review-card card fade-in"
@@ -60,14 +60,14 @@
         </div>
       </div>
 
-      <ReviewModal 
+      <ReviewModal
         v-if="showReviewModal"
         @close="showReviewModal = false"
         @submit="submitReview"
       />
 
     </div> <Footer />
-    
+
   </div>
 </template>
 
@@ -77,7 +77,7 @@ import { useRoute } from 'vue-router'
 import api from '@/api/axios.js'
 
 import ReviewModal from '@/components/reviews/reviewModal.vue'
-import StarRating from '@/components/reviews/StarRating.vue'
+import StarRating from '@/components/reviews/starRating.vue'
 import Footer from '@/components/common/Footer.vue'
 
 const game = ref({})
@@ -88,7 +88,7 @@ const showReviewModal = ref(false)
 const releaseYear = computed(() => {
   const date = game.value?.release_date;
   if (!date) return "N/A";
-  
+
   const year = new Date(date).getFullYear();
   return isNaN(year) ? "N/A" : year;
 });
@@ -199,11 +199,11 @@ onMounted(() => {
 
   display: flex;
   flex-direction: column;
-  align-items: center;      
-  justify-content: center;  
+  align-items: center;
+  justify-content: center;
   text-align: center;
   gap: 1rem;
-  min-height: 220px;        
+  min-height: 220px;
 }
 
 /* --- TITLES --- */
@@ -265,8 +265,8 @@ onMounted(() => {
 
 .reviews-list {
   margin-top: 1rem;
-  max-height: 350px;    
-  overflow-y: auto;      
+  max-height: 350px;
+  overflow-y: auto;
   padding-right: 10px;
 }
 

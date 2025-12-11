@@ -4,10 +4,10 @@
       <button type="button" class="close-x" @click="$emit('close')">×</button>
       <div class="field-col">
         <label for="username" class="field-label">Username</label>
-        <input 
-          type="text" 
-          id="username" 
-          v-model="username" 
+        <input
+          type="text"
+          id="username"
+          v-model="username"
           class="retro-input"
         >
       </div>
@@ -17,10 +17,10 @@
           <label for="password" class="field-label">Password</label>
           <a href="#" class="forgot-link">Forgotten?</a>
         </div>
-        <input 
-          type="password" 
-          id="password" 
-          v-model="password" 
+        <input
+          type="password"
+          id="password"
+          v-model="password"
           class="retro-input"
         >
       </div>
@@ -30,7 +30,7 @@
           <input type="checkbox" id="remember" class="retro-checkbox" v-model="rememberMe">
           <label for="remember" class="remember-label">Remember me</label>
         </div>
-        
+
         <button type="submit" class="btn-signin" :disabled="isLoading">
           {{ isLoading ? '...' : 'SIGN IN' }}
         </button>
@@ -53,14 +53,14 @@ const username = ref('')
 const password = ref('')
 const isLoading = ref(false)
 
-const rememberMe = ref(false) 
+const rememberMe = ref(false)
 
 const isUserValid = ref(false)
 const isServerError = ref(false)
 
 const login = () => {
   isLoading.value = true
-  
+
   api.post('auth/login', {
     username: username.value,
     password: password.value
@@ -73,7 +73,7 @@ const login = () => {
      } else {
        sessionStorage.setItem(storageKey, true);
      }
-     router.push('/home')
+     router.push('/home');
   })
   .catch((error) => {
     console.error("Error", error);
@@ -117,7 +117,7 @@ const login = () => {
 
 .compact-form {
   display: flex;
-  align-items: flex-end; 
+  align-items: flex-end;
   gap: 15px;
 }
 
@@ -130,7 +130,7 @@ const login = () => {
   padding: 0 5px;
   margin-right: 5px;
   line-height: 1;
-  align-self: center; 
+  align-self: center;
 }
 .close-x:hover { color: #000; }
 
@@ -149,26 +149,26 @@ const login = () => {
 
 .field-label {
   font-family: 'Inter', sans-serif;
-  font-size: 0.75rem; 
+  font-size: 0.75rem;
   color: #666;
   font-weight: 600;
-  text-transform: uppercase; 
+  text-transform: uppercase;
 }
 
 .forgot-link {
   font-family: 'Inter', sans-serif;
   font-size: 0.75rem;
-  color: #FF4444; 
+  color: #FF4444;
   text-decoration: none;
   font-weight: 600;
 }
 .forgot-link:hover { text-decoration: underline; }
 
 .retro-input {
-  background-color: #9CA3AF; 
+  background-color: #9CA3AF;
   border: none;
   border-radius: 3px;
-  height: 28px; 
+  height: 28px;
   width: 140px;
   padding: 0 8px;
   color: white;
@@ -183,7 +183,7 @@ const login = () => {
   display: flex;
   align-items: center;
   gap: 12px;
-  height: 28px; 
+  height: 28px;
 }
 
 .remember-row {
@@ -193,7 +193,7 @@ const login = () => {
 }
 
 .retro-checkbox {
-  accent-color: #757575; 
+  accent-color: #757575;
   cursor: pointer;
 }
 
@@ -205,12 +205,12 @@ const login = () => {
 }
 
 .btn-signin {
-  background-color: #00AEEF; 
+  background-color: #00AEEF;
   color: white;
   border: none;
   border-radius: 3px;
   padding: 0 16px;
-  height: 28px; 
+  height: 28px;
   font-weight: 700;
   font-size: 0.75rem;
   cursor: pointer;
@@ -230,16 +230,16 @@ const login = () => {
     align-items: stretch;
     gap: 12px;
   }
-  
+
   .retro-input { width: 100%; height: 36px; }
   .btn-signin { height: 36px; width: 100%; }
-  
+
   .actions-col {
     flex-direction: row;
     justify-content: space-between;
     height: auto;
   }
-  
+
   .close-x {
     align-self: flex-end;
     font-size: 1.5rem;
