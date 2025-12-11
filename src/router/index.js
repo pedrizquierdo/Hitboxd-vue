@@ -5,7 +5,6 @@ import HomeFeed from '@/views/HomeFeed.vue'
 import TinderPage from '@/views/TinderPage.vue'
 import Catalogo from '@/views/Catalogo.vue'
 import UserProfile from '@/views/UserProfile.vue'
-// ✅ 1. NUEVA IMPORTACIÓN DEL DASHBOARD
 import AdminDashboard from '@/views/AdminDashboard.vue'
 
 const router = createRouter({

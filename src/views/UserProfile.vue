@@ -82,15 +82,15 @@
 
       <section v-show="activeTab === 'LISTS'" class="section">
         <div class="section-header-row">
-            <h2 class="section-title">LISTS</h2>
-            <button 
-              v-if="userLists.length > 0" 
-              @click="openModal" 
-              class="btn-create-mini"
-              title="Crear nueva lista"
-            >
-              + Nueva
-            </button>
+          <h2 class="section-title">LISTS</h2>
+          <button 
+            v-if="userLists.length > 0" 
+            @click="openModal" 
+            class="btn-create-mini"
+            title="Crear nueva lista"
+          >
+            + NEW
+          </button>
         </div>
 
         <div v-if="userLists.length > 0" class="lists-grid">
@@ -98,22 +98,22 @@
             v-for="list in userLists" 
             :key="list.id_list || list.id" 
             class="list-card"
-          >
+            @click="editList(list)" >
             <div class="list-card-content">
-                <h3>{{ list.title || list.name }}</h3> 
-                <p class="list-desc">{{ list.description || 'Sin descripción' }}</p>
+              <h3>{{ list.title || list.name }}</h3> 
+              <p class="list-desc">{{ list.description || 'Sin descripción' }}</p>
             </div>
             <div class="list-card-footer">
-                <small>{{ list.games ? list.games.length : 0 }} juegos</small>
-                <span class="list-icon">📝</span>
+              <small>{{ list.games ? list.games.length : 0 }} GAMES</small>
+              <span class="list-icon">📝</span>
             </div>
           </div>
         </div>
         
         <div v-else class="empty-state">
-          <p class="section-text">No has creado ninguna lista todavía.</p>
+          <p class="section-text">YOU HAVENT CREATED ANY LISTS YET.</p>
           <button class="start-list-btn" @click="openModal">
-            Crear mi primera lista
+            CREATE YOUR FIRST LIST
           </button>
         </div>
       </section>
@@ -175,6 +175,18 @@ const handleListCreated = (newListData) => {
   userLists.value.unshift(newListData); 
 }
 
+// 🚨 FUNCIÓN AÑADIDA: Maneja la navegación a la vista de edición de lista
+const editList = (list) => {
+    const listId = list.id_list || list.id;
+    if (listId) {
+        // Redirige a la ruta dinámica /lists/:listId
+        router.push({ 
+            name: 'ListDetail', // Asegúrate que este sea el nombre de tu ruta
+            params: { listId: listId } 
+        });
+    }
+};
+
 // --- Lógica de Carga con "Parche de Hidratación" ---
 onMounted(async () => {
   try {
@@ -203,16 +215,16 @@ onMounted(async () => {
       
       // b) PARCHE: Pedimos el detalle de cada lista para obtener el conteo de juegos
       const detailedListsPromises = basicLists.map(async (list) => {
-         const listId = list.id_list || list.id;
-         try {
-             // Pedimos el detalle completo individual
-             const { data } = await api.get(`/lists/${listId}`);
-             return data; // 'data' incluye el array 'games'
-         } catch (error) {
-             console.error(`Error cargando detalles de lista ${listId}`, error);
-             return list; // Si falla, usamos la básica (mostrará 0 juegos)
-         }
-      });
+           const listId = list.id_list || list.id;
+           try {
+               // Pedimos el detalle completo individual
+               const { data } = await api.get(`/lists/${listId}`);
+               return data; // 'data' incluye el array 'games'
+           } catch (error) {
+               console.error(`Error cargando detalles de lista ${listId}`, error);
+               return list; // Si falla, usamos la básica (mostrará 0 juegos)
+           }
+       });
       
       // c) Esperamos a que todas las peticiones terminen y guardamos
       userLists.value = await Promise.all(detailedListsPromises);
@@ -419,7 +431,7 @@ const setTab = tab => {
     justify-content: space-between;
     min-height: 120px;
     transition: transform 0.2s, box-shadow 0.2s;
-    cursor: pointer;
+    cursor: pointer; /* Importante para indicar que es clickeable */
 }
 
 .list-card:hover {
