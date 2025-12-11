@@ -7,7 +7,7 @@
       <textarea
         v-model="content"
         class="review-input"
-        placeholder="Write your thoughts..."
+        placeholder="Share your opinion about this game!"
       ></textarea>
 
       <div class="rating-block">
@@ -15,6 +15,10 @@
         <StarRating v-model="rating" />
       </div>
 
+      <div class="spoiler-block">
+          <input type="checkbox" id="hasSpoilers" v-model="hasSpoilers">
+          <label for="hasSpoilers">⚠️ Esta reseña contiene Spoilers</label>
+      </div>
       <button class="submit-btn" @click="submit">SUBMIT</button>
     </div>
 
@@ -27,20 +31,27 @@ import StarRating from './starRating.vue';
 
 const emit = defineEmits(["close", "submit"]);
 
-// Cambiado de 'text' a 'content' para coincidir con el backend
 const content = ref(""); 
 const rating = ref(0);
+// NUEVA VARIABLE: Para manejar si contiene spoilers
+const hasSpoilers = ref(false); 
 
 const close = () => emit("close");
 
 const submit = () => {
   if (!content.value.trim()) return;
 
-  // Enviamos los datos con los nombres esperados por el controlador: content y rating
+  // Enviamos los datos con los nombres esperados por el controlador: content, rating y has_spoilers
   emit("submit", {
     content: content.value, 
     rating: rating.value,
+    has_spoilers: hasSpoilers.value, // <- NUEVO DATO
   });
+
+  // Opcional: limpiar los campos después de enviar
+  content.value = "";
+  rating.value = 0;
+  hasSpoilers.value = false;
 };
 </script>
 
@@ -52,10 +63,10 @@ const submit = () => {
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 1000; /* Asegurar que esté encima de todo */
 }
 
 .modal-box {
-  /* Fondo consistente con el diseño gris/blanco */
   background: #d3d3d3; 
   width: 450px;
   padding: 2rem;
@@ -82,6 +93,27 @@ const submit = () => {
     align-items: center;
     font-weight: bold;
 }
+
+/* NUEVOS ESTILOS PARA SPOILERS */
+.spoiler-block {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    font-size: 0.9rem;
+}
+
+.spoiler-block input[type="checkbox"] {
+    transform: scale(1.3);
+    cursor: pointer;
+}
+
+.spoiler-block label {
+    font-weight: 500;
+}
+/* FIN NUEVOS ESTILOS */
 
 .submit-btn {
   margin-top: 1rem;

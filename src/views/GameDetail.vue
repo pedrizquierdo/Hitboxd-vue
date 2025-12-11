@@ -99,8 +99,39 @@
               <StarRating :model-value="review.rating" disabled />
             </div>
             
-            <p class="review-text">{{ review.content || review.text || 'No content provided.' }}</p>
+            <div 
+              class="review-content-wrapper"
+              :class="{ 'has-spoilers-hidden': review.has_spoilers && !review.showContent }"
+            >
+                <p class="review-text">{{ review.content || review.text || 'No content provided.' }}</p>
 
+                <div 
+                    v-if="review.has_spoilers && !review.showContent" 
+                    class="spoiler-overlay"
+                >
+                    <button 
+                        class="spoiler-btn"
+                        @click.stop="toggleSpoiler(review)"
+                        title="Click para revelar spoilers"
+                    >
+                        SPOILERS
+                    </button>
+                </div>
+            </div>
+            
+            <div class="review-actions">
+                <button 
+                class="like-btn" 
+                :class="{ 'liked': review.is_liked }" 
+                @click="toggleLike(review)"
+                title="Like this review"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="heart-icon">
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+                <span class="like-count">{{ review.likes || 0 }}</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -142,7 +173,6 @@ const releaseYear = computed(() => {
 
 const route = useRoute()
 
-// Función de utilidad para formatear la fecha
 const formatDate = (dateString) => {
     if (!dateString) return '';
     const options = { year: 'numeric', month: 'short', day: 'numeric' };
@@ -166,7 +196,10 @@ const fetchGameDetail = async () => {
 const fetchReviews = async () => {
   try {
     const res = await api.get(`reviews/game/${route.params.id}`)
-    reviews.value = res.data
+    reviews.value = res.data.map(review => ({
+      ...review,
+      showContent: !review.has_spoilers, 
+    }))
   } catch (err) {
     console.error("Error loading reviews:", err)
   }
@@ -176,18 +209,41 @@ const submitReview = async (data) => {
   try {
     const payload = {
         id_game: route.params.id, 
-        content: data.content,     
-        rating: data.rating,       
+        content: data.content,      
+        rating: data.rating,  
+        has_spoilers: data.has_spoilers, 
     };
     
     await api.post('/reviews', payload)
 
     showReviewModal.value = false
-    await fetchReviews()
+    await fetchReviews() 
 
   } catch (err) {
     console.error("Error submitting review:", err)
   }
+}
+
+const toggleSpoiler = (review) => {
+    review.showContent = !review.showContent; 
+}
+
+const toggleLike = async (review) => {
+    const previousLikedState = review.is_liked;
+    const previousLikesCount = review.likes || 0;
+
+    review.is_liked = !review.is_liked;
+    review.likes = review.is_liked 
+        ? previousLikesCount + 1 
+        : previousLikesCount - 1;
+
+    try {
+        await api.post(`/reviews/${review.id_review}/like`);
+    } catch (err) {
+        console.error("Error toggling like:", err);
+        review.is_liked = previousLikedState;
+        review.likes = previousLikesCount;
+    }
 }
 
 onMounted(() => {
@@ -345,30 +401,30 @@ onMounted(() => {
 }
 
 .game-title, .info-text {
-  display: none; 
+    display: none; 
 }
 
 .activity-buttons {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  width: 100%;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    width: 100%;
 }
 
 .btn.status {
-  padding: 8px 14px;
-  border: none;
-  border-radius: 4px;
-  font-size: .9rem;
-  cursor: pointer;
-  transition: transform 0.15s ease, background 0.2s, color 0.2s;
-  
-  background: #E5E7EB; 
-  color: #4B5563;
+    padding: 8px 14px;
+    border: none;
+    border-radius: 4px;
+    font-size: .9rem;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.2s, color 0.2s;
+    
+    background: #E5E7EB; 
+    color: #4B5563;
 }
 
 .btn.status:hover {
-  transform: scale(1.05);
+    transform: scale(1.05);
 }
 
 .btn.status.active-status {
@@ -402,49 +458,49 @@ onMounted(() => {
 }
 
 .reviews-section {
-  margin-top: 3rem;
-  max-width: 100%;
-  padding: 0 2rem; 
+    margin-top: 3rem;
+    max-width: 100%;
+    padding: 0 2rem; 
 }
 
 .reviews-list {
-  margin-top: 1rem;
-  max-height: 350px;
-  overflow-y: auto;
-  padding-right: 10px;
+    margin-top: 1rem;
+    max-height: 350px;
+    overflow-y: auto;
+    padding-right: 10px;
 }
 
 .reviews-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .write-review-btn {
-  background: var(--brand-cyan);
-  color: white;
-  border: none;
-  padding: 10px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: transform 0.15s;
+    background: var(--brand-cyan);
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: transform 0.15s;
 }
 
 .write-review-btn:hover {
-  transform: scale(1.05);
-  background-color: #0095CC;
+    transform: scale(1.05);
+    background-color: #0095CC;
 }
 
 .review-card {
-  padding: 1rem;
-  margin-bottom: 1rem;
-  border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  transition: transform .2s ease;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    transition: transform .2s ease;
 }
 
 .review-card:hover {
-  transform: translateY(-3px);
+    transform: translateY(-3px);
 }
 
 .review-meta {
@@ -466,8 +522,118 @@ onMounted(() => {
 .review-text {
     margin-top: 0.5rem;
     line-height: 1.4;
+    padding: 0; 
+    margin: 0; 
+    min-height: 50px;
 }
 
+/* --- ESTILOS PARA EL EFECTO SPOILER (BLUR Y OVERLAY) --- */
+
+.review-content-wrapper {
+    position: relative;
+    margin-top: 1rem;
+    border-radius: 4px;
+    overflow: hidden; 
+}
+
+/* Aplica el filtro blur al texto cuando los spoilers están ocultos */
+.review-content-wrapper.has-spoilers-hidden .review-text {
+    filter: blur(5px);
+    transition: filter 0.3s ease;
+    user-select: none; 
+}
+
+/* El overlay */
+.spoiler-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(45, 45, 45, 0.95); /* Fondo oscuro casi sólido */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 5;
+}
+
+/* BOTÓN SPOILER ESTILIZADO */
+.spoiler-btn {
+    background-color: #2d2d2d; /* Fondo oscuro que contraste un poco */
+    color: #ffffff;
+    font-size: 0.9rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 10px 24px;
+    border: 2px solid #888; /* Contorno gris */
+    border-radius: 50px; /* Borde completamente redondo (pill shape) */
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.spoiler-btn:hover {
+    background-color: #444; /* Un poco más claro al hover */
+    border-color: #fff; /* Borde blanco al hover para resaltar */
+    transform: scale(1.05);
+}
+
+/* --- ESTILOS PARA BOTONES DE ACCIÓN (LIKE) --- */
+
+.review-actions {
+    display: flex;
+    justify-content: flex-end; 
+    align-items: center;
+    margin-top: 1rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid #e0e0e0;
+}
+
+.like-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 1rem;
+    color: #888; 
+    transition: transform 0.2s, color 0.2s, background-color 0.2s;
+    padding: 5px 8px;
+    border-radius: 4px;
+}
+
+.like-btn:hover {
+    background-color: rgba(0,0,0,0.05);
+    transform: scale(1.1);
+}
+
+.heart-icon {
+    fill: #888; 
+    transition: fill 0.2s;
+}
+
+.like-btn.liked {
+    color: #ff4757; 
+}
+
+.like-btn.liked .heart-icon {
+    fill: #ff4757;
+    animation: heartPop 0.3s ease-out;
+}
+
+.like-count {
+    font-weight: 600;
+    font-family: sans-serif;
+}
+
+@keyframes heartPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+/* ESTILOS PARA ANIMACIONES */
 .fade-in {
   animation: fadeIn 0.7s ease;
 }
