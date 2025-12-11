@@ -2,6 +2,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 import LandingPage from '@/views/LandingPage.vue'
 import GameDetail from '@/views/GameDetail.vue'
 import HomeFeed from '@/views/HomeFeed.vue'
+import TinderPage from '@/views/TinderPage.vue'
+import Catalogo from '@/views/Catalogo.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -21,6 +23,16 @@ const router = createRouter({
       path: '/home',
       name: 'HomeFeed',
       component: HomeFeed,
+    },
+     {
+      path: '/tracker',
+      name: 'TinderComponent',
+      component: TinderPage,
+    },
+    {
+      path: '/catalogo',
+      name: 'catalogo',
+      component: Catalogo,
     }
 
   ],
