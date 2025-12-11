@@ -15,15 +15,14 @@ defineOptions({ name: 'HitboxdLogo' });
 import { computed } from 'vue';
 
 const destination = computed(() => {
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+  const storageKey = import.meta.env.VITE_KEY_STORAGE
+  const token = localStorage.getItem(storageKey) || sessionStorage.getItem(storageKey);
 
-    // ✅ CORRECCIÓN: Si hay token, va al path '/home' de la ruta HomeFeed
     return token ? '/home' : '/';
 });
 </script>
 
 <style scoped>
-/* (Styles remain the same) */
 .logo-link {
   text-decoration: none;
   color: inherit;
