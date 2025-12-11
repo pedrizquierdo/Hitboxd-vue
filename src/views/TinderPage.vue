@@ -56,7 +56,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '@/api/axios';
 import Logo from '@/components/common/Logo.vue';
-import Footer from '@/components/common/Footer.vue';
+import Footer from '@/components/common/PageFooter.vue';
 
 const router = useRouter();
 const loading = ref(true);

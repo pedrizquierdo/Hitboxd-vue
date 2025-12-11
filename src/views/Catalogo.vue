@@ -55,7 +55,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import api from '@/api/axios';
-import Footer from '@/components/common/Footer.vue';
+import Footer from '@/components/common/PageFooter.vue';
 import GameCard from '@/components/common/GameCard.vue';
 import Logo from '@/components/common/Logo.vue';
 

@@ -78,6 +78,7 @@
       </section>
 
     </div>
+    <Footer />
   </div>
 </template>
 
@@ -85,6 +86,7 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import Nav from "@/components/common/Nav.vue";
+import Footer from "@/components/common/PageFooter.vue";
 import api from "@/api/axios.js";
 
 const route = useRoute();

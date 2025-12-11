@@ -95,7 +95,7 @@ import { ref, onMounted } from 'vue';
 import api from '@/api/axios';
 // Asumiendo que 'api' está configurado
 import Nav from '@/components/common/Nav.vue';
-import Footer from '@/components/common/Footer.vue';
+import Footer from '@/components/common/PageFooter.vue';
 
 // --- DUMMY DATA (Mantenemos la simulación por la restricción de backend) ---
 const dummyUsers = [

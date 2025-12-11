@@ -154,7 +154,7 @@ import api from '@/api/axios.js'
 
 import ReviewModal from '@/components/reviews/reviewModal.vue'
 import StarRating from '@/components/reviews/starRating.vue'
-import Footer from '@/components/common/Footer.vue'
+import Footer from '@/components/common/PageFooter.vue'
 import Nav from '@/components/common/Nav.vue'
 
 const game = ref({})

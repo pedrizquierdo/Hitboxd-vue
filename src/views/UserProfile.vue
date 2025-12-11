@@ -148,7 +148,7 @@
 import { ref, onMounted } from "vue"
 import { useRouter } from "vue-router"
 import Nav from "@/components/common/Nav.vue"
-import Footer from "@/components/common/Footer.vue"
+import Footer from "@/components/common/PageFooter.vue"
 import CreateListModal from "@/components/lists/CreateListModal.vue"
 import api from "@/api/axios.js" 
 

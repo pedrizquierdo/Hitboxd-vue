@@ -131,7 +131,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Nav from '@/components/common/Nav.vue'
-import Footer from '@/components/common/Footer.vue'
+import Footer from '@/components/common/PageFooter.vue'
 // IMPORTAMOS EL NUEVO COMPONENTE
 import GameSearchModal from '@/components/lists/GameSearchModal.vue' 
 import api from '@/api/axios.js'

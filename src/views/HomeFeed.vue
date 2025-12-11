@@ -66,7 +66,7 @@
 import { ref, onMounted } from 'vue';
 import api from '@/api/axios';
 import Nav from '@/components/common/Nav.vue';
-import Footer from '@/components/common/Footer.vue';
+import Footer from '@/components/common/PageFooter.vue';
 import GameCard from '@/components/common/GameCard.vue';
 import ActivityCard from '@/components/activity/ActivityCard.vue';
 
