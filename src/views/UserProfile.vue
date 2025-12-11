@@ -89,7 +89,7 @@
               class="btn-create-mini"
               title="Crear nueva lista"
             >
-              + Nueva
+              + NEW
             </button>
         </div>
 
@@ -104,16 +104,16 @@
                 <p class="list-desc">{{ list.description || 'Sin descripción' }}</p>
             </div>
             <div class="list-card-footer">
-                <small>{{ list.games ? list.games.length : 0 }} juegos</small>
+                <small>{{ list.games ? list.games.length : 0 }} GAMES</small>
                 <span class="list-icon">📝</span>
             </div>
           </div>
         </div>
         
         <div v-else class="empty-state">
-          <p class="section-text">No has creado ninguna lista todavía.</p>
+          <p class="section-text">YOU HAVENT CREATED ANY LISTS YET.</p>
           <button class="start-list-btn" @click="openModal">
-            Crear mi primera lista
+            CREATE YOUR FIRST LIST
           </button>
         </div>
       </section>

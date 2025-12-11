@@ -2,17 +2,17 @@
   <div v-if="open" class="modal-backdrop">
     <div class="modal">
 
-      <h2>Crear nueva lista</h2>
+      <h2>CREATE NEW LIST</h2>
 
       <input 
         v-model="listName"
         type="text"
-        placeholder="Nombre de la lista"
+        placeholder="LIST NAME"
       />
 
       <textarea 
         v-model="description"
-        placeholder="Descripción..."
+        placeholder="Description..."
       ></textarea>
 
       <input 
@@ -20,7 +20,7 @@
         @input="searchGames"
         @focus="searchGames"
         type="text"
-        placeholder="Buscar juegos..."
+        placeholder="Search..."
       />
 
       <div v-if="searchResults.length > 0" class="search-results">
@@ -33,11 +33,11 @@
             <img v-if="game.cover_url" :src="game.cover_url" class="game-cover" />
             <span>{{ game.title || game.name }}</span>
           </div>
-          <button @click="addGame(game)">Agregar</button>
+          <button @click="addGame(game)">ADD</button>
         </div>
       </div>
       
-      <h3>Juegos seleccionados</h3>
+      <h3>SELECTED GAMES</h3>
       <div class="selected-games">
         <div 
           v-for="game in selectedGames"
@@ -45,13 +45,13 @@
           class="selected-game"
         >
           <span>{{ game.title || game.name }}</span>
-          <button @click="removeGame(game.id_game)">Eliminar</button>
+          <button @click="removeGame(game.id_game)">DELETE</button>
         </div>
       </div>
 
       <div class="modal-footer">
-        <button @click="close">Cancelar</button>
-        <button @click="createList">Crear Lista</button>
+        <button @click="close">CANCEL</button>
+        <button @click="createList">CREATE LIST</button>
       </div>
 
     </div>
@@ -109,7 +109,7 @@ const searchGames = async () => {
     const { data } = await axios.get(`/games/search?q=${query}`);
     searchResults.value = data;
   } catch (error) {
-    console.error("Error buscando juegos:", error);
+    console.error("Error looking for games:", error);
     searchResults.value = [];
   }
 }
@@ -130,13 +130,13 @@ const removeGame = (idToRemove) => {
 // --- CREAR LISTA ---
 const createList = async () => {
   if (!listName.value.trim()) {
-    alert("La lista necesita un nombre")
+    alert("The list needs a name")
     return
   }
 
   try {
     // 1. Crear la lista (Cabecera)
-    console.log("Creando lista...");
+    console.log("Creating list...");
     const createPayload = {
       title: listName.value, 
       description: description.value,
@@ -146,7 +146,7 @@ const createList = async () => {
     
     // El backend puede devolver { id: ... } o { insertId: ... }
     const newListId = createData.id || createData.insertId; 
-    console.log("Lista creada con ID:", newListId);
+    console.log("list created with id:", newListId);
 
     if (!newListId) throw new Error("No se recibió el ID de la nueva lista.");
     
