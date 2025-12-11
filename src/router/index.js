@@ -6,6 +6,7 @@ import TinderPage from '@/views/TinderPage.vue'
 import Catalogo from '@/views/Catalogo.vue'
 import UserProfile from '@/views/UserProfile.vue'
 import AdminDashboard from '@/views/AdminDashboard.vue'
+import ListDetail from '@/views/ListDetail.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -54,9 +55,12 @@ const router = createRouter({
       component: AdminDashboard,
     },
 
-    
-      
-    
+        {
+      path: '/lists/:listId',
+     name: 'ListDetail',
+      component: ListDetail,
+      props: true,
+    },
   ],
 })
 
