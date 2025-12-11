@@ -40,21 +40,23 @@ const router = createRouter({
       path: '/profile',
       name: 'UserProfile',
       component: UserProfile,
-      meta: { requiresAuth: true }
+
     },
     {
       path: '/games',
       name: 'catalogo',
       component: Catalogo,
     },
-    // ✅ 2. NUEVA RUTA PARA EL DASHBOARD
+
     {
       path: '/admin',
       name: 'AdminDashboard',
       component: AdminDashboard,
-      // Asumiendo que el dashboard SIEMPRE requiere autenticación y permisos de admin
-      meta: { requiresAuth: true, requiresAdmin: true }
-    }
+    },
+
+    
+      
+    
   ],
 })
 
