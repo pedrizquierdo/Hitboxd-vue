@@ -1,7 +1,6 @@
 <template>
   <div class="activity-card" @click="goToGame">
     
-    <!-- Header: Quién y Qué hizo -->
     <div class="friend-info">
       <img :src="activity.avatar_url || '/assets/default-avatar.png'" class="avatar" />
       <div class="action-text">
@@ -12,11 +11,9 @@
       </div>
     </div>
 
-    <!-- Cover del Juego -->
     <div class="game-cover-wrapper">
       <img :src="activity.cover_url" class="game-img" />
       
-      <!-- Rating (si existe) -->
       <div v-if="activity.rating" class="rating-badge">
         ★ {{ activity.rating }}
       </div>
