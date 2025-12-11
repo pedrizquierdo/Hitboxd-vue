@@ -7,40 +7,42 @@
 
       <div class="header-content fade-in">
         <h1>Welcome back, <span class="username">{{ userName }}</span>.</h1>
-        <p class="subtitle">Here’s what’s happening in the world of gaming.</p>
       </div>
 
       <div v-if="loading" class="loading-state">
         <div class="spinner"></div>
-        <p>Loading your feed...</p>
       </div>
 
       <div v-else class="feed-content fade-up">
 
         <section class="game-section">
           <div class="section-header">
+            <h3>Friends Activity</h3>
+            <span class="line"></span>
+          </div>
+
+          <div v-if="friendsActivity.length > 0" class="horizontal-scroll">
+            <ActivityCard 
+              v-for="(act, index) in friendsActivity" 
+              :key="index" 
+              :activity="act"
+              class="scroll-item"
+            />
+          </div>
+
+          <div v-else class="empty-state">
+            <p>It's quiet here...</p>
+            <span>Follow other players to see their updates on your feed.</span>
+          </div>
+        </section>
+
+        <section class="game-section">
+          <div class="section-header">
             <h3>New Releases</h3>
             <span class="line"></span>
           </div>
-          
-          <div class="carousel-wrapper">
-            <button class="nav-btn prev" @click="scroll(newGamesScroll, 'left')" aria-label="Scroll Left">
-              &#10094; </button>
-
-            <div class="fade-left"></div>
-            <div class="fade-right"></div>
-
-            <div class="horizontal-scroll" ref="newGamesScroll">
-              <GameCard 
-                v-for="game in newGames" 
-                :key="game.igdb_id" 
-                :game="game"
-                class="scroll-item"
-              />
-            </div>
-
-            <button class="nav-btn next" @click="scroll(newGamesScroll, 'right')" aria-label="Scroll Right">
-              &#10095; </button>
+          <div class="horizontal-scroll">
+            <GameCard v-for="game in newGames" :key="game.igdb_id" :game="game" class="scroll-item" />
           </div>
         </section>
 
@@ -49,29 +51,14 @@
             <h3>Popular on Hitboxd</h3>
             <span class="line"></span>
           </div>
-          
-          <div class="carousel-wrapper">
-            <button class="nav-btn prev" @click="scroll(popularScroll, 'left')">&#10094;</button>
-            <div class="fade-left"></div>
-            <div class="fade-right"></div>
-            
-            <div class="horizontal-scroll" ref="popularScroll">
-              <GameCard 
-                v-for="game in popularGames" 
-                :key="game.igdb_id" 
-                :game="game"
-                class="scroll-item"
-              />
-            </div>
-
-            <button class="nav-btn next" @click="scroll(popularScroll, 'right')">&#10095;</button>
+          <div class="horizontal-scroll">
+            <GameCard v-for="game in popularGames" :key="game.igdb_id" :game="game" class="scroll-item" />
           </div>
         </section>
 
       </div>
     </div>
-    
-    <Footer/>
+    <Footer />
   </div>
 </template>
 
@@ -80,27 +67,14 @@ import { ref, onMounted } from 'vue';
 import api from '@/api/axios';
 import Nav from '@/components/common/Nav.vue';
 import Footer from '@/components/common/Footer.vue';
-import GameCard from '@/components/common/GameCard.vue'; 
+import GameCard from '@/components/common/GameCard.vue';
+import ActivityCard from '@/components/activity/ActivityCard.vue';
 
 const loading = ref(true);
 const userName = ref('Player');
 const newGames = ref([]);
 const popularGames = ref([]);
-
-const newGamesScroll = ref(null);
-const popularScroll = ref(null);
-
-const scroll = (element, direction) => {
-  if (!element) return;
-  
-  const scrollAmount = 300; 
-  
-  element.scrollBy({
-    left: direction === 'left' ? -scrollAmount : scrollAmount,
-    behavior: 'smooth'
-  });
-};
-
+const friendsActivity = ref([]);
 
 const fetchData = async () => {
   loading.value = true;
@@ -108,29 +82,24 @@ const fetchData = async () => {
     try {
         const userRes = await api.get('/users/me');
         if (userRes.data?.username) userName.value = userRes.data.username;
-    } catch (error) { 
-        console.error("No se pudo obtener usuario:", error);
+    } catch (error) {
+        console.error("Error fetching user data:", error);
     }
 
     const results = await Promise.allSettled([
-        api.get('/games/new?limit=12'),           
-        api.get('/games/trending?limit=12')
+        api.get('/games/new?limit=20'),
+        api.get('/games/trending?limit=20'),
+        api.get('/activity/feed') 
     ]);
 
-    if (results[0].status === 'fulfilled') {
-        newGames.value = results[0].value.data;
-    } else {
-        console.error("No se pudo obtener nuevos juegos:", results[0].reason);
-    }
-
-    if (results[1].status === 'fulfilled') {
-        popularGames.value = results[1].value.data;
-    } else {
-        console.error("No se pudo obtener juegos populares:", results[1].reason);
+    if (results[0].status === 'fulfilled') newGames.value = results[0].value.data;
+    if (results[1].status === 'fulfilled') popularGames.value = results[1].value.data;
+    if (results[2].status === 'fulfilled') {
+        friendsActivity.value = results[2].value.data;
     }
 
   } catch (error) {
-    console.error("Error general cargando feed:", error);
+    console.error("Error cargando feed:", error);
   } finally {
     loading.value = false;
   }
