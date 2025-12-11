@@ -5,7 +5,7 @@
       <h3>YOUR REVIEW</h3>
 
       <textarea
-        v-model="text"
+        v-model="content"
         class="review-input"
         placeholder="Write your thoughts..."
       ></textarea>
@@ -27,16 +27,18 @@ import StarRating from './starRating.vue';
 
 const emit = defineEmits(["close", "submit"]);
 
-const text = ref("");
+// Cambiado de 'text' a 'content' para coincidir con el backend
+const content = ref(""); 
 const rating = ref(0);
 
 const close = () => emit("close");
 
 const submit = () => {
-  if (!text.value.trim()) return;
+  if (!content.value.trim()) return;
 
+  // Enviamos los datos con los nombres esperados por el controlador: content y rating
   emit("submit", {
-    text: text.value,
+    content: content.value, 
     rating: rating.value,
   });
 };
@@ -53,11 +55,13 @@ const submit = () => {
 }
 
 .modal-box {
-  background: #d3d3d3;
+  /* Fondo consistente con el diseño gris/blanco */
+  background: #d3d3d3; 
   width: 450px;
   padding: 2rem;
   border-radius: 6px;
   text-align: center;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
 }
 
 .review-input {
@@ -67,6 +71,16 @@ const submit = () => {
   border: none;
   padding: 10px;
   font-size: .9rem;
+  resize: none;
+  border-radius: 4px;
+}
+
+.rating-block {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
 }
 
 .submit-btn {
@@ -77,5 +91,11 @@ const submit = () => {
   color: white;
   border-radius: 5px;
   cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.submit-btn:hover {
+    transform: scale(1.02);
+    background-color: #0095CC;
 }
 </style>

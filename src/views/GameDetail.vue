@@ -1,23 +1,37 @@
 <template>
   <div class="page-wrapper">
-
+    
     <div class="game-detail-container">
       <div class="bg-texture"></div>
 
-      <div class="cover-box fade-in">
-        <img :src="game.cover_url" class="cover-img" alt="Game Cover" />
-      </div>
+      <div class="game-header-container">
+        
+        <div class="background-box fade-in">
+          <img :src="game.background_url" class="background-img" alt="Game Background" />
+        </div>
 
-      <div class="content-box slide-up">
+        <div class="header-content-overlay slide-up">
+          
+          <div class="game-avatar-box">
+            <div class="cover-mask-wrapper"> 
+              <img :src="game.cover_url" class="game-avatar-img" alt="Game Cover" />
+            </div>
+          </div>
+
+          <div class="game-info-box">
+            <h1 class="game-title-header">{{ game.title }}</h1>
+            <p class="info-text-header">
+              <strong>Developer:</strong> {{ game.developer || 'Unknown' }} •
+              <strong>Release year:</strong> {{ releaseYear }}
+            </p>
+          </div>
+
+        </div>
+      </div>
+      <div class="content-box-main slide-up">
 
         <div class="left-section">
-          <h1 class="game-title">{{ game.title }}</h1>
-
-          <p class="info-text">
-            <strong>Developer:</strong> {{ game.developer || 'Unknown' }} •
-            <strong>Release year:</strong> {{ releaseYear }}
-          </p>
-
+          
           <div class="description-box card">
             <h3>GAME DESCRIPTION</h3>
             <p>{{ game.description || "No description available." }}</p>
@@ -28,9 +42,29 @@
           <h3 class="section-title">MY ACTIVITY</h3>
 
           <div class="activity-buttons">
-            <button class="btn status played">Played</button>
-            <button class="btn status pending">Pending</button>
-            <button class="btn status abandoned">Abandoned</button>
+            <button 
+              class="btn status played" 
+              :class="{ 'active-status': userStatus === 'played' }"
+              @click="setUserStatus('played')"
+            >
+              Played
+            </button>
+            
+            <button 
+              class="btn status pending" 
+              :class="{ 'active-status': userStatus === 'pending' }"
+              @click="setUserStatus('pending')"
+            >
+              Pending
+            </button>
+            
+            <button 
+              class="btn status abandoned" 
+              :class="{ 'active-status': userStatus === 'abandoned' }"
+              @click="setUserStatus('abandoned')"
+            >
+              Abandoned
+            </button>
           </div>
 
           <div class="rating-section">
@@ -39,7 +73,7 @@
           </div>
         </div>
       </div>
-
+      
       <div class="reviews-section slide-up-delay">
         <div class="reviews-header">
           <h2>REVIEWS</h2>
@@ -49,25 +83,34 @@
         </div>
 
         <div class="reviews-list">
-          <div
+          <div 
             v-for="review in reviews"
-            :key="review.id"
+            :key="review.id_review"
             class="review-card card fade-in"
           >
-            <p class="review-text">{{ review.text }}</p>
-            <StarRating :model-value="review.rating" disabled />
+            <div class="review-meta">
+              <span class="review-author">Reviewed by <strong>{{ review.username || 'Anonymous' }}</strong></span> 
+              <span class="review-date">{{ formatDate(review.created_at) }}</span>
+            </div>
+            
+            <div class="review-rating-stars">
+              <StarRating :model-value="review.rating" disabled />
+            </div>
+            
+            <p class="review-text">{{ review.content || review.text || 'No content provided.' }}</p>
+
           </div>
         </div>
       </div>
 
-      <ReviewModal
+      <ReviewModal 
         v-if="showReviewModal"
-        @close="showReviewModal = false"
+        @close="showReviewModal = false" 
         @submit="submitReview"
       />
 
     </div> <Footer />
-
+    
   </div>
 </template>
 
@@ -84,16 +127,29 @@ const game = ref({})
 const reviews = ref([])
 const userRating = ref(0)
 const showReviewModal = ref(false)
+const userStatus = ref(null) 
 
 const releaseYear = computed(() => {
   const date = game.value?.release_date;
   if (!date) return "N/A";
-
+  
   const year = new Date(date).getFullYear();
   return isNaN(year) ? "N/A" : year;
 });
 
 const route = useRoute()
+
+// Función de utilidad para formatear la fecha
+const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+    return new Date(dateString).toLocaleDateString(undefined, options);
+}
+
+const setUserStatus = (status) => {
+  userStatus.value = userStatus.value === status ? null : status;
+  console.log('Nuevo estado de juego:', userStatus.value);
+}
 
 const fetchGameDetail = async () => {
   try {
@@ -115,13 +171,17 @@ const fetchReviews = async () => {
 
 const submitReview = async (data) => {
   try {
-    await api.post('/reviews', {
-      id_game: route.params.id,
-      ...data
-    })
+    const payload = {
+        id_game: route.params.id, 
+        content: data.content,     
+        rating: data.rating,       
+    };
+    
+    await api.post('/reviews', payload)
 
     showReviewModal.value = false
-    fetchReviews()
+    await fetchReviews()
+
   } catch (err) {
     console.error("Error submitting review:", err)
   }
@@ -134,93 +194,41 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Wrapper opcional para asegurar flujo */
+
 .page-wrapper {
   width: 100%;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background-color: #E3E4E8;
+  color: #2d2d2d; 
 }
 
 .game-detail-container {
   width: 100%;
   max-width: 1100px;
   margin: auto;
-  padding: 2rem; /* Este padding ya no afectará al footer */
-  padding-bottom: 4rem; /* Espacio extra antes del footer si quieres */
+  padding-bottom: 4rem;
   position: relative;
-  color: var(--text-main);
-  flex: 1; /* Esto empuja el footer hacia abajo si hay poco contenido */
+  background-color: transparent; 
+  flex: 1;
+  padding-top: 20px; 
 }
 
-/* --- BACKGROUND --- */
 .bg-texture {
-  position: fixed;
-  top: 0; left: 0; width: 100%; height: 100%;
+  position: fixed; 
+  top: 0; left: 0; 
+  width: 100%; 
+  height: 100%;
   background-image: url('/assets/bg-texture.jpg');
+  background-repeat: repeat;
   background-size: 400px;
   opacity: 0.1;
-  z-index: -1;
+  z-index: -1; 
 }
 
-/* --- GAME COVER --- */
-.cover-box {
-  width: 100%;
-  height: 340px;
-  border-radius: 6px;
-  overflow: hidden;
-  box-shadow: 0 6px 12px rgba(0,0,0,0.35);
-}
-
-.cover-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  mask-image: linear-gradient(to bottom, black 75%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to bottom, black 75%, transparent 100%);
-}
-
-/* --- CONTENT AREA --- */
-.content-box {
-  display: flex;
-  gap: 30px;
-  margin-top: 2rem;
-}
-
-.left-section {
-  width: 60%;
-}
-
-.right-section {
-  width: 40%;
-  background: var(--card-bg);
-  padding: 1.5rem;
-  border-radius: 6px;
-
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  gap: 1rem;
-  min-height: 220px;
-}
-
-/* --- TITLES --- */
-.game-title {
-  font-family: 'Courier Prime', monospace;
-  font-size: 2.6rem;
-  margin-bottom: .5rem;
-}
-
-.info-text {
-  color: #555;
-  margin-bottom: 1.5rem;
-}
-
-/* — CARDS —*/
 .card {
-  background-color: var(--card-bg);
+  background-color: #F2F3F5; 
   padding: 1.5rem;
   border-radius: 6px;
   box-shadow: 0 4px 6px rgba(0,0,0,0.35);
@@ -232,7 +240,111 @@ onMounted(() => {
   box-shadow: 0 8px 12px rgba(0,0,0,0.45);
 }
 
-/* --- ACTIVITY BUTTONS --- */
+.game-header-container {
+    position: relative;
+    width: 100%;
+    margin: 0 -2rem 1rem -2rem; 
+}
+
+.background-box {
+    width: 100%;
+    height: 300px; 
+    overflow: hidden;
+    border-radius: 0 0 6px 6px; 
+    box-shadow: 0 6px 12px rgba(0,0,0,0.35);
+    
+    -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+    mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+}
+
+.background-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: brightness(0.7); 
+}
+
+.header-content-overlay {
+    position: absolute;
+    bottom: -60px; 
+    left: 40px; 
+    display: flex;
+    align-items: flex-end; 
+    gap: 20px;
+}
+
+.game-avatar-box {
+    width: 180px;
+    height: 240px;
+    border: 5px solid #E3E4E8; 
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    position: relative; 
+}
+
+.cover-mask-wrapper {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    
+    -webkit-mask-image: linear-gradient(to bottom, black 95%, transparent 100%);
+    mask-image: linear-gradient(to bottom, black 95%, transparent 100%);
+}
+
+.game-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; 
+}
+
+.game-info-box {
+    padding-bottom: 20px; 
+}
+
+.game-title-header {
+    font-family: 'Courier Prime', monospace;
+    font-size: 3rem;
+    color: white; 
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+    line-height: 1;
+    margin: 0;
+}
+
+.info-text-header {
+    font-size: 1.1rem;
+    color: #2D2D2D; 
+    margin: 5px 0 0 0;
+}
+
+.content-box-main {
+    display: flex;
+    gap: 30px;
+    margin-top: 80px; 
+    padding: 0 2rem; 
+}
+
+.left-section {
+    width: 60%;
+}
+
+.right-section {
+    width: 40%;
+    padding: 1.5rem; 
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 1rem; 
+    min-height: 220px; 
+}
+
+.game-title, .info-text {
+  display: none; 
+}
+
 .activity-buttons {
   display: flex;
   gap: 10px;
@@ -246,21 +358,50 @@ onMounted(() => {
   border-radius: 4px;
   font-size: .9rem;
   cursor: pointer;
-  transition: transform 0.15s ease;
+  transition: transform 0.15s ease, background 0.2s, color 0.2s;
+  
+  background: #E5E7EB; 
+  color: #4B5563;
 }
 
 .btn.status:hover {
   transform: scale(1.05);
 }
 
-.played { background: var(--brand-green); color: white; }
-.pending { background: var(--brand-yellow); color: black; }
-.abandoned { background: var(--brand-red); color: white; }
+.btn.status.active-status {
+    transform: scale(1.05);
+}
 
-/* --- REVIEWS --- */
+.played.active-status {
+    background: var(--brand-green); 
+    color: white;
+}
+.pending.active-status {
+    background: var(--brand-yellow); 
+    color: black; 
+}
+.abandoned.active-status {
+    background: var(--brand-red); 
+    color: white;
+}
+
+.played:hover:not(.active-status) { 
+    background: var(--brand-green); 
+    color: white; 
+}
+.pending:hover:not(.active-status) { 
+    background: var(--brand-yellow); 
+    color: black; 
+}
+.abandoned:hover:not(.active-status) { 
+    background: var(--brand-red); 
+    color: white; 
+}
+
 .reviews-section {
   margin-top: 3rem;
   max-width: 100%;
+  padding: 0 2rem; 
 }
 
 .reviews-list {
@@ -292,7 +433,6 @@ onMounted(() => {
 }
 
 .review-card {
-  background: var(--card-bg);
   padding: 1rem;
   margin-bottom: 1rem;
   border-radius: 4px;
@@ -304,7 +444,27 @@ onMounted(() => {
   transform: translateY(-3px);
 }
 
-/* --- ANIMATIONS --- */
+.review-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: #555;
+    margin-bottom: 0.5rem;
+}
+
+.review-rating-stars {
+    margin-bottom: 0.5rem;
+}
+
+.review-author strong {
+    color: #2d2d2d;
+}
+
+.review-text {
+    margin-top: 0.5rem;
+    line-height: 1.4;
+}
+
 .fade-in {
   animation: fadeIn 0.7s ease;
 }
