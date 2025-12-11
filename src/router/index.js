@@ -5,6 +5,8 @@ import HomeFeed from '@/views/HomeFeed.vue'
 import TinderPage from '@/views/TinderPage.vue'
 import Catalogo from '@/views/Catalogo.vue'
 import UserProfile from '@/views/UserProfile.vue'
+// ✅ 1. NUEVA IMPORTACIÓN DEL DASHBOARD
+import AdminDashboard from '@/views/AdminDashboard.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -25,7 +27,7 @@ const router = createRouter({
       name: 'HomeFeed',
       component: HomeFeed,
     },
-     {
+      {
       path: '/tracker',
       name: 'TinderComponent',
       component: TinderPage,
@@ -39,33 +41,43 @@ const router = createRouter({
       path: '/profile',
       name: 'UserProfile',
       component: UserProfile,
+      meta: { requiresAuth: true }
     },
     {
       path: '/games',
       name: 'catalogo',
       component: Catalogo,
     },
-
-
-
-
-
-
-
+    // ✅ 2. NUEVA RUTA PARA EL DASHBOARD
+    {
+      path: '/admin',
+      name: 'AdminDashboard',
+      component: AdminDashboard,
+      // Asumiendo que el dashboard SIEMPRE requiere autenticación y permisos de admin
+      meta: { requiresAuth: true, requiresAdmin: true }
+    }
   ],
 })
 
+// --- GUARDIANES DE NAVEGACIÓN (Se mantienen las correcciones anteriores) ---
+
 router.beforeEach((to, from, next) => {
   const isAuthenticated = localStorage.getItem(import.meta.env.VITE_KEY_STORAGE)
+  // Nota: Aquí podrías añadir la lógica para 'requiresAdmin'
 
+  // 1. Redirigir si falta autenticación en ruta protegida
   if (to.meta.requiresAuth && !isAuthenticated) {
     next({ name: 'Auth' })
+    return
   }
 
+  // 2. Redirigir si está autenticado y trata de ir a Auth
   if (to.name === 'Auth' && isAuthenticated) {
-    next({ name: 'Home' })
+    next({ name: 'HomeFeed' })
+    return
   }
 
+  // 3. Continuar la navegación normal
   next()
 })
 

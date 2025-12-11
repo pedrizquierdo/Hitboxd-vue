@@ -3,7 +3,7 @@
     <div class="logo-container">
       <span class="cube-icon">
         <img src="/assets/logo.png" alt="Hitboxd Logo" class="logo-img"/>
-      </span> 
+      </span>
       <span class="brand-name">Hitboxd</span>
     </div>
   </router-link>
@@ -15,13 +15,15 @@ defineOptions({ name: 'HitboxdLogo' });
 import { computed } from 'vue';
 
 const destination = computed(() => {
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token'); 
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
 
-    return token ? '/feed' : '/';
+    // ✅ CORRECCIÓN: Si hay token, va al path '/home' de la ruta HomeFeed
+    return token ? '/home' : '/';
 });
 </script>
 
 <style scoped>
+/* (Styles remain the same) */
 .logo-link {
   text-decoration: none;
   color: inherit;
@@ -32,7 +34,7 @@ const destination = computed(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-weight: 800; 
+  font-weight: 800;
   font-size: 1.3rem;
   color: #2D2D2D;
   font-family: 'Inter', sans-serif;

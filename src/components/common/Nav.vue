@@ -1,9 +1,7 @@
-<template>
+  <template>
   <nav class="navbar">
     <div class="navbar-inner">
-
       <HitboxdLogo />
-
       <ul class="nav-links desktop-links">
         <li class="nav-item dropdown">
           <span @click="toggleProfileMenu">
@@ -109,15 +107,14 @@ const showReviewModal = ref(false);
 // LÓGICA DE MANEJO DE ENVÍO DE LA RESEÑA
 const handleReviewSubmit = (reviewData) => {
     console.log("Reseña enviada desde el Nav:", reviewData);
-    // [AQUÍ VA TU LÓGICA REAL DE ENVÍO A LA API]
     showReviewModal.value = false;
 };
 
 
-// --- Filtro de Búsqueda Dinámico ---
+// --- Filtro de Búsqueda Dinámico (Corregido para mostrar todos los juegos por defecto) ---
 const filteredGames = computed(() => {
     if (!searchQuery.value) {
-        return allGames.value.slice(0, 1000);
+        return allGames.value;
     }
     const query = searchQuery.value.toLowerCase();
     return allGames.value.filter(game =>
@@ -143,7 +140,7 @@ const goToDetail = (id) => {
 
 const fetchAllGames = async () => {
     try {
-        const res = await api.get('/games/trending?limit=500');
+        const res = await api.get('/games/trending?limit=1000');
 
         if (res.data && Array.isArray(res.data)) {
             allGames.value = res.data;
@@ -190,6 +187,14 @@ const toggleSearch = () => {
   justify-content: space-between;
   padding: 0 2rem;
 }
+
+/* Nuevo estilo para que el router-link no rompa la disposición del logo */
+.logo-link {
+    display: flex;
+    align-items: center;
+    text-decoration: none; /* Asegura que no tenga subrayado */
+}
+
 
 /* Links, Dropdown y Auth Buttons */
 .nav-links {
