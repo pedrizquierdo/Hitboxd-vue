@@ -1,410 +1,289 @@
 <template>
-  <Nav />
   <div class="page-wrapper">
+    <Nav />
+    
     <div class="home-container">
       <div class="bg-texture"></div>
 
-      <h1 class="home-title fade-in">
-        Welcome {{ userName }}. Here’s what we’ve been gaming...
-      </h1>
-      <p class="subtitle fade-in-delay">
-        This homepage will become customized as you review on Hitboxd.
-      </p>
+      <div class="header-content fade-in">
+        <h1>Welcome back, <span class="username">{{ userName }}</span>.</h1>
+        <p class="subtitle">Here’s what’s happening in the world of gaming.</p>
+      </div>
 
       <div v-if="loading" class="loading-state">
         <div class="spinner"></div>
         <p>Loading your feed...</p>
       </div>
 
-      <div v-else class="library-content fade-in">
+      <div v-else class="feed-content fade-up">
 
         <section class="game-section">
-            <div class="top-row-titles">
-                <h3 class="section-title">NEW ON HITBOXD</h3>
-
-                <h3 class="section-title activity-title">
-                    <router-link to="/profile" class="activity-link">
-                        YOUR ACTIVITY
-                    </router-link>
-                </h3>
-            </div>
-
-            <div class="carousel-wrapper top-carousel-wrapper">
-                <button class="nav-btn left" @click="scrollRow('top-games-track', -1)">&#8249;</button>
-
-                <div class="carousel-track" id="top-games-track">
-
-                    <div class="carousel-item top-item"
-                        v-for="game in newGames.slice(0, 5)"
-                        :key="'new-' + game.id_game"
-                        @click="goToDetail(game.id_game)">
-                        <GameCard :game="game" />
-                    </div>
-
-                    <div class="carousel-item top-item activity-game-item"
-                        v-for="game in trendingGames.slice(0, 5)"
-                        :key="'act-' + game.id_game"
-                        @click="goToDetail(game.id_game)">
-                        <GameCard :game="game" />
-                    </div>
-                </div>
-
-                <button class="nav-btn right" @click="scrollRow('top-games-track', 1)">&#8250;</button>
-            </div>
-        </section>
-
-        <section class="game-section">
-          <h3 class="section-title">POPULAR ON HITBOXD</h3>
+          <div class="section-header">
+            <h3>New Releases</h3>
+            <span class="line"></span>
+          </div>
+          
           <div class="carousel-wrapper">
-            <button class="nav-btn left" @click="scrollRow('popular', -1)">&#8249;</button>
-            <div class="carousel-track" id="popular">
-              <div class="carousel-item"
-                   v-for="game in popularGames"
-                   :key="'pop-' + game.id_game"
-                   @click="goToDetail(game.id_game)">
-                <GameCard :game="game" />
-              </div>
+            <button class="nav-btn prev" @click="scroll(newGamesScroll, 'left')" aria-label="Scroll Left">
+              &#10094; </button>
+
+            <div class="fade-left"></div>
+            <div class="fade-right"></div>
+
+            <div class="horizontal-scroll" ref="newGamesScroll">
+              <GameCard 
+                v-for="game in newGames" 
+                :key="game.igdb_id" 
+                :game="game"
+                class="scroll-item"
+              />
             </div>
-            <button class="nav-btn right" @click="scrollRow('popular', 1)">&#8250;</button>
+
+            <button class="nav-btn next" @click="scroll(newGamesScroll, 'right')" aria-label="Scroll Right">
+              &#10095; </button>
           </div>
         </section>
 
         <section class="game-section">
-          <h3 class="section-title">POPULAR REVIEWS THIS WEEK</h3>
-          <div class="reviews-grid">
-            <ReviewCard
-              v-for="review in popularReviews"
-              :key="review.id"
-              :review="review"
-              :gameImage="review.game_cover_url"
-            />
+          <div class="section-header">
+            <h3>Popular on Hitboxd</h3>
+            <span class="line"></span>
+          </div>
+          
+          <div class="carousel-wrapper">
+            <button class="nav-btn prev" @click="scroll(popularScroll, 'left')">&#10094;</button>
+            <div class="fade-left"></div>
+            <div class="fade-right"></div>
+            
+            <div class="horizontal-scroll" ref="popularScroll">
+              <GameCard 
+                v-for="game in popularGames" 
+                :key="game.igdb_id" 
+                :game="game"
+                class="scroll-item"
+              />
+            </div>
+
+            <button class="nav-btn next" @click="scroll(popularScroll, 'right')">&#10095;</button>
           </div>
         </section>
+
       </div>
     </div>
-    <Footer />
+    
+    <Footer/>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
-import { useRouter } from "vue-router";
+import { ref, onMounted } from 'vue';
 import api from '@/api/axios';
+import Nav from '@/components/common/Nav.vue';
 import Footer from '@/components/common/Footer.vue';
-import Nav from "@/components/common/Nav.vue";
-import GameCard from '@/components/common/GameCard.vue';
-import ReviewCard from '@/components/reviews/reviewCard.vue';
-
-const router = useRouter();
+import GameCard from '@/components/common/GameCard.vue'; 
 
 const loading = ref(true);
-const trendingGames = ref([]);
-const popularGames = ref([]);
+const userName = ref('Player');
 const newGames = ref([]);
-const popularReviews = ref([]);
-const userName = ref("Account"); // Estado reactivo para el nombre del usuario
+const popularGames = ref([]);
 
-let reviewUpdateInterval;
-let targetGameId = null;
+const newGamesScroll = ref(null);
+const popularScroll = ref(null);
 
-// --- FUNCIÓN DE CARGA DE DATOS PRINCIPAL MODIFICADA ---
-const fetchUserData = async () => {
-    try {
-        // 1. Cargar información del usuario (usando la misma lógica de tu ejemplo)
-        const userResponse = await api.get("/users/me");
-        // ASUMO que el endpoint /users/me devuelve { username: "nombre" }
-        if (userResponse.data && userResponse.data.username) {
-            userName.value = userResponse.data.username;
-        }
-    } catch (error) {
-        console.error("Error al obtener información del usuario logueado:", error);
-        // Si hay un error (ej: 401 Unauthorized), lo mantenemos como "Account"
-    }
+const scroll = (element, direction) => {
+  if (!element) return;
+  
+  const scrollAmount = 300; 
+  
+  element.scrollBy({
+    left: direction === 'left' ? -scrollAmount : scrollAmount,
+    behavior: 'smooth'
+  });
 };
 
-const scrollRow = (id, direction) => {
-  const container = document.getElementById(id);
-  if (container) {
-    const itemWidth = (180 + 16);
-    const scrollAmount = itemWidth * 3;
-    container.scrollBy({ left: scrollAmount * direction, behavior: 'smooth' });
-  }
-};
 
-const goToDetail = (id) => router.push(`/game/${id}`);
-
-const fetchReviews = async () => {
-    // ... (Lógica de fetchReviews)
-    if (!targetGameId) return;
-
-    try {
-        const resReviews = await api.get(`/reviews/game/${targetGameId}`);
-
-        if (resReviews.data && Array.isArray(resReviews.data)) {
-            const latestReviews = resReviews.data.slice(0, 4);
-
-            const formattedReviews = latestReviews.map(r => ({
-                id: r.id_review,
-                user_name: r.username,
-                game_title: popularGames.value[0]?.title || `Game ID: ${r.id_game}`,
-                game_cover_url: popularGames.value[0]?.cover_url || '/assets/placeholder.jpg',
-                review_text: r.content,
-                rating: r.rating || 4,
-            }));
-
-            popularReviews.value = formattedReviews;
-
-        } else {
-            console.warn("[REVIEWS] API devolvió lista vacía o inválida.");
-            popularReviews.value = [];
-        }
-    } catch (error) {
-        console.error("Error al obtener reseñas del juego más popular:", error);
-        popularReviews.value = [];
-    }
-};
-
-const fetchGames = async () => {
+const fetchData = async () => {
+  loading.value = true;
   try {
-    const res = await api.get('/games/trending?limit=90');
-    const allGames = res.data;
+    try {
+        const userRes = await api.get('/users/me');
+        if (userRes.data?.username) userName.value = userRes.data.username;
+    } catch (error) { 
+        console.error("No se pudo obtener usuario:", error);
+    }
 
-    newGames.value = allGames.slice(0, 10);
-    trendingGames.value = allGames.slice(10, 20);
-    popularGames.value = allGames.slice(20, 50);
+    const results = await Promise.allSettled([
+        api.get('/games/new?limit=12'),           
+        api.get('/games/trending?limit=12')
+    ]);
 
-    if (popularGames.value.length > 0) {
-        targetGameId = popularGames.value[0].id_game;
+    if (results[0].status === 'fulfilled') {
+        newGames.value = results[0].value.data;
+    } else {
+        console.error("No se pudo obtener nuevos juegos:", results[0].reason);
+    }
+
+    if (results[1].status === 'fulfilled') {
+        popularGames.value = results[1].value.data;
+    } else {
+        console.error("No se pudo obtener juegos populares:", results[1].reason);
     }
 
   } catch (error) {
-    console.error("Error fetching homefeed data:", error);
+    console.error("Error general cargando feed:", error);
   } finally {
     loading.value = false;
-
-    if (targetGameId) {
-        fetchReviews();
-        reviewUpdateInterval = setInterval(fetchReviews, 60000);
-    }
   }
 };
 
-
-onMounted(async () => {
-  // 1. Obtener el nombre del usuario logueado llamando a /users/me
-  await fetchUserData();
-
-  // 2. Iniciar la carga del feed
-  fetchGames();
-});
-
-onUnmounted(() => {
-  if (reviewUpdateInterval) {
-    clearInterval(reviewUpdateInterval);
-    console.log("Polling de reseñas detenido.");
-  }
+onMounted(() => {
+  fetchData();
 });
 </script>
 
 <style scoped>
-/* ----------------------------------- */
-/* ESTILOS DEL HOMEFEED */
-/* ----------------------------------- */
-
 .page-wrapper {
-  width: 100%;
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  display: flex; flex-direction: column;
+  background-color: #E3E4E8;
 }
 
 .home-container {
+  flex: 1;
+  max-width: 1200px;
   width: 100%;
-  max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
-  flex: 1;
   position: relative;
-  overflow-x: hidden;
-  color: #000;
-  text-align: center;
 }
 
 .bg-texture {
   position: fixed; top: 0; left: 0; width: 100%; height: 100%;
   background-image: url('/assets/bg-texture.jpg');
-  background-size: 400px; opacity: 0.1; z-index: -1;
+  background-size: 400px; opacity: 0.1; z-index: 0; pointer-events: none;
 }
 
-/* TITLES */
-.home-title {
-  font-family: 'Courier Prime', monospace;
-  font-size: 2rem;
-  margin-bottom: 0.5rem;
-  color: #000000;
+.header-content {
+  position: relative; z-index: 1; margin-bottom: 3rem; text-align: center;
 }
 
-.subtitle {
-  margin-bottom: 3rem;
-  font-size: 0.95rem;
-  color: #505050;
-}
-
-.link {
-  color: var(--brand-cyan, #00AEEF);
-  text-decoration: none;
-}
-
-.section-title {
-  font-family: 'Courier Prime', monospace;
-  font-size: 1.3rem;
-  margin-bottom: 1rem;
-  text-align: left;
-  padding: 0 0.5rem;
-  color: #504f4f;
-  text-transform: uppercase;
-}
+h1 { font-family: 'Courier Prime', monospace; font-size: 2.5rem; color: #2D2D2D; margin-bottom: 0.5rem; }
+.username { color: #00AEEF; } 
+.subtitle { color: #666; font-size: 1.1rem; }
 
 .game-section {
-  margin-bottom: 3rem;
-  padding: 0 30px;
+  margin-bottom: 4rem; position: relative; z-index: 1;
 }
 
-/* TÍTULOS DE LA FILA SUPERIOR */
-.top-row-titles {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding: 0 0.5rem;
-    margin-bottom: 1rem;
+.section-header {
+  display: flex; align-items: center; gap: 15px; margin-bottom: 1.5rem;
 }
 
-.top-row-titles .section-title {
-    margin-bottom: 0;
+h3 {
+  font-family: 'Inter', sans-serif; font-weight: 800; font-size: 1.2rem;
+  color: #444; text-transform: uppercase; white-space: nowrap;
 }
 
-/* Título 'YOUR ACTIVITY' contenedor */
-.activity-title {
-    text-align: right;
-    margin-left: auto;
-    padding: 0;
+.line {
+  flex: 1; height: 2px; background-color: #d1d5db; 
 }
 
-/* Estilo para el router-link dentro del H3 */
-.activity-link {
-    color: inherit;
-    text-decoration: none;
-    transition: color 0.2s;
+.view-all {
+  font-size: 0.9rem; color: #00AEEF; text-decoration: none; font-weight: bold;
 }
 
-.activity-link:hover {
-    color: var(--brand-cyan, #00AEEF);
-}
-
-
-/* --- CARRUSEL GENERAL --- */
-
-.carousel-wrapper {
+.horizontal-scroll {
   display: flex;
-  align-items: center;
-  position: relative;
-  width: 100%;
-  transition: margin 0.3s ease, padding 0.3s ease;
-}
-
-/* El track permite el desplazamiento horizontal */
-.carousel-track {
-  display: flex;
-  gap: 16px;
+  gap: 20px;
   overflow-x: auto;
-  padding-bottom: 15px;
-  scroll-snap-type: x mandatory;
+  padding-bottom: 20px; 
   scroll-behavior: smooth;
-  scrollbar-width: none;
-  flex: 1;
-  min-width: 0;
-  width: 100%;
+  scroll-snap-type: x mandatory; 
+  
+  scrollbar-width: thin;
+  scrollbar-color: #ccc transparent;
 }
-.carousel-track::-webkit-scrollbar { display: none; }
 
-/* Item (Tamaño de las portadas) */
-.carousel-item {
-  min-width: 180px;
-  width: 180px;
-  scroll-snap-align: start;
+.horizontal-scroll::-webkit-scrollbar { height: 6px; }
+.horizontal-scroll::-webkit-scrollbar-thumb { background-color: #ccc; border-radius: 4px; }
+.horizontal-scroll::-webkit-scrollbar-track { background-color: transparent; }
+
+.scroll-item {
+  min-width: 160px; 
+  width: 160px;
   flex-shrink: 0;
-  transition: all 0.3s ease;
+  scroll-snap-align: start; 
+}
+.carousel-wrapper {
+  position: relative;
 }
 
 .nav-btn {
-  background: white;
-  border: 1px solid #ccc;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid #ddd;
+  border-radius: 50%;
   width: 40px;
   height: 40px;
-  border-radius: 50%;
   cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0,0,0,0);
   display: flex; align-items: center; justify-content: center;
-  font-size: 1.5rem;
-  line-height: 1;
-  color: #555;
-  transition: all 0.2s;
-  flex-shrink: 0;
-  z-index: 2;
-  padding-bottom: 4px;
+  transition: all 0.2s ease;
+  color: #333;
 }
 
 .nav-btn:hover {
-  background: var(--brand-cyan, #00AEEF);
-  color: white;
-  border-color: transparent;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  background: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 }
 
-.nav-btn.left { margin-right: 10px; }
-.nav-btn.right { margin-left: 10px; }
+.nav-btn.prev { left: -50px; } 
+.nav-btn.next { right: -50px; }
 
 
-/* GRID DE RESEÑAS */
-.reviews-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.5rem;
+.fade-left, .fade-right {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 30px;
+  height: 95%; 
+  z-index: 5;
+  pointer-events: none; 
 }
 
-/* RESPONSIVIDAD */
-@media (max-width: 768px) {
-  .top-row-titles {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+.fade-left {
+  left: 0;
+  background: linear-gradient(to right, #d2d4d9 0%, transparent 100%);
+}
 
-  .activity-title {
-    text-align: left;
-    margin-left: 0;
-  }
-
-  .game-section {
-    padding: 0 1.5rem;
-  }
-
-  .carousel-wrapper {
-    margin: 0 -1.5rem;
-    padding: 0 1.5rem;
-    width: auto;
-  }
-
-  .reviews-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .nav-btn {
-    display: none;
-  }
+.fade-right {
+  right: 0;
+  background: linear-gradient(to left, #d2d4d9 0%, transparent 100%);
 }
 
 
-/* ANIMATIONS */
-.loading-state { text-align: center; margin-top: 5rem; }
+.loading-state { text-align: center; margin-top: 5rem; color: #666; font-family: monospace; position: relative; z-index: 1;}
+.spinner { margin-bottom: 10px; font-size: 2rem; }
+
 .fade-in { animation: fadeIn 0.8s ease; }
+.fade-up { animation: fadeUp 0.8s ease; }
+
+
+
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+
+@media (max-width: 768px) {
+  h1 { font-size: 1.8rem; }
+  .nav-btn { display: none; }
+  .fade-left, .fade-right { width: 30px; }
+  
+  .nav-btn.prev { left: 0; }
+  .nav-btn.next { right: 0; }
+  .horizontal-scroll { gap: 15px; }
+  .scroll-item { min-width: 140px; width: 140px; }
+}
 </style>

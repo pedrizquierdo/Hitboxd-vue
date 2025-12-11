@@ -109,10 +109,13 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import Logo from '../components/common/Logo.vue';
 import api from '@/api/axios';
 import AuthModal from '../components/auth/AuthModal.vue';
 import GameCard from '../components/common/GameCard.vue';
+
+const router = useRouter();
 
 const showAuth = ref(false);
 const authView = ref('login');
@@ -136,7 +139,14 @@ const fetchTrendingGames = async () => {
 };
 
 onMounted(() => {
-  fetchTrendingGames();
+  const storageKey = import.meta.env.VITE_KEY_STORAGE || 'isAuthenticated';
+  const isLoggedIn = localStorage.getItem(storageKey) || sessionStorage.getItem(storageKey);
+
+  if (isLoggedIn) {
+    router.push('/home');
+  } else {
+    fetchTrendingGames();
+  }
 });
 </script>
 
