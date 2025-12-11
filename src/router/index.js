@@ -4,6 +4,7 @@ import GameDetail from '@/views/GameDetail.vue'
 import HomeFeed from '@/views/HomeFeed.vue'
 import TinderPage from '@/views/TinderPage.vue'
 import Catalogo from '@/views/Catalogo.vue'
+import UserProfile from '@/views/UserProfile.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -33,7 +34,17 @@ const router = createRouter({
       path: '/catalogo',
       name: 'catalogo',
       component: Catalogo,
-    }
+    },
+    {
+      path: '/profile',
+      name: 'UserProfile',
+      component: UserProfile,
+
+}
+
+  
+
+
 
   ],
 })
