@@ -5,11 +5,10 @@
       <div class="bg-texture"></div>
 
       <h1 class="home-title fade-in">
-        Welcome Account. Here’s what we’ve been gaming...
+        Welcome {{ userName }}. Here’s what we’ve been gaming...
       </h1>
       <p class="subtitle fade-in-delay">
-        This homepage will become customized as you
-        <a href="/members" class="link">follow active members</a> on Hitboxd.
+        This homepage will become customized as you review on Hitboxd.
       </p>
 
       <div v-if="loading" class="loading-state">
@@ -19,32 +18,40 @@
 
       <div v-else class="library-content fade-in">
 
-        <div class="game-row-split">
+        <section class="game-section">
+            <div class="top-row-titles">
+                <h3 class="section-title">NEW ON HITBOXD</h3>
 
-          <section class="game-section half-width">
-            <h3 class="section-title">NEW ON HITBOXD</h3>
-            <div class="carousel-track mini-track">
-              <div class="carousel-item mini-item"
-                   v-for="game in newGames.slice(0, 5)"
-                   :key="game.id_game"
-                   @click="goToDetail(game.id_game)">
-                <GameCard :game="game" />
-              </div>
+                <h3 class="section-title activity-title">
+                    <router-link to="/profile" class="activity-link">
+                        YOUR ACTIVITY
+                    </router-link>
+                </h3>
             </div>
-          </section>
 
-          <section class="game-section half-width">
-            <h3 class="section-title">YOUR ACTIVITY</h3>
-            <div class="carousel-track mini-track">
-              <div class="carousel-item mini-item"
-                   v-for="game in trendingGames.slice(0, 5)"
-                   :key="'act-' + game.id_game"
-                   @click="goToDetail(game.id_game)">
-                <GameCard :game="game" />
-              </div>
+            <div class="carousel-wrapper top-carousel-wrapper">
+                <button class="nav-btn left" @click="scrollRow('top-games-track', -1)">&#8249;</button>
+
+                <div class="carousel-track" id="top-games-track">
+
+                    <div class="carousel-item top-item"
+                        v-for="game in newGames.slice(0, 5)"
+                        :key="'new-' + game.id_game"
+                        @click="goToDetail(game.id_game)">
+                        <GameCard :game="game" />
+                    </div>
+
+                    <div class="carousel-item top-item activity-game-item"
+                        v-for="game in trendingGames.slice(0, 5)"
+                        :key="'act-' + game.id_game"
+                        @click="goToDetail(game.id_game)">
+                        <GameCard :game="game" />
+                    </div>
+                </div>
+
+                <button class="nav-btn right" @click="scrollRow('top-games-track', 1)">&#8250;</button>
             </div>
-          </section>
-        </div>
+        </section>
 
         <section class="game-section">
           <h3 class="section-title">POPULAR ON HITBOXD</h3>
@@ -95,58 +102,54 @@ const trendingGames = ref([]);
 const popularGames = ref([]);
 const newGames = ref([]);
 const popularReviews = ref([]);
+const userName = ref("Account"); // Estado reactivo para el nombre del usuario
 
 let reviewUpdateInterval;
-let targetGameId = null; // ID del juego para el cual buscaremos las reseñas
+let targetGameId = null;
+
+// --- FUNCIÓN DE CARGA DE DATOS PRINCIPAL MODIFICADA ---
+const fetchUserData = async () => {
+    try {
+        // 1. Cargar información del usuario (usando la misma lógica de tu ejemplo)
+        const userResponse = await api.get("/users/me");
+        // ASUMO que el endpoint /users/me devuelve { username: "nombre" }
+        if (userResponse.data && userResponse.data.username) {
+            userName.value = userResponse.data.username;
+        }
+    } catch (error) {
+        console.error("Error al obtener información del usuario logueado:", error);
+        // Si hay un error (ej: 401 Unauthorized), lo mantenemos como "Account"
+    }
+};
 
 const scrollRow = (id, direction) => {
   const container = document.getElementById(id);
   if (container) {
-    const scrollAmount = 500;
+    const itemWidth = (180 + 16);
+    const scrollAmount = itemWidth * 3;
     container.scrollBy({ left: scrollAmount * direction, behavior: 'smooth' });
   }
 };
 
 const goToDetail = (id) => router.push(`/game/${id}`);
 
-/**
- * Función para obtener las reseñas del JUEGO MÁS POPULAR.
- * Usamos la ruta existente: /reviews/game/:gameId
- */
 const fetchReviews = async () => {
-    // Si aún no tenemos el ID del juego (la primera vez), salimos.
+    // ... (Lógica de fetchReviews)
     if (!targetGameId) return;
 
     try {
-        // ✨ USO DE RUTA EXISTENTE: /reviews/game/:gameId ✨
-        // Esto devolverá las últimas reseñas para el juego MÁS POPULAR, que se actualizan al crear una nueva.
         const resReviews = await api.get(`/reviews/game/${targetGameId}`);
 
         if (resReviews.data && Array.isArray(resReviews.data)) {
-            // Como solo queremos mostrar 4, hacemos el slicing en el Frontend:
             const latestReviews = resReviews.data.slice(0, 4);
 
-            // Formateamos los datos para que ReviewCard los entienda (títulos y URLs)
-            // NOTA: La ruta /game/:gameId NO devuelve el título ni cover_url (ver reviews.model.js)
-            // Esto es un problema de Backen. Usaremos placeholders.
-
-            // --- PENDIENTE DE CORRECCIÓN DE BACKEND (Formato de Datos) ---
-            // Temporalmente, asumimos que cada reseña tendrá al menos game_title y game_cover_url
-            // En tu modelo actual, getReviewsByGame() SOLO devuelve r.* (reseña) y u.* (usuario).
-            // Esto NO incluye el título y la portada.
-            // Necesitarías modificar el modelo de Backend para incluir g.title y g.cover_url
-            // O hacer una llamada adicional aquí.
-
-            // Por ahora, usamos una estructura básica (los datos de usuario SÍ están, pero no la info del juego)
             const formattedReviews = latestReviews.map(r => ({
                 id: r.id_review,
                 user_name: r.username,
-                // Estos dos son placeholders porque tu modelo /game/:gameId no los devuelve
                 game_title: popularGames.value[0]?.title || `Game ID: ${r.id_game}`,
                 game_cover_url: popularGames.value[0]?.cover_url || '/assets/placeholder.jpg',
                 review_text: r.content,
-                // (Asumo que r.rating existe en la tabla reviews, pero no lo veo en el SQL)
-                rating: r.rating || 4, // Usar rating real si existe
+                rating: r.rating || 4,
             }));
 
             popularReviews.value = formattedReviews;
@@ -161,10 +164,6 @@ const fetchReviews = async () => {
     }
 };
 
-/**
- * Función para obtener los datos de los juegos (tu lógica de slicing).
- * Después de cargar los juegos, define el targetGameId.
- */
 const fetchGames = async () => {
   try {
     const res = await api.get('/games/trending?limit=90');
@@ -174,7 +173,6 @@ const fetchGames = async () => {
     trendingGames.value = allGames.slice(10, 20);
     popularGames.value = allGames.slice(20, 50);
 
-    // DEFINIMOS EL ID DEL JUEGO MÁS POPULAR PARA USARLO EN FETCHREVIEWS
     if (popularGames.value.length > 0) {
         targetGameId = popularGames.value[0].id_game;
     }
@@ -184,18 +182,19 @@ const fetchGames = async () => {
   } finally {
     loading.value = false;
 
-    // UNA VEZ QUE TENEMOS EL ID DEL JUEGO, INICIAMOS LA CARGA DE RESEÑAS
     if (targetGameId) {
         fetchReviews();
-        // Configura el Polling para actualizar las reseñas de ese juego
         reviewUpdateInterval = setInterval(fetchReviews, 60000);
     }
   }
 };
 
 
-onMounted(() => {
-  // Solo llamamos a fetchGames. fetchGames se encarga de llamar a fetchReviews y configurar el Polling.
+onMounted(async () => {
+  // 1. Obtener el nombre del usuario logueado llamando a /users/me
+  await fetchUserData();
+
+  // 2. Iniciar la carga del feed
   fetchGames();
 });
 
@@ -209,7 +208,7 @@ onUnmounted(() => {
 
 <style scoped>
 /* ----------------------------------- */
-/* ESTILOS DEL HOMEFEED (Basados en tu código) */
+/* ESTILOS DEL HOMEFEED */
 /* ----------------------------------- */
 
 .page-wrapper {
@@ -266,47 +265,45 @@ onUnmounted(() => {
   text-transform: uppercase;
 }
 
-/* SECCIONES DE CONTENIDO */
 .game-section {
   margin-bottom: 3rem;
   padding: 0 30px;
 }
 
-/* LAYOUT DE DOBLE COLUMNA (NEW / ACTIVITY) */
-.game-row-split {
-  display: flex;
-  justify-content: space-between;
-  gap: 20px;
-  margin-bottom: 3rem;
-  padding: 0 30px;
+/* TÍTULOS DE LA FILA SUPERIOR */
+.top-row-titles {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 0 0.5rem;
+    margin-bottom: 1rem;
 }
 
-.half-width {
-  flex: 1;
-  min-width: 0;
-  padding: 0;
+.top-row-titles .section-title {
+    margin-bottom: 0;
 }
 
-/* Carrusel pequeño para NEW y ACTIVITY */
-.mini-track {
-  display: flex;
-  gap: 10px;
-  overflow-x: auto;
-  padding-bottom: 15px;
-  scroll-behavior: smooth;
-  scrollbar-width: none;
-}
-.mini-track::-webkit-scrollbar { display: none; }
-
-.mini-item {
-  min-width: 110px;
-  width: 110px;
-  height: auto;
-  flex-shrink: 0;
+/* Título 'YOUR ACTIVITY' contenedor */
+.activity-title {
+    text-align: right;
+    margin-left: auto;
+    padding: 0;
 }
 
+/* Estilo para el router-link dentro del H3 */
+.activity-link {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.2s;
+}
 
-/* CARRUSEL DE JUEGOS POPULARES (Similar a tu código de catálogo) */
+.activity-link:hover {
+    color: var(--brand-cyan, #00AEEF);
+}
+
+
+/* --- CARRUSEL GENERAL --- */
+
 .carousel-wrapper {
   display: flex;
   align-items: center;
@@ -315,6 +312,7 @@ onUnmounted(() => {
   transition: margin 0.3s ease, padding 0.3s ease;
 }
 
+/* El track permite el desplazamiento horizontal */
 .carousel-track {
   display: flex;
   gap: 16px;
@@ -329,6 +327,7 @@ onUnmounted(() => {
 }
 .carousel-track::-webkit-scrollbar { display: none; }
 
+/* Item (Tamaño de las portadas) */
 .carousel-item {
   min-width: 180px;
   width: 180px;
@@ -365,7 +364,7 @@ onUnmounted(() => {
 .nav-btn.right { margin-left: 10px; }
 
 
-/* GRID DE RESEÑAS (2x2) */
+/* GRID DE RESEÑAS */
 .reviews-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -373,11 +372,15 @@ onUnmounted(() => {
 }
 
 /* RESPONSIVIDAD */
-
 @media (max-width: 768px) {
-  .game-row-split {
+  .top-row-titles {
     flex-direction: column;
-    padding: 0 1.5rem;
+    align-items: flex-start;
+  }
+
+  .activity-title {
+    text-align: left;
+    margin-left: 0;
   }
 
   .game-section {

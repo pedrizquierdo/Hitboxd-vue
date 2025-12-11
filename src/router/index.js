@@ -39,10 +39,16 @@ const router = createRouter({
       path: '/profile',
       name: 'UserProfile',
       component: UserProfile,
+    },
+    {
+      path: '/games',
+      name: 'catalogo',
+      component: Catalogo,
+    },
 
-}
 
-  
+
+
 
 
 

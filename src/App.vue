@@ -12,9 +12,9 @@
 :root {
   --bg-color: #E3E4E8;
   --text-main: #2D2D2D;
-  --card-bg: #757575; 
+  --card-bg: #757575;
   --brand-cyan: #00AEEF;
-  --brand-red:#FF4444; 
+  --brand-red:#FF4444;
   --brand-green:  #00CC66;
   --brand-yellow: #FFD700;
   --white: #FFFFFF;
