@@ -257,13 +257,19 @@ h3 {
 .my-swiper {
   padding: 10px 0 20px 0; 
   z-index: 0;
-  cursor: default 
+  cursor: grab; 
+}
+
+.my-swiper:active {
+  cursor: grabbing;
 }
 
 .swiper-item {
+  width: 160px; 
   height: auto;
   display: flex;
   justify-content: center;
+  flex-shrink: 0; 
 }
 
 .swiper-item > * {
