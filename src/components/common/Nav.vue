@@ -169,7 +169,7 @@ const toggleSearch = () => {
 .navbar {
   width: 100%;
   background-color: #e5e7eb;
-  border-bottom: 1px solid #d1d5db;
+  border-bottom: none;
   padding: 0.6rem 0;
   display: flex;
   flex-direction: column;
@@ -177,8 +177,20 @@ const toggleSearch = () => {
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  box-shadow: none;
 }
+
+.navbar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url('/assets/bg-texture.jpg');
+  background-size: 400px;
+  opacity: 0.1;
+  z-index: -1;
+  pointer-events: none;
+}
+
 .navbar-inner {
   width: 100%;
   max-width: 1300px;
