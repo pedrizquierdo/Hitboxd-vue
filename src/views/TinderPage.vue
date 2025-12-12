@@ -1,13 +1,6 @@
 <template>
   <div class="page-wrapper">  
-    <!-- <nav class="navbar slide-down">
-      <Logo />
-      <div class="nav-links">
-        <router-link to="/profile" class="nav-link">PROFILE</router-link>
-        <router-link to="/games" class="nav-link">GAMES</router-link>
-        <router-link to="/lists" class="nav-link">LISTS</router-link>
-      </div>
-    </nav> -->
+    <div><Nav /> </div>
     <div class="body">
       <div class="bg-texture"></div>
       <div v-if="loading" class="loading-state fade-in">
@@ -19,6 +12,8 @@
           <span>SKIP</span>
           <span class="icon">✕</span>
         </button>
+          <button class="top-corner-btn" @click="handleBack">
+          <span class="icon-btn">🔙</span> </button>
         <div class="game-poster-card" @click="goToDetail"> 
           <div class="poster-wrapper">
             <img 
@@ -57,6 +52,7 @@ import { useRouter } from 'vue-router';
 import api from '@/api/axios';
 import Logo from '@/components/common/Logo.vue';
 import Footer from '@/components/common/PageFooter.vue';
+import Nav from '@/components/common/Nav.vue';
 
 const router = useRouter();
 const loading = ref(true);
@@ -90,7 +86,9 @@ const handleAction = (type) => {
   // Aquí es donde ira el api.post() de momento, solo carga todos los juegos.
   fetchRandomGame();
 };
-
+const handleBack = () => {
+  router.push('/');
+};
 const goToDetail = () => {
   if (currentGame.value) {
     router.push(`/game/${currentGame.value.id_game}`);
@@ -122,37 +120,6 @@ onMounted(() => {
   justify-content: center;
   align-items: center;
 }
-/* .navbar {
-  width: 100%;
-  max-width: 1200px;
-  padding: 24px 32px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: 0 auto;
-  
-}
-.logo {
-  font-weight: bolder;
-  font-size: 1.2rem;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  .logo-img { width: 30px; height: 35px; }
-.nav-links {
-  display: flex;
-  gap: 20px;
-}
-.nav-link { 
-  text-decoration: none;
-  font-weight: 600;
-  color: #444;
-  font-size: 0.9rem;
-  transition: color 0.2s;
-}
-.nav-link:hover, .nav-link.active {
-  color: var(--brand-cyan,#00AEEF);
-} */
 .bg-texture {
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
@@ -280,6 +247,37 @@ onMounted(() => {
 }
 .slide-down {
   animation: slideDown 0.5s ease;
+}
+
+.top-corner-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  z-index: 20;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+}
+
+.top-corner-btn:hover {
+  background-color: white;
+  color: black;
+  transform: scale(1.1);
+  border-color: white;
+}
+
+.icon-btn {
+  font-size: 19px;
+  line-height: 1;
 }
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
