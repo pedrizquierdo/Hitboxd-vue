@@ -10,7 +10,7 @@
           <ul v-if="profileMenu" class="dropdown-menu">
             <li><router-link to="/profile" @click="toggleProfileMenu">My Profile</router-link></li>
             <li><router-link to="/settings" @click="toggleProfileMenu">Settings</router-link></li>
-            
+
             <li class="separator"></li>
             <li>
               <LogoutButton :minimal="true" @click="toggleProfileMenu" />
@@ -63,7 +63,7 @@
                     v-for="game in filteredGames"
                     :key="game.id_game"
                     class="game-result-item"
-                    @click="goToDetail(game.id_game)"
+                    @click="goToDetail(game.slug)"
                 >
                     <img :src="game.cover_url" :alt="game.title" class="game-cover-mini"/>
                     <span class="game-title-result">{{ game.title }}</span>

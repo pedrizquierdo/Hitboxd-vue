@@ -1,12 +1,12 @@
 <template>
-  <div 
+  <div
     class="game-card"
     @click="goToDetail"
   >
-    <img 
-      :src="game.cover_url || '/assets/placeholder-game.png'" 
-      :alt="game.title" 
-      loading="lazy" 
+    <img
+      :src="game.cover_url || '/assets/placeholder-game.png'"
+      :alt="game.slug"
+      loading="lazy"
     />
 
     <div class="game-overlay">
@@ -28,7 +28,7 @@ const props = defineProps({
 })
 
 const goToDetail = () => {
-  router.push(`/game/${props.game.id_game}`)
+  router.push(`/game/${props.game.slug}`)
 }
 </script>
 
@@ -43,7 +43,7 @@ const goToDetail = () => {
   box-shadow: 0 4px 6px rgba(0,0,0,0.3);
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s;
-  border: 2px solid transparent; 
+  border: 2px solid transparent;
 }
 
 .game-card img {
@@ -56,7 +56,7 @@ const goToDetail = () => {
 .game-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 12px 20px rgba(0,0,0,0.5);
-  border-color: var(--hover-color, #00AEEF); 
+  border-color: var(--hover-color, #00AEEF);
 }
 
 .game-card:hover .game-overlay {

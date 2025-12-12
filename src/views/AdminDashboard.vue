@@ -36,7 +36,7 @@
                         <span>{{ game.id_game }}</span>
                         <span>{{ game.title }}</span>
                         <span>{{ game.developer || 'N/A' }}</span>
-                        <button @click="viewGame(game.id_game)" class="btn-action view">View</button>
+                        <button @click="viewGame(game.slug)" class="btn-action view">View</button>
                     </div>
                 </div>
             </div>
@@ -59,7 +59,7 @@
                         <span class="review-username">{{ review.review_username }}</span>
                         <span :title="review.all_reasons">{{ review.report_count }}</span>
                         <div class="action-buttons">
-                            <button @click="viewReview(review)" class="btn-action view">Ver</button>
+                            <button @click="viewReview(review)" class="btn-action view">View</button>
                             <button @click="moderationAction('Eliminar', review.id_review)" class="btn-action delete">Delete</button>
                             <button @click="moderationAction('Aprobar', review.id_review)" class="btn-action approve">Aprove</button>
                         </div>

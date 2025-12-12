@@ -18,7 +18,7 @@ const router = createRouter({
       component: LandingPage,
     },
     {
-      path: '/game/:id',
+      path: '/game/:slug',
       name: 'GameDetail',
       component: GameDetail,
       props: true,

@@ -2,20 +2,20 @@
   <div class="page-wrapper">
 
     <Nav />
-    
+
     <div class="game-detail-container">
       <div class="bg-texture"></div>
 
       <div class="game-header-container">
-        
+
         <div class="background-box fade-in">
           <img :src="game.background_url" class="background-img" alt="Game Background" />
         </div>
 
         <div class="header-content-overlay slide-up">
-          
+
           <div class="game-avatar-box">
-            <div class="cover-mask-wrapper"> 
+            <div class="cover-mask-wrapper">
               <img :src="game.cover_url" class="game-avatar-img" alt="Game Cover" />
             </div>
           </div>
@@ -33,7 +33,7 @@
       <div class="content-box-main slide-up">
 
         <div class="left-section">
-          
+
           <div class="description-box card">
             <h3>GAME DESCRIPTION</h3>
             <p>{{ game.description || "No description available." }}</p>
@@ -41,13 +41,13 @@
         </div>
 
         <div class="right-section card">
-          
+
           <div class="activity-header-row">
             <h3 class="section-title">MY ACTIVITY</h3>
 
-            <button 
-              class="fav-btn" 
-              :class="{ 'is-active': isLiked }" 
+            <button
+              class="fav-btn"
+              :class="{ 'is-active': isLiked }"
               @click="toggleLike"
               title="Me gusta (like)"
             >
@@ -57,22 +57,22 @@
             </button>
           </div>
           <div class="activity-buttons">
-            <button 
-              class="btn status played" 
+            <button
+              class="btn status played"
               :class="{ 'active-status': userStatus === 'played' }"
               @click="setUserStatus('played')"
             >
               Played
             </button>
-            <button 
-              class="btn status pending" 
+            <button
+              class="btn status pending"
               :class="{ 'active-status': userStatus === 'plan_to_play' }"
               @click="setUserStatus('plan_to_play')"
             >
               Pending
             </button>
-            <button 
-              class="btn status abandoned" 
+            <button
+              class="btn status abandoned"
               :class="{ 'active-status': userStatus === 'dropped' }"
               @click="setUserStatus('dropped')"
             >
@@ -85,7 +85,7 @@
           </div>
         </div>
       </div>
-      
+
       <div class="reviews-section slide-up-delay">
         <div class="reviews-header">
           <h2>REVIEWS</h2>
@@ -95,31 +95,31 @@
         </div>
 
         <div class="reviews-list">
-          <div 
+          <div
             v-for="review in reviews"
             :key="review.id_review"
             class="review-card card fade-in"
           >
             <div class="review-meta">
-              <span class="review-author">Reviewed by <strong>{{ review.username || 'Anonymous' }}</strong></span> 
+              <span class="review-author">Reviewed by <strong>{{ review.username || 'Anonymous' }}</strong></span>
               <span class="review-date">{{ formatDate(review.created_at) }}</span>
             </div>
-            
+
             <div class="review-rating-stars">
               <StarRating :model-value="review.rating" disabled />
             </div>
-            
-            <div 
+
+            <div
               class="review-content-wrapper"
               :class="{ 'has-spoilers-hidden': review.has_spoilers && !review.showContent }"
             >
                 <p class="review-text">{{ review.content || review.text || 'No content provided.' }}</p>
 
-                <div 
-                    v-if="review.has_spoilers && !review.showContent" 
+                <div
+                    v-if="review.has_spoilers && !review.showContent"
                     class="spoiler-overlay"
                 >
-                    <button 
+                    <button
                         class="spoiler-btn"
                         @click.stop="toggleSpoiler(review)"
                         title="Click para revelar spoilers"
@@ -128,11 +128,11 @@
                     </button>
                 </div>
             </div>
-            
+
             <div class="review-actions">
-                <button 
-                class="like-btn" 
-                :class="{ 'liked': review.is_liked }" 
+                <button
+                class="like-btn"
+                :class="{ 'liked': review.is_liked }"
                 @click="toggleLike(review)"
                 title="Like this review"
               >
@@ -160,27 +160,26 @@
         </div>
       </div>
 
-      <ReviewModal 
+      <ReviewModal
         v-if="showReviewModal"
-        @close="showReviewModal = false" 
+        @close="showReviewModal = false"
         @submit="submitReview"
       />
 
-      <ReportModal 
+      <ReportModal
         v-if="showReportModal"
         @close="closeReportModal"
         @submit="submitReport"
       />
 
     </div> <Footer />
-    
+
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { watch } from 'vue'
 import api from '@/api/axios.js'
 
 import ReviewModal from '@/components/reviews/reviewModal.vue'
@@ -196,14 +195,14 @@ const showReviewModal = ref(false)
 const showReportModal = ref(false)
 const isLiked = ref(false)
 const selectedReviewId = ref(null)
-const userStatus = ref(null) 
+const userStatus = ref(null)
 
 const currentUserId = Number(localStorage.getItem("user_id"));
 
 const releaseYear = computed(() => {
   const date = game.value?.release_date;
   if (!date) return "N/A";
-  
+
   const year = new Date(date).getFullYear();
   return isNaN(year) ? "N/A" : year;
 });
@@ -216,10 +215,15 @@ const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString(undefined, options);
 }
 
+// -----------------------------------------------------------------
+// 1. WATCHER y ACCIONES DE ACTIVIDAD (usan game.value.id_game)
+// -----------------------------------------------------------------
+
 watch(userRating, async (newRating) => {
+  if (!game.value.id_game) return; // Asegurar que el ID está disponible
   try {
     await api.post('/activity', {
-      gameId: route.params.id,
+      gameId: game.value.id_game, // <-- USA ID
       rating: newRating
     })
     console.log("Calificación guardada:", newRating);
@@ -229,94 +233,28 @@ watch(userRating, async (newRating) => {
 })
 
 const setUserStatus = async (status) => {
-  
   const newStatus = userStatus.value === status ? null : status;
   userStatus.value = newStatus;
+  if (!game.value.id_game) return; // Asegurar que el ID está disponible
 
   try {
-    
     await api.post('/activity', {
-      gameId: route.params.id,
-      status: newStatus 
-      
+      gameId: game.value.id_game, // <-- USA ID
+      status: newStatus
     })
     console.log("Estado guardado:", newStatus);
   } catch (err) {
     console.error("Error guardando el estado:", err);
-    
   }
-}
-
-const fetchGameDetail = async () => {
-  try {
-    const res = await api.get(`games/${route.params.id}`)
-    game.value = res.data
-  } catch (err) {
-    console.error("Error loading game:", err)
-  }
-}
-
-const fetchReviews = async () => {
-  try {
-    const res = await api.get(`reviews/game/${route.params.id}`)
-    reviews.value = res.data.map(review => ({
-      ...review,
-      showContent: !review.has_spoilers, 
-      is_reported: review.is_reported || false
-    }))
-  } catch (err) {
-    console.error("Error loading reviews:", err)
-  }
-}
-
-const fetchUserActivity = async () => {
-  try {
-    
-    const res = await api.get(`activity/check/${route.params.id}`)
-    
-    if (res.data) {
-      
-      userStatus.value = res.data.status
-      userRating.value = res.data.rating
-      
-      isLiked.value = Boolean(res.data.is_liked)
-    }
-  } catch (err) {
-    console.error("Error cargando actividad del usuario:", err)
-  }
-}
-
-const submitReview = async (data) => {
-  try {
-    const payload = {
-        id_game: route.params.id, 
-        content: data.content,      
-        rating: data.rating,  
-        has_spoilers: data.has_spoilers, 
-    };
-    
-    await api.post('/reviews', payload)
-
-    showReviewModal.value = false
-    await fetchReviews() 
-
-  } catch (err) {
-    console.error("Error submitting review:", err)
-  }
-}
-
-const toggleSpoiler = (review) => {
-    review.showContent = !review.showContent; 
 }
 
 const toggleLike = async () => {
-  
   isLiked.value = !isLiked.value
+  if (!game.value.id_game) return; // Asegurar que el ID está disponible
 
   try {
-    
     await api.post('/activity', {
-      gameId: route.params.id,
+      gameId: game.value.id_game, // <-- USA ID
       isLiked: isLiked.value
     })
   } catch (err) {
@@ -325,8 +263,80 @@ const toggleLike = async () => {
   }
 }
 
+// -----------------------------------------------------------------
+// 2. FETCHING DE DATOS
+// -----------------------------------------------------------------
+
+const fetchGameDetail = async () => {
+  try {
+    // CAMBIO CRUCIAL: Llamamos al nuevo endpoint con /slug/
+    const res = await api.get(`games/slug/${route.params.slug}`)
+    game.value = res.data
+  } catch (err) {
+    console.error("Error loading game:", err)
+  }
+}
+
+// CORREGIDO: Recibe el ID del juego
+const fetchReviews = async (gameId) => {
+  try {
+    // Usa el ID del juego
+    const res = await api.get(`reviews/game/${gameId}`)
+    reviews.value = res.data.map(review => ({
+      ...review,
+      showContent: !review.has_spoilers,
+      is_reported: review.is_reported || false
+    }))
+  } catch (err) {
+    console.error("Error loading reviews:", err)
+  }
+}
+
+// CORREGIDO: Recibe el ID del juego
+const fetchUserActivity = async (gameId) => {
+  try {
+    // Usa el ID del juego
+    const res = await api.get(`activity/check/${gameId}`)
+
+    if (res.data) {
+      userStatus.value = res.data.status
+      userRating.value = res.data.rating
+      isLiked.value = Boolean(res.data.is_liked)
+    }
+  } catch (err) {
+    console.error("Error cargando actividad del usuario:", err)
+  }
+}
+
+// -----------------------------------------------------------------
+// 3. MODALES Y ACCIONES DE RESEÑA
+// -----------------------------------------------------------------
+
+const submitReview = async (data) => {
+  if (!game.value.id_game) return; // Asegurar que el ID está disponible
+
+  try {
+    const payload = {
+        id_game: game.value.id_game, // <-- USA ID
+        content: data.content,
+        rating: data.rating,
+        has_spoilers: data.has_spoilers,
+    };
+
+    await api.post('/reviews', payload)
+    showReviewModal.value = false
+    await fetchReviews(game.value.id_game) // <-- Usar función corregida
+  } catch (err) {
+    console.error("Error submitting review:", err)
+  }
+}
+
+const toggleSpoiler = (review) => {
+    review.showContent = !review.showContent;
+}
+
 const toggleReport = (review) => {
-    if (review.id_user === currentUserId) return; 
+    if (review.id_user === currentUserId) return;
 
     selectedReviewId.value = review.id_review
     showReportModal.value = true
@@ -352,10 +362,24 @@ const submitReport = async (reason) => {
     }
 }
 
-onMounted(() => {
-  fetchGameDetail()
-  fetchReviews()
-  fetchUserActivity()
+// -----------------------------------------------------------------
+// 4. CICLO DE VIDA (onMounted)
+// -----------------------------------------------------------------
+
+// CORREGIDO: Ejecución secuencial para asegurar que game.value.id_game esté disponible
+onMounted(async () => {
+  // 1. OBTENER DETALLE POR SLUG (para obtener el ID)
+  await fetchGameDetail()
+
+  if (game.value.id_game) {
+    const gameId = game.value.id_game
+
+    // 2. OBTENER DATOS SECUNDARIOS POR ID
+    fetchReviews(gameId)
+    fetchUserActivity(gameId)
+  } else {
+    console.warn("No se pudo obtener el ID del juego después de la llamada por slug. La página puede tener errores.");
+  }
 })
 </script>
 
@@ -367,7 +391,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   background-color: #E3E4E8;
-  color: #2d2d2d; 
+  color: #2d2d2d;
 }
 
 .game-detail-container {
@@ -376,25 +400,25 @@ onMounted(() => {
   margin: auto;
   padding-bottom: 4rem;
   position: relative;
-  background-color: transparent; 
+  background-color: transparent;
   flex: 1;
-  padding-top: 20px; 
+  padding-top: 20px;
 }
 
 .bg-texture {
-  position: fixed; 
-  top: 0; left: 0; 
-  width: 100%; 
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
   height: 100%;
   background-image: url('/assets/bg-texture.jpg');
   background-repeat: repeat;
   background-size: 400px;
   opacity: 0.1;
-  z-index: -1; 
+  z-index: -1;
 }
 
 .card {
-  background-color: #F2F3F5; 
+  background-color: #F2F3F5;
   padding: 1.5rem;
   border-radius: 6px;
   box-shadow: 0 4px 6px rgba(0,0,0,0.35);
@@ -409,16 +433,16 @@ onMounted(() => {
 .game-header-container {
     position: relative;
     width: 100%;
-    margin: 0 -2rem 1rem -2rem; 
+    margin: 0 -2rem 1rem -2rem;
 }
 
 .background-box {
     width: 100%;
-    height: 380px; 
+    height: 380px;
     overflow: hidden;
-    border-radius: 0 0 6px 6px; 
+    border-radius: 0 0 6px 6px;
     box-shadow: 0 6px 12px rgba(0,0,0,0.35);
-    
+
     -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
     mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
 }
@@ -427,33 +451,33 @@ onMounted(() => {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    filter: brightness(0.7); 
+    filter: brightness(0.7);
 }
 
 .header-content-overlay {
     position: absolute;
-    bottom: -60px; 
-    left: 40px; 
+    bottom: -60px;
+    left: 40px;
     display: flex;
-    align-items: flex-end; 
+    align-items: flex-end;
     gap: 20px;
 }
 
 .game-avatar-box {
     width: 180px;
     height: 240px;
-    border: 5px solid #E3E4E8; 
+    border: 5px solid #E3E4E8;
     border-radius: 4px;
     overflow: hidden;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
-    position: relative; 
+    position: relative;
 }
 
 .cover-mask-wrapper {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    
+
     -webkit-mask-image: linear-gradient(to bottom, black 95%, transparent 100%);
     mask-image: linear-gradient(to bottom, black 95%, transparent 100%);
 }
@@ -461,17 +485,17 @@ onMounted(() => {
 .game-avatar-img {
     width: 100%;
     height: 100%;
-    object-fit: cover; 
+    object-fit: cover;
 }
 
 .game-info-box {
-    padding-bottom: 20px; 
+    padding-bottom: 20px;
 }
 
 .game-title-header {
     font-family: 'Courier Prime', monospace;
     font-size: 3rem;
-    color: white; 
+    color: white;
     text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
     line-height: 1;
     margin: 0;
@@ -479,15 +503,15 @@ onMounted(() => {
 
 .info-text-header {
     font-size: 1.1rem;
-    color: #2D2D2D; 
+    color: #2D2D2D;
     margin: 5px 0 0 0;
 }
 
 .content-box-main {
     display: flex;
     gap: 30px;
-    margin-top: 80px; 
-    padding: 0 2rem; 
+    margin-top: 80px;
+    padding: 0 2rem;
 }
 
 .left-section {
@@ -496,19 +520,19 @@ onMounted(() => {
 
 .right-section {
     width: 40%;
-    padding: 1.5rem; 
+    padding: 1.5rem;
     border-radius: 6px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     text-align: center;
-    gap: 1rem; 
-    min-height: 220px; 
+    gap: 1rem;
+    min-height: 220px;
 }
 
 .game-title, .info-text {
-    display: none; 
+    display: none;
 }
 
 .activity-buttons {
@@ -525,8 +549,8 @@ onMounted(() => {
     font-size: .9rem;
     cursor: pointer;
     transition: transform 0.15s ease, background 0.2s, color 0.2s;
-    
-    background: #E5E7EB; 
+
+    background: #E5E7EB;
     color: #4B5563;
 }
 
@@ -539,36 +563,36 @@ onMounted(() => {
 }
 
 .played.active-status {
-    background: var(--brand-green, #10B981); 
+    background: var(--brand-green, #10B981);
     color: white;
 }
-.played:hover:not(.active-status) { 
-    background: var(--brand-green, #10B981); 
-    color: white; 
+.played:hover:not(.active-status) {
+    background: var(--brand-green, #10B981);
+    color: white;
 }
 
 .pending.active-status {
-    background: var(--brand-yellow, #FBBF24); 
-    color: black; 
+    background: var(--brand-yellow, #FBBF24);
+    color: black;
 }
-.pending:hover:not(.active-status) { 
-    background: var(--brand-yellow, #FBBF24); 
-    color: black; 
+.pending:hover:not(.active-status) {
+    background: var(--brand-yellow, #FBBF24);
+    color: black;
 }
 
 .abandoned.active-status {
-    background: var(--brand-red, #EF4444); 
+    background: var(--brand-red, #EF4444);
     color: white;
 }
-.abandoned:hover:not(.active-status) { 
-    background: var(--brand-red, #EF4444); 
-    color: white; 
+.abandoned:hover:not(.active-status) {
+    background: var(--brand-red, #EF4444);
+    color: white;
 }
 
 .reviews-section {
     margin-top: 3rem;
     max-width: 100%;
-    padding: 0 2rem; 
+    padding: 0 2rem;
 }
 
 .reviews-list {
@@ -635,8 +659,8 @@ onMounted(() => {
 .review-text {
     margin-top: 0.5rem;
     line-height: 1.4;
-    padding: 0; 
-    margin: 0; 
+    padding: 0;
+    margin: 0;
     min-height: 50px;
 }
 
@@ -644,13 +668,13 @@ onMounted(() => {
     position: relative;
     margin-top: 1rem;
     border-radius: 4px;
-    overflow: hidden; 
+    overflow: hidden;
 }
 
 .review-content-wrapper.has-spoilers-hidden .review-text {
     filter: blur(5px);
     transition: filter 0.3s ease;
-    user-select: none; 
+    user-select: none;
 }
 
 .spoiler-overlay {
@@ -659,7 +683,7 @@ onMounted(() => {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(45, 45, 45, 0.95); 
+    background-color: rgba(45, 45, 45, 0.95);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -667,28 +691,28 @@ onMounted(() => {
 }
 
 .spoiler-btn {
-    background-color: #2d2d2d; 
+    background-color: #2d2d2d;
     color: #ffffff;
     font-size: 0.9rem;
     font-weight: bold;
     text-transform: uppercase;
     letter-spacing: 1px;
     padding: 10px 24px;
-    border: 2px solid #888; 
-    border-radius: 50px; 
+    border: 2px solid #888;
+    border-radius: 50px;
     cursor: pointer;
     transition: all 0.2s ease-in-out;
 }
 
 .spoiler-btn:hover {
-    background-color: #444; 
-    border-color: #fff; 
+    background-color: #444;
+    border-color: #fff;
     transform: scale(1.05);
 }
 
 .review-actions {
     display: flex;
-    justify-content: flex-end; 
+    justify-content: flex-end;
     align-items: center;
     margin-top: 1rem;
     padding-top: 0.5rem;
@@ -704,7 +728,7 @@ onMounted(() => {
     align-items: center;
     gap: 6px;
     font-size: 1rem;
-    color: #888; 
+    color: #888;
     transition: transform 0.2s, color 0.2s, background-color 0.2s;
     padding: 5px 8px;
     border-radius: 4px;
@@ -716,12 +740,12 @@ onMounted(() => {
 }
 
 .heart-icon {
-    fill: #888; 
+    fill: #888;
     transition: fill 0.2s;
 }
 
 .like-btn.liked {
-    color: #ff4757; 
+    color: #ff4757;
 }
 
 .like-btn.liked .heart-icon {
@@ -765,13 +789,13 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  margin-bottom: 1rem; 
+  margin-bottom: 1rem;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid #e0e0e0; 
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .section-title {
-  margin: 0; 
+  margin: 0;
 }
 
 .fav-btn {
@@ -794,12 +818,12 @@ onMounted(() => {
 .fav-icon {
   width: 28px;
   height: 28px;
-  color: #ccc; 
+  color: #ccc;
   transition: color 0.3s ease, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .fav-btn.is-active .fav-icon {
-  color: #ff4757; 
+  color: #ff4757;
   transform: scale(1.1);
 }
 
