@@ -317,11 +317,9 @@ const toggleLike = async () => {
     
     await api.post('/activity', {
       gameId: route.params.id,
-      isLiked: isLiked.value, // 
-      
+      isLiked: isLiked.value
     })
   } catch (err) {
-    
     isLiked.value = !isLiked.value
     console.error("Error dando like:", err)
   }
@@ -332,23 +330,6 @@ const toggleReport = (review) => {
 
     selectedReviewId.value = review.id_review
     showReportModal.value = true
-}
-
-const toggleFavorite = async () => {
-  
-  isFavorite.value = !isFavorite.value
-
-  try {
-    
-    await api.post('/activity', {
-      gameId: route.params.id,
-      isFavorite: isFavorite.value
-    })
-  } catch (err) {
-    
-    isFavorite.value = !isFavorite.value
-    console.error("Error actualizando favorito:", err)
-  }
 }
 
 const closeReportModal = () => {
