@@ -140,7 +140,7 @@ const goToDetail = (id) => {
 
 const fetchAllGames = async () => {
     try {
-        const res = await api.get('/games/trending?limit=1000');
+        const res = await api.get('/games/trending?limit=500');
 
         if (res.data && Array.isArray(res.data)) {
             allGames.value = res.data;

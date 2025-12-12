@@ -1,270 +1,284 @@
 <template>
-  <Nav />
+    <Nav />
   <div class="admin-dashboard-wrapper">
-    <main class="admin-content">
-      <h1 class="main-title">Administrator</h1>
+    <h1 class="main-title">Panel de Administración</h1>
 
-      <section class="stats-grid">
-        <div class="stat-card">
-          <span class="stat-number">12345</span>
-          <span class="stat-label">Users</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-number">{{ totalGamesCount }}</span>
-          <span class="stat-label">Games</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-number">2750</span>
-          <span class="stat-label">Reviews</span>
-        </div>
-        <div class="stat-card stat-card-total">
-          <svg class="stat-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-          <span class="stat-label">Total Reviews</span>
-        </div>
-      </section>
+    <section class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-number">12345</span>
+        <span class="stat-label">Usuarios (Estimado)</span>
+      </div>
+      <div class="stat-card stat-card-active">
+        <span class="stat-number">{{ totalGamesCount }}</span>
+        <span class="stat-label">Juegos en Caché (Mínimo)</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number">2750</span>
+        <span class="stat-label">Reseñas Totales (Estimado)</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number">{{ adminInfo.id_user ? adminInfo.id_user : 'N/A' }}</span>
+        <span class="stat-label">ID Admin Logueado</span>
+      </div>
+    </section>
 
-      <section class="admin-panels-grid">
+    <section class="admin-panels-grid">
 
-        <div class="panel user-management-panel">
-          <h2>User Management</h2>
-          <div class="data-table">
-            <div class="table-header">
-              <span class="header-username">Username</span>
-              <span class="header-email">Email</span>
-              <span class="header-role">Role</span>
-            </div>
-            <div v-for="user in dummyUsers" :key="user.id" class="table-row">
-              <span class="row-username">{{ user.username }}</span>
-              <span class="row-email">{{ user.email }}</span>
-              <span class="row-role">{{ user.role }}</span>
-            </div>
+      <div class="panel catalog-management-panel">
+        <h2>Catálogo de Juegos (Trending)</h2>
+        <p class="panel-note">Datos obtenidos de `/games/trending`. Limitado a 1000.</p>
+        <div class="data-table">
+          <div class="table-header">
+            <span>ID</span>
+            <span>Título</span>
+            <span>Desarrollador</span>
+            <span>Acción</span>
+          </div>
+          <div v-if="games.length === 0" class="loading-state">Cargando juegos o sin resultados...</div>
+
+          <div v-for="game in games.slice(0, 10)" :key="game.id_game" class="table-row">
+            <span>{{ game.id_game }}</span>
+            <span>{{ game.title }}</span>
+            <span>{{ game.developer || 'N/A' }}</span>
+            <button @click="viewGame(game.slug)" class="btn-action view">Ver</button>
           </div>
         </div>
+      </div>
 
-        <div class="panel add-game-panel">
-          <h2>Add Game</h2>
-          <form @submit.prevent="submitNewGame">
-            <input type="text" v-model="newGame.releaseDate" placeholder="Release Date" class="form-input" />
-            <input type="text" v-model="newGame.title" placeholder="Title" class="form-input" />
-            <input type="text" v-model="newGame.description" placeholder="Description" class="form-input" />
-            <input type="text" v-model="newGame.developer" placeholder="Developer" class="form-input" />
-            <textarea v-model="newGame.details" placeholder="Details (Optional)" class="form-textarea"></textarea>
-            <button type="submit" class="btn-publish">Publish</button>
-          </form>
-        </div>
+      <div class="panel add-game-panel">
+        <h2>Añadir/Actualizar Juego (IGDB)</h2>
+        <form @submit.prevent="submitNewGame">
+          <input type="text" v-model="newGame.title" placeholder="Título del Juego" class="form-input" required />
+          <input type="text" v-model="newGame.developer" placeholder="Desarrollador" class="form-input" />
+          <input type="text" v-model="newGame.releaseDate" placeholder="Fecha de Lanzamiento (YYYY-MM-DD)" class="form-input" />
+          <textarea v-model="newGame.description" placeholder="Descripción corta" class="form-textarea"></textarea>
+          <button type="submit" class="btn-publish">Enviar a Caché (Simulado)</button>
+        </form>
+        <p class="panel-note-alert">*Esta acción asume un endpoint `POST /api/admin/games` que usa `createOrUpdateGame`.</p>
+      </div>
 
-        <div class="panel recent-actions-panel">
-          <h2>Recent action on reviews</h2>
-          <div class="data-table">
+      <div class="panel admin-reviews-panel">
+        <h2>Mis Reseñas Publicadas</h2>
+        <p class="panel-note">Datos de `/reviews/user/{{ adminInfo.id_user }}`.</p>
+        <div class="data-table">
             <div class="table-header">
-              <span class="header-game">Game title</span>
-              <span class="header-user">User</span>
-              <span class="header-action">Action</span>
+                <span>Juego</span>
+                <span>Contenido</span>
+                <span>Acción</span>
             </div>
-            <div v-for="(action, index) in dummyActions" :key="'a'+index" class="table-row">
-              <span class="row-game">{{ action.game }}</span>
-              <span class="row-user">{{ action.user }}</span>
-              <span class="row-action">{{ action.action }}</span>
-            </div>
-          </div>
-        </div>
+            <div v-if="adminReviews.length === 0" class="loading-state">Cargando o no hay reseñas propias...</div>
 
-        <div class="panel recent-reviews-panel">
-          <h2>Recente reviews</h2>
-          <div class="data-table">
-            <div class="table-header">
-              <span class="header-game">Game title</span>
-              <span class="header-user">User</span>
-              <span class="header-review">Review</span>
+            <div v-for="review in adminReviews.slice(0, 4)" :key="review.id_review" class="table-row">
+                <span>{{ review.game_title }}</span>
+                <span class="review-content">{{ review.content.substring(0, 30) }}...</span>
+                <button @click="deleteReview(review.id_review)" class="btn-action delete">Eliminar</button>
             </div>
-            <div v-for="(review, index) in dummyReviews" :key="'r'+index" class="table-row">
-              <span class="row-game">{{ review.game }}</span>
-              <span class="row-user">{{ review.user }}</span>
-              <span class="row-review">{{ review.content }}</span>
-            </div>
-          </div>
         </div>
-      </section>
-    </main>
-    <Footer />
+      </div>
+
+    </section>
   </div>
+  <Footer />
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import api from '@/api/axios';
-// Asumiendo que 'api' está configurado
+import api from '@/api/axios'; // Asumiendo que 'api' está configurado
+import { useRouter } from 'vue-router';
 import Nav from '@/components/common/Nav.vue';
 import Footer from '@/components/common/PageFooter.vue';
 
-// --- DUMMY DATA (Mantenemos la simulación por la restricción de backend) ---
-const dummyUsers = [
-  { id: 1, username: 'Usrename', email: 'Example@gmail.com', role: 'Personal Role' },
-  { id: 2, username: 'Usrename', email: 'Example@gmail.com', role: 'Personal Role' },
-  { id: 3, username: 'Usrename', email: 'Example@gmail.com', role: 'Personal Role' },
-  { id: 4, username: 'Usrename', email: 'Example@gmail.com', role: 'Personal Role' },
-];
+const router = useRouter();
+
+// --- ESTADOS DE DATOS ---
+const adminInfo = ref({});
+const totalGamesCount = ref('0');
+const games = ref([]);
+const adminReviews = ref([]);
 
 const newGame = ref({
-  releaseDate: '', title: '', description: '', developer: '', details: '',
+  title: '', description: '', developer: '', releaseDate: '',
 });
 
-const dummyActions = [
-  { game: 'Game title', user: 'Username', action: 'Action on review' },
-  { game: 'Game title', user: 'Username', action: 'Action on review' },
-  { game: 'Game title', user: 'Username', action: 'Action on review' },
-  { game: 'Game title', user: 'Username', action: 'Action on review' },
-];
+// --- FUNCIONES DE FETCHING (Usando Endpoints Existentes) ---
 
-const dummyReviews = [
-  { game: 'Game title', user: 'Username', content: 'Personal Review' },
-  { game: 'Game title', user: 'Username', content: 'Personal Review' },
-  { game: 'Game title', user: 'Username', content: 'Personal Review' },
-  { game: 'Game title', user: 'Username', content: 'Personal Review' },
-];
-
-// --- FUNCIONALIDAD DE DATOS ---
-
-const totalGamesCount = ref('350');
-
-const fetchTotalGamesEstimate = async () => {
+// 1. Obtener la información del administrador (ID es crucial)
+const fetchAdminInfo = async () => {
   try {
-    const res = await api.get('/games/trending?limit=500');
-    if (res.data && Array.isArray(res.data)) {
-      totalGamesCount.value = res.data.length.toString();
+    const res = await api.get('/users/me'); // Requiere un token de autenticación válido
+    adminInfo.value = res.data;
+
+    // Si el ID de usuario está disponible, cargar sus reseñas
+    if (adminInfo.value.id_user) {
+      fetchAdminReviews(adminInfo.value.id_user);
     }
   } catch (error) {
-    console.error("Error al obtener juegos trending para conteo:", error);
+    console.error("Error al obtener info del administrador (¿Está logueado?):", error);
   }
 };
 
-const submitNewGame = () => {
-  console.log("Intentando publicar juego (Simulado):", newGame.value);
-  alert("Juego simulado publicado. Requiere endpoint POST de backend.");
+// 2. Obtener listado de juegos (Real)
+const fetchGames = async () => {
+  try {
+    const res = await api.get('/games/trending?limit=500');
+    games.value = res.data || [];
+    totalGamesCount.value = games.value.length.toString();
+  } catch (error) {
+    console.error("Error al obtener juegos:", error);
+  }
 };
 
+// 3. Obtener Reseñas del Admin (Real)
+const fetchAdminReviews = async (userId) => {
+  try {
+    const res = await api.get(`/reviews/user/${userId}`);
+    adminReviews.value = res.data || [];
+  } catch (error) {
+    console.error("Error al obtener reseñas del administrador:", error);
+  }
+};
+
+
+// --- FUNCIONES DE ACCIÓN (Simuladas o Existentes) ---
+
+// Acción de Ver juego
+const viewGame = (slug) => {
+  router.push(`/game/${slug}`); // Asumiendo que tienes una ruta para el detalle del juego
+};
+
+// Acción de Borrar Reseña (Funcional si el token es válido y es suya)
+const deleteReview = async (reviewId) => {
+    if (confirm(`¿Seguro que quieres eliminar la reseña ID: ${reviewId}?`)) {
+        try {
+            // Este endpoint ya existe en tu backend y requiere el token del usuario.
+            await api.delete(`/reviews/${reviewId}`);
+            alert("Reseña eliminada con éxito.");
+            // Recargar reseñas después de la eliminación
+            fetchAdminReviews(adminInfo.value.id_user);
+        } catch (error) {
+            console.error("Error al eliminar reseña:", error);
+            alert("Error al eliminar reseña. (Verifica si el token es válido o si es tu reseña)");
+        }
+    }
+};
+
+// Acción de Añadir Juego (Simulada)
+const submitNewGame = () => {
+  alert("Juego simulado enviado. Requiere un endpoint POST de administración para ser funcional.");
+  console.log("Datos a enviar (Simulado):", newGame.value);
+};
+
+
+// --- CICLO DE VIDA ---
 onMounted(() => {
-  fetchTotalGamesEstimate();
+  fetchAdminInfo();
+  fetchGames();
 });
 </script>
 
 <style scoped>
 /* --- VARIABLES Y ESTILOS GLOBALES --- */
 :root {
-  --color-bg-light: #f5f5f5; /* Fondo general más claro */
-  --color-panel-dark: #444; /* Fondo de los paneles y tarjetas */
-  --color-text-light: #fff; /* Texto en paneles oscuros */
-  --color-divider: #666; /* Separadores en paneles oscuros */
-  --color-input-bg: #555; /* Fondo de los inputs */
-  --color-accent: #5cb85c; /* Verde para el botón Publish/Total Reviews */
-  --color-text-main: #333;
+  --color-bg-light: #f5f5f5;
+  --color-panel-dark: #3a3a3a; /* Más oscuro que el anterior */
+  --color-text-light: #fff;
+  --color-divider: #505050;
+  --color-input-bg: #4b4b4b;
+  --color-text-main: #222;
+  --color-accent-blue: #00AEEF;
+  --color-btn-delete: #dc3545;
+  --color-btn-view: #6c757d;
 }
 
 .admin-dashboard-wrapper {
   background-color: var(--color-bg-light);
   min-height: 100vh;
-}
-
-.admin-content {
-  max-width: 1200px;
-  margin: 0 auto;
   padding: 30px 20px;
 }
 
 .main-title {
+  max-width: 1200px;
+  margin: 0 auto;
   font-size: 2.5rem;
-  font-weight: 400; /* Letra delgada como en la imagen */
+  font-weight: 400;
   margin-bottom: 30px;
   color: var(--color-text-main);
 }
 
-/* --- 1. STATS CARDS (Tarjetas de Resumen) --- */
+/* --- 1. STATS CARDS --- */
 .stats-grid {
+  max-width: 1200px;
+  margin: 0 auto 40px;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 20px;
-  margin-bottom: 40px;
 }
 
 .stat-card {
   background-color: var(--color-panel-dark);
   color: var(--color-text-light);
   padding: 15px;
-  border-radius: 4px;
+  border-radius: 8px; /* Bordes más suaves */
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 90px;
-  transition: transform 0.2s;
+  min-height: 100px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.stat-card:hover {
-    transform: translateY(-2px);
-}
-
-.stat-card-total {
-    /* Fondo ligeramente diferente o acento como en la imagen */
-    background-color: #6c757d;
+.stat-card-active {
+    background-color: var(--color-accent-blue);
 }
 
 .stat-number {
-  font-size: 1.8rem;
+  font-size: 2rem;
   font-weight: 700;
-  margin-bottom: 3px;
+  margin-bottom: 5px;
 }
 
 .stat-label {
   font-size: 0.8rem;
   text-transform: uppercase;
   opacity: 0.9;
-}
-
-.stat-icon {
-    width: 28px;
-    height: 28px;
-    color: var(--color-text-light);
-    margin-bottom: 5px;
+  text-align: center;
 }
 
 /* --- 2. GRILLA PRINCIPAL DE PANELES --- */
 .admin-panels-grid {
+  max-width: 1200px;
+  margin: 0 auto;
   display: grid;
-  /* 2 columnas: la izquierda más ancha que la derecha */
   grid-template-columns: 2fr 1fr;
-  /* 2 filas: una para la gestión/adición, otra para la actividad reciente */
-  grid-template-rows: auto auto;
   gap: 20px;
 }
 
 .panel {
   background-color: var(--color-panel-dark);
   color: var(--color-text-light);
-  padding: 20px;
-  border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  padding: 25px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .panel h2 {
-  font-size: 1.5rem;
-  font-weight: 500;
+  font-size: 1.6rem;
+  font-weight: 600;
   margin-bottom: 15px;
   padding-bottom: 10px;
   border-bottom: 1px solid var(--color-divider);
 }
 
-/* Asignación de Paneles a la Grilla */
-.user-management-panel {
-    grid-area: 1 / 1; /* Fila 1, Columna 1 */
+.panel-note {
+    font-size: 0.8rem;
+    color: #a0a0a0;
+    margin-bottom: 15px;
 }
-.add-game-panel {
-    grid-area: 1 / 2; /* Fila 1, Columna 2 */
-}
-.recent-actions-panel {
-    grid-area: 2 / 1; /* Fila 2, Columna 1 */
-}
-.recent-reviews-panel {
-    grid-area: 2 / 2; /* Fila 2, Columna 2 */
+
+.panel-note-alert {
+    font-size: 0.8rem;
+    color: #FFC107;
+    margin-top: 15px;
 }
 
 
@@ -273,25 +287,28 @@ onMounted(() => {
   width: 100%;
 }
 
+.loading-state {
+    padding: 20px 0;
+    text-align: center;
+    color: #ccc;
+}
+
 .table-header, .table-row {
   display: grid;
-  padding: 10px 0;
+  padding: 12px 0;
   font-size: 0.9rem;
   align-items: center;
 }
 
-/* Columnas de User Management */
-.user-management-panel .table-header,
-.user-management-panel .table-row {
-    grid-template-columns: 1.5fr 2fr 1.5fr;
+/* Columnas para Catálogo */
+.catalog-management-panel .table-header,
+.catalog-management-panel .table-row {
+    grid-template-columns: 0.5fr 3fr 2fr 1fr;
 }
-
-/* Columnas de Reviews/Actions (3 columnas) */
-.recent-actions-panel .table-header,
-.recent-actions-panel .table-row,
-.recent-reviews-panel .table-header,
-.recent-reviews-panel .table-row {
-    grid-template-columns: 1fr 1fr 2fr;
+/* Columnas para Reseñas Propias */
+.admin-reviews-panel .table-header,
+.admin-reviews-panel .table-row {
+    grid-template-columns: 1.5fr 3fr 1fr;
 }
 
 
@@ -303,12 +320,43 @@ onMounted(() => {
 }
 
 .table-row {
-  border-bottom: 1px solid #555; /* Separador más sutil */
+  border-bottom: 1px solid #4a4a4a;
 }
 
 .table-row:last-child {
   border-bottom: none;
 }
+
+.review-content {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.btn-action {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    color: white;
+    font-size: 0.8rem;
+    transition: background-color 0.2s;
+}
+
+.btn-action.view {
+    background-color: var(--color-btn-view);
+}
+.btn-action.view:hover {
+    background-color: #5a6268;
+}
+
+.btn-action.delete {
+    background-color: var(--color-btn-delete);
+}
+.btn-action.delete:hover {
+    background-color: #c82333;
+}
+
 
 /* --- FORMULARIO (Add Game) --- */
 .form-input, .form-textarea {
@@ -320,26 +368,20 @@ onMounted(() => {
   background-color: var(--color-input-bg);
   color: var(--color-text-light);
   font-size: 1rem;
-  transition: background-color 0.2s;
 }
 
 .form-input::placeholder, .form-textarea::placeholder {
-  color: #aaa;
-}
-
-.form-input:focus, .form-textarea:focus {
-    background-color: #666;
-    outline: none;
+  color: #ccc;
 }
 
 .form-textarea {
-  height: 100px;
+  height: 80px;
   resize: vertical;
 }
 
 .btn-publish {
   width: 100%;
-  background-color: var(--color-accent);
+  background-color: #28a745;
   color: white;
   padding: 10px 0;
   margin-top: 10px;
@@ -347,33 +389,19 @@ onMounted(() => {
   border-radius: 4px;
   cursor: pointer;
   font-weight: bold;
-  transition: background-color 0.2s;
-}
-
-.btn-publish:hover {
-  background-color: #4CAF50;
 }
 
 /* --- RESPONSIVIDAD --- */
 @media (max-width: 992px) {
-  /* En tablets, las estadísticas siguen siendo 2x2 */
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  /* La grilla principal colapsa a una sola columna */
   .admin-panels-grid {
     grid-template-columns: 1fr;
-    grid-template-rows: auto;
   }
-  /* Reasignación de áreas para el flujo vertical */
-  .user-management-panel { grid-area: auto; }
-  .add-game-panel { grid-area: auto; }
-  .recent-actions-panel { grid-area: auto; }
-  .recent-reviews-panel { grid-area: auto; }
 }
 
 @media (max-width: 600px) {
-    /* En móviles, las estadísticas se ponen una debajo de otra */
     .stats-grid {
         grid-template-columns: 1fr;
     }
