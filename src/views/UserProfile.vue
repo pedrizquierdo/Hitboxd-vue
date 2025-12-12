@@ -1,9 +1,9 @@
 <template>
   <div class="profile-page">
-
     <Nav />
 
     <div v-if="isLoading" class="loading-container">
+      <div class="spinner"></div>
       <p>Cargando perfil...</p>
     </div>
 
@@ -11,26 +11,28 @@
       
       <div class="profile-header">
         <div class="profile-avatar">
-          <img :src="avatar" class="avatar-img" />
+          <img :src="avatar || 'https://placehold.co/150'" class="avatar-img" />
         </div>
 
         <div class="profile-info">
           <h1 class="username">{{ username }}</h1>
+          <span v-if="pronouns" class="pronouns-badge">{{ pronouns }}</span>
+          <p v-if="bio" class="bio-text">{{ bio }}</p>
         </div>
 
         <div class="profile-stats">
           <div class="stat-block">
-            <span class="stat-number">{{ userStats.gamesCount || 0 }}</span>
+            <span class="stat-number">{{ watchlist.length || 0 }}</span>
             <span class="stat-label">Games</span>
           </div>
           <div class="divider"></div>
           <div class="stat-block">
-            <span class="stat-number">{{ userStats.followers || 0 }}</span>
+            <span class="stat-number">0</span>
             <span class="stat-label">Followers</span>
           </div>
           <div class="divider"></div>
           <div class="stat-block">
-            <span class="stat-number">{{ userStats.following || 0 }}</span>
+            <span class="stat-number">0</span>
             <span class="stat-label">Following</span>
           </div>
         </div>
@@ -42,53 +44,97 @@
           :key="tab"
           href="#"
           :class="{ active: activeTab === tab }"
-          @click.prevent="setTab(tab)"
+          @click.prevent="activeTab = tab"
         >
           {{ tab }}
         </a>
-        <div class="search-icons"></div>
       </nav>
 
       <section v-show="activeTab === 'PROFILE'" class="section">
         <h2 class="section-title">FAVORITE GAMES</h2>
-        <p class="section-text">Don't forget to select your favorite Games!</p>
-        <h2 class="section-title" style="margin-top: 40px;">RECENT ACTIVITY</h2>
+        
+        <div v-if="likedGames.length > 0" class="fav-games-grid">
+          <div 
+            v-for="game in likedGames.slice(0, 4)" 
+            :key="game.id_game" 
+            class="game-poster-card"
+          >
+            <img :src="getCoverUrl(game.cover_url)" alt="Game Cover" />
+            <span class="game-title-hover">{{ game.title }}</span>
+          </div>
+        </div>
+        <p v-else class="section-text">No favorite games yet.</p>
+
+        <h2 class="section-title" style="margin-top: 40px;">RECENT REVIEWS</h2>
+         <div v-if="reviews.length > 0" class="mini-reviews-list">
+            <div v-for="review in reviews.slice(0, 3)" :key="review.id_review" class="mini-review-item">
+              <span class="review-game">
+                {{ getGameTitle(review.id_game) }}
+              </span>
+              <div class="review-meta">
+                <span class="stars">★ {{ review.rating }}</span>
+                <span class="date">{{ formatDate(review.created_at) }}</span>
+              </div>
+              <p class="review-content">"{{ review.content }}"</p>
+            </div>
+         </div>
+         <p v-else class="section-text">No recent reviews.</p>
       </section>
 
       <section v-show="activeTab === 'ACTIVITY'" class="section">
-        <h2 class="section-title">RECENT ACTIVITY</h2>
-        <p class="section-text">Nothing here yet.</p>
+        <h2 class="section-title">FRIENDS ACTIVITY FEED</h2>
+        <div v-if="activityFeed.length > 0" class="activity-list">
+          <div v-for="(act, index) in activityFeed" :key="index" class="activity-card">
+            <div class="activity-icon">🎮</div>
+            <div class="activity-content">
+              <p>
+                <strong>User {{ act.id_user }}</strong> 
+                {{ act.status }} 
+                <strong>{{ getGameTitle(act.id_game) }}</strong>
+              </p>
+              <small>{{ formatDate(act.created_at) }}</small>
+            </div>
+          </div>
+        </div>
+        <p v-else class="section-text">No recent activity found.</p>
       </section>
 
       <section v-show="activeTab === 'GAMES'" class="section">
-        <h2 class="section-title">GAMES</h2>
-        <p class="section-text">No games logged yet.</p>
-      </section>
+         <h2 class="section-title">GAMELIST</h2> <div v-if="watchlistError" class="error-box">
+            <p>⚠️ <strong>Server Error:</strong> Unable to load gamelist.</p>
+         </div>
 
-      <section v-show="activeTab === 'DIARY'" class="section">
-        <h2 class="section-title">DIARY</h2>
-        <p class="section-text">Diary is empty.</p>
+         <div v-else-if="watchlist.length > 0" class="games-grid-layout">
+            <div v-for="game in watchlist" :key="game.id_game" class="game-poster-card">
+               <img :src="getCoverUrl(game.cover_url)" alt="Game Cover" />
+               <span class="game-title-hover">{{ game.title }}</span>
+            </div>
+         </div>
+         <p v-else class="section-text">Your gamelist is empty.</p>
       </section>
 
       <section v-show="activeTab === 'REVIEWS'" class="section">
-        <h2 class="section-title">REVIEWS</h2>
-        <p class="section-text">No reviews yet.</p>
-      </section>
-
-      <section v-show="activeTab === 'PLAYLIST'" class="section">
-        <h2 class="section-title">PLAYLIST</h2>
-        <p class="section-text">No playlists created.</p>
+        <h2 class="section-title">MY REVIEWS</h2>
+        <div v-if="reviews.length > 0" class="reviews-list">
+          <div v-for="review in reviews" :key="review.id_review" class="review-card-full">
+            <div class="review-header">
+               <span class="game-name">{{ getGameTitle(review.id_game) }}</span>
+               <span v-if="review.rating" class="rating-badge">★ {{ review.rating }}</span>
+            </div>
+            <p class="review-body">{{ review.content }}</p>
+            <div class="review-footer">
+               <small>{{ formatDate(review.created_at) }}</small>
+               <span v-if="review.has_spoilers" class="spoiler-tag">SPOILER</span>
+            </div>
+          </div>
+        </div>
+        <p v-else class="section-text">You haven't written any reviews yet.</p>
       </section>
 
       <section v-show="activeTab === 'LISTS'" class="section">
         <div class="section-header-row">
           <h2 class="section-title">LISTS</h2>
-          <button 
-            v-if="userLists.length > 0" 
-            @click="openModal" 
-            class="btn-create-mini"
-            title="Crear nueva lista"
-          >
+          <button v-if="userLists.length > 0" @click="openModal" class="btn-create-mini">
             + NEW
           </button>
         </div>
@@ -98,7 +144,8 @@
             v-for="list in userLists" 
             :key="list.id_list || list.id" 
             class="list-card"
-            @click="editList(list)" >
+            @click="editList(list)" 
+          >
             <div class="list-card-content">
               <h3>{{ list.title || list.name }}</h3> 
               <p class="list-desc">{{ list.description || 'Sin descripción' }}</p>
@@ -111,27 +158,55 @@
         </div>
         
         <div v-else class="empty-state">
-          <p class="section-text">YOU HAVENT CREATED ANY LISTS YET.</p>
+          <p class="section-text">YOU HAVEN'T CREATED ANY LISTS YET.</p>
           <button class="start-list-btn" @click="openModal">
             CREATE YOUR FIRST LIST
           </button>
         </div>
       </section>
 
-      <section v-show="activeTab === 'LIKES'" class="section">
-        <h2 class="section-title">LIKES</h2>
-        <p class="section-text">You haven't liked anything yet.</p>
-      </section>
-
-      <section v-show="activeTab === 'TAGS'" class="section">
-        <h2 class="section-title">TAGS</h2>
-        <p class="section-text">No tags added.</p>
-      </section>
-
       <section v-show="activeTab === 'NETWORK'" class="section">
-        <h2 class="section-title">NETWORK</h2>
-        <p class="section-text">No connections yet.</p>
+        <h2 class="section-title">FOLLOWING & FRIENDS</h2>
+        <div class="network-grid">
+           <p class="section-text">No friends connected yet.</p>
+        </div>
       </section>
+
+      <section v-show="activeTab === 'DIARY'" class="section">
+        <h2 class="section-title">DIARY LOG</h2>
+        <div v-if="reviews.length > 0" class="diary-list">
+           <div v-for="entry in reviews" :key="entry.id_review" class="diary-entry">
+              <div class="diary-date">
+                 <span class="day">{{ new Date(entry.created_at).getDate() }}</span>
+                 <span class="month">{{ new Date(entry.created_at).toLocaleString('default', { month: 'short' }) }}</span>
+                 <span class="year">{{ new Date(entry.created_at).getFullYear() }}</span>
+              </div>
+              <div class="diary-poster">
+                 <div class="mini-poster-placeholder">🎮</div>
+              </div>
+              <div class="diary-info">
+                 <span class="diary-game-title">{{ getGameTitle(entry.id_game) }}</span>
+                 <div class="diary-rating">
+                    <span v-for="n in 5" :key="n" :class="{ 'star-filled': n <= entry.rating, 'star-empty': n > entry.rating }">★</span>
+                 </div>
+              </div>
+           </div>
+        </div>
+        <p v-else class="section-text">Diary is empty. Write a review to add an entry!</p>
+      </section>
+
+      <section v-show="activeTab === 'LIKES'" class="section">
+        <h2 class="section-title">LIKED GAMES</h2>
+        <div v-if="likedGames.length > 0" class="games-grid-layout">
+            <div v-for="game in likedGames" :key="game.id_game" class="game-poster-card">
+               <img :src="getCoverUrl(game.cover_url)" alt="Game Cover" />
+               <span class="game-title-hover">{{ game.title }}</span>
+               <span class="heart-icon">❤️</span>
+            </div>
+         </div>
+         <p v-else class="section-text">You haven't liked any games yet.</p>
+      </section>
+
     </div> 
     
     <CreateListModal 
@@ -145,370 +220,242 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue"
+import { ref, onMounted, computed } from "vue"
 import { useRouter } from "vue-router"
 import Nav from "@/components/common/Nav.vue"
 import Footer from "@/components/common/PageFooter.vue"
-import CreateListModal from "@/components/lists/CreateListModal.vue"
+import CreateListModal from "@/components/lists/CreateListModal.vue" 
 import api from "@/api/axios.js" 
 
 const router = useRouter()
+const isLoading = ref(true)
+
+// Datos de Usuario
 const username = ref("")
 const avatar = ref("")
-const isModalOpen = ref(false) 
-const userLists = ref([]) 
-const isLoading = ref(true) 
+const bio = ref("")
+const pronouns = ref("")
+const currentUserId = ref(null)
 
-const userStats = ref({
-    gamesCount: 0,
-    followers: 0,
-    following: 0
+// Datos de Contenido
+const watchlist = ref([])
+const watchlistError = ref(false)
+const reviews = ref([])     
+const activityFeed = ref([]) 
+const userLists = ref([])   
+const gamesCache = ref({}) 
+
+// COMPUTED: Filtramos los juegos que tienen is_favorite = true para la pestaña LIKES
+const likedGames = computed(() => {
+  return watchlist.value.filter(game => game.is_favorite || game.is_liked);
 })
 
-let currentUserId = null;
+// UI States
+const activeTab = ref("PROFILE")
+const tabs = ["PROFILE", "ACTIVITY", "GAMES", "REVIEWS", "LISTS", "NETWORK", "DIARY", "LIKES"]
+const isModalOpen = ref(false)
 
 const openModal = () => { isModalOpen.value = true }
 const closeModal = () => { isModalOpen.value = false }
 
-const handleListCreated = (newListData) => {
-  console.log('✅ Lista creada:', newListData);
-  userLists.value.unshift(newListData); 
+// --- Helpers ---
+const getCoverUrl = (url) => {
+  if (!url) return 'https://placehold.co/150x220?text=No+Cover';
+  return url.replace('t_thumb', 't_cover_big');
 }
 
-// 🚨 FUNCIÓN AÑADIDA: Maneja la navegación a la vista de edición de lista
+const formatDate = (dateString) => {
+  if(!dateString) return '';
+  return new Date(dateString).toLocaleDateString();
+}
+
+const getGameTitle = (gameId) => {
+  if (!gameId) return 'Unknown Game';
+  if (gamesCache.value[gameId]) {
+    return gamesCache.value[gameId].title || gamesCache.value[gameId].name; 
+  }
+  return `Game ID: ${gameId}...`;
+}
+
 const editList = (list) => {
     const listId = list.id_list || list.id;
     if (listId) {
-        // Redirige a la ruta dinámica /lists/:listId
-        router.push({ 
-            name: 'ListDetail', // Asegúrate que este sea el nombre de tu ruta
-            params: { listId: listId } 
-        });
+        router.push({ name: 'ListDetail', params: { listId: listId } });
     }
 };
 
-// --- Lógica de Carga con "Parche de Hidratación" ---
+const handleListCreated = (newListData) => {
+  userLists.value.unshift(newListData);
+}
+
+// Cargar nombres de juegos para el cache
+const enrichDataWithGameInfo = async () => {
+  const gameIdsToFetch = new Set();
+  reviews.value.forEach(r => { if(r.id_game) gameIdsToFetch.add(r.id_game) });
+  activityFeed.value.forEach(a => { if(a.id_game) gameIdsToFetch.add(a.id_game) });
+  // También enriquecer likes si vienen de watchlist pero no tienen titulo
+  watchlist.value.forEach(g => { if(g.id_game) gameIdsToFetch.add(g.id_game) });
+
+  const promises = Array.from(gameIdsToFetch).map(async (id) => {
+      if (gamesCache.value[id]) return;
+      try {
+          const { data } = await api.get(`/games/${id}`);
+          gamesCache.value[id] = data; 
+      } catch (error) {
+          gamesCache.value[id] = { title: `Unknown Game (${id})` };
+      }
+  });
+  await Promise.all(promises);
+}
+
+// --- Carga Inicial ---
 onMounted(async () => {
   try {
     isLoading.value = true;
     
-    // 1. Cargar Usuario
-    const userResponse = await api.get("/users/me")
-    const userData = userResponse.data;
-    
+    // 1. Obtener Usuario
+    const { data: userData } = await api.get("/users/me")
+    currentUserId.value = userData.id_user || userData.id;
     username.value = userData.username
-    avatar.value = userData.avatar_url || "/default-avatar.png" 
+    avatar.value = userData.avatar_url
+    bio.value = userData.bio
+    pronouns.value = userData.pronouns 
     
-    userStats.value = {
-        gamesCount: userData.games_count || 0,
-        followers: userData.followers_count || 0,
-        following: userData.following_count || 0
-    }
-
-    currentUserId = userData.id_user || userData.id; 
-
-    // 2. Cargar Listas
-    if (currentUserId) {
-      // a) Obtenemos las listas básicas (sin juegos)
-      const listsResponse = await api.get(`/lists/user/${currentUserId}`)
-      const basicLists = listsResponse.data
+    if (currentUserId.value) {
+      // 2. Cargar datos en paralelo (con manejo de errores individual)
       
-      // b) PARCHE: Pedimos el detalle de cada lista para obtener el conteo de juegos
-      const detailedListsPromises = basicLists.map(async (list) => {
-           const listId = list.id_list || list.id;
-           try {
-               // Pedimos el detalle completo individual
-               const { data } = await api.get(`/lists/${listId}`);
-               return data; // 'data' incluye el array 'games'
-           } catch (error) {
-               console.error(`Error cargando detalles de lista ${listId}`, error);
-               return list; // Si falla, usamos la básica (mostrará 0 juegos)
-           }
-       });
-      
-      // c) Esperamos a que todas las peticiones terminen y guardamos
-      userLists.value = await Promise.all(detailedListsPromises);
+      // REVIEWS (Para la pestaña REVIEWS y DIARY)
+      try {
+        const res = await api.get(`/reviews/user/${currentUserId.value}`);
+        reviews.value = res.data.sort((a,b) => new Date(b.created_at) - new Date(a.created_at)); // Ordenar por fecha
+      } catch (e) { console.error("Error reviews", e); }
+
+      // WATCHLIST (Para GAMES y LIKES)
+      try {
+        const res = await api.get('/activity/watchlist');
+        watchlist.value = res.data;
+      } catch (e) { 
+        console.error("Error watchlist (500)", e);
+        watchlistError.value = true; 
+      }
+
+      // FEED (Para ACTIVITY)
+      try {
+        const res = await api.get('/activity/feed');
+        activityFeed.value = res.data;
+      } catch (e) { console.error("Error feed", e); }
+
+      // LISTAS
+      try {
+        const res = await api.get(`/lists/user/${currentUserId.value}`);
+        userLists.value = res.data; 
+      } catch (e) { console.error("Error listas", e); }
+
+      // Cargar Nombres
+      await enrichDataWithGameInfo();
     }
     
   } catch (error) {
-    console.error("Error cargando perfil:", error)
     if (error.response && error.response.status === 401) {
-        alert("Tu sesión ha expirado.");
-        router.push("/");
+       router.push("/login");
     }
   } finally {
     isLoading.value = false; 
   }
 })
-
-// Tabs (FILMS ELIMINADO)
-const activeTab = ref("PROFILE")
-const tabs = [
-  "PROFILE", "ACTIVITY", "GAMES", "DIARY", "REVIEWS", 
-  "PLAYLIST", "LISTS", "LIKES", "TAGS", "NETWORK"
-]
-
-const setTab = tab => {
-  activeTab.value = tab
-}
 </script>
 
 <style scoped>
-/* Estilos Generales */
-.profile-page {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background-color: #f8f9fa;
-}
-
-.profile-container {
-  width: 90%;
-  max-width: 1100px;
-  margin: 40px auto;
-  flex: 1;
-}
-
-.loading-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 50vh;
-    font-size: 18px;
-    color: #666;
-}
+/* GENERAL */
+.profile-page { display: flex; flex-direction: column; min-height: 100vh; background-color: #f8f9fa; font-family: 'Inter', sans-serif; }
+.profile-container { width: 90%; max-width: 1100px; margin: 40px auto; flex: 1; }
+.loading-container { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 50vh; color: #666; }
+.spinner { border: 4px solid #f3f3f3; border-top: 4px solid #00cc66; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px;}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
 /* HEADER */
-.profile-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-
-.profile-avatar {
-  width: 110px;
-  height: 110px;
-  border-radius: 50%;
-  overflow: hidden;
-  border: 5px solid #111;
-  background: #000;
-  flex-shrink: 0;
-  z-index: 2;
-}
-
-.avatar-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.profile-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-left: -400px; 
-}
-
-.username {
-  font-size: 32px;
-  margin: 0;
-  color: #333;
-}
-
-.profile-stats {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.stat-block {
-  text-align: center;
-  min-width: 60px;
-}
-
-.stat-number {
-  font-size: 20px;
-  font-weight: bold;
-  display: block;
-  color: #222;
-}
-
-.stat-label {
-  font-size: 11px;
-  text-transform: uppercase;
-  color: #666;
-  letter-spacing: 0.5px;
-}
-
-.divider {
-  width: 1px;
-  height: 30px;
-  background: #ccc;
-}
+.profile-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.profile-avatar { width: 110px; height: 110px; border-radius: 50%; overflow: hidden; border: 5px solid #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.1); background: #000; flex-shrink: 0; z-index: 2; }
+.avatar-img { width: 100%; height: 100%; object-fit: cover; }
+.profile-info { display: flex; flex-direction: column; justify-content: center; margin-left: -350px; }
+.username { font-size: 32px; margin: 0; color: #333; font-weight: 700; }
+.pronouns-badge { display: inline-block; background-color: #e0e0e0; color: #666; font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 4px; margin-top: 4px; margin-bottom: 8px; width: fit-content; }
+.bio-text { color: #666; font-size: 14px; margin-top: 5px; max-width: 400px;}
+.profile-stats { display: flex; align-items: center; gap: 20px; }
+.stat-block { text-align: center; min-width: 60px; }
+.stat-number { font-size: 20px; font-weight: bold; display: block; color: #222; }
+.stat-label { font-size: 11px; text-transform: uppercase; color: #888; letter-spacing: 0.5px; }
+.divider { width: 1px; height: 30px; background: #eee; }
 
 /* TABS */
-.profile-tabs {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  border-bottom: 1px solid #ccc;
-  margin-top: 10px;
-  padding-bottom: 10px;
-  overflow-x: auto;
-}
+.profile-tabs { display: flex; align-items: center; gap: 25px; border-bottom: 1px solid #e0e0e0; margin-top: 20px; padding-bottom: 0; overflow-x: auto; }
+.profile-tabs a { text-decoration: none; font-size: 13px; color: #666; font-weight: 600; padding-bottom: 15px; border-bottom: 3px solid transparent; transition: all 0.2s; white-space: nowrap; }
+.profile-tabs a:hover { color: #333; }
+.profile-tabs a.active { color: #00cc66; border-bottom-color: #00cc66; }
 
-.profile-tabs a {
-  text-decoration: none;
-  font-size: 13px;
-  color: #666;
-  font-weight: 500;
-  transition: color 0.2s;
-  white-space: nowrap;
-}
+/* SECTIONS */
+.section { margin-top: 40px; }
+.section-title { font-size: 13px; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; color: #999; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;}
+.section-text { font-size: 14px; color: #666; }
+.error-text { color: #888; font-style: italic; font-size: 13px; }
+.error-box { padding: 20px; background: #fff0f0; border: 1px solid #ffcccc; border-radius: 6px; color: #d8000c; text-align: center; margin-bottom: 20px;}
 
-.profile-tabs a:hover {
-    color: #000;
-}
+/* GAMES GRID (Usado en Profile, Games y Likes) */
+.fav-games-grid, .games-grid-layout { display: flex; gap: 15px; flex-wrap: wrap; }
+.game-poster-card { width: 120px; height: 180px; background: #ddd; border-radius: 6px; overflow: hidden; position: relative; transition: transform 0.2s; cursor: pointer; }
+.game-poster-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+.game-poster-card img { width: 100%; height: 100%; object-fit: cover; }
+.game-title-hover { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.7); color: white; font-size: 11px; padding: 4px; text-align: center; opacity: 0; transition: opacity 0.2s; }
+.game-poster-card:hover .game-title-hover { opacity: 1; }
+.heart-icon { position: absolute; top: 5px; right: 5px; font-size: 14px; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
 
-.profile-tabs a.active {
-  color: #00aaff;
-  font-weight: bold;
-  border-bottom: 3px solid #00aaff;
-  padding-bottom: 7px;
-}
+/* REVIEWS & MINI REVIEWS */
+.reviews-list { display: flex; flex-direction: column; gap: 20px; }
+.review-card-full { background: white; padding: 20px; border-radius: 8px; border: 1px solid #eee; }
+.review-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
+.game-name { font-weight: bold; color: #333; }
+.rating-badge { background: #00cc66; color: white; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+.review-body { color: #555; font-size: 14px; line-height: 1.5; font-style: italic; }
+.review-footer { margin-top: 10px; display: flex; gap: 10px; font-size: 12px; color: #999; }
+.spoiler-tag { color: #ff4444; font-weight: bold; }
 
-/* SECCIONES */
-.section {
-  margin-top: 40px;
-}
+.mini-reviews-list { display: flex; flex-direction: column; gap: 10px; }
+.mini-review-item { background: #fff; padding: 12px; border: 1px solid #eee; border-radius: 6px; }
+.review-game { display: block; font-weight: bold; font-size: 13px; color: #333; margin-bottom: 4px; }
+.review-meta { font-size: 11px; color: #999; margin-bottom: 6px; display: flex; gap: 10px; }
+.stars { color: #00cc66; font-weight: bold; }
+.review-content { font-size: 13px; color: #555; margin: 0; font-style: italic;}
 
-.section-title {
-  font-size: 14px;
-  margin-bottom: 15px;
-  border-bottom: 1px solid #ddd;
-  padding-bottom: 5px;
-  color: #888;
-  font-weight: normal;
-  letter-spacing: 1px;
-}
+/* ACTIVITY FEED */
+.activity-list { display: flex; flex-direction: column; gap: 10px; }
+.activity-card { background: #fff; padding: 10px; border: 1px solid #eee; border-radius: 4px; font-size: 13px; display: flex; gap: 10px; align-items: center;}
+.activity-icon { background: #f0f0f0; width: 30px; height: 30px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 16px; }
 
-.section-header-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #ddd;
-    margin-bottom: 15px;
-    padding-bottom: 5px;
-}
+/* DIARY (Log Cronológico) */
+.diary-list { border-top: 1px solid #eee; }
+.diary-entry { display: flex; padding: 15px 0; border-bottom: 1px solid #eee; align-items: center; gap: 20px; }
+.diary-date { display: flex; flex-direction: column; align-items: center; min-width: 50px; color: #666; }
+.diary-date .day { font-size: 18px; font-weight: bold; color: #333; line-height: 1; }
+.diary-date .month { font-size: 11px; text-transform: uppercase; line-height: 1; margin-top: 2px;}
+.diary-date .year { font-size: 10px; color: #999; }
+.diary-poster { width: 40px; height: 60px; background: #eee; border-radius: 4px; display: flex; justify-content: center; align-items: center; flex-shrink: 0; }
+.mini-poster-placeholder { font-size: 20px; }
+.diary-info { display: flex; flex-direction: column; }
+.diary-game-title { font-weight: bold; font-size: 14px; color: #333; }
+.diary-rating { display: flex; gap: 2px; margin-top: 4px; font-size: 12px; }
+.star-filled { color: #00cc66; }
+.star-empty { color: #ddd; }
 
-.section-header-row .section-title {
-    border-bottom: none;
-    margin-bottom: 0;
-    padding-bottom: 0;
-}
-
-.section-text {
-  font-size: 14px;
-  color: #555;
-}
-
-/* LISTAS */
-.lists-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 20px;
-    margin-top: 20px;
-}
-
-.list-card {
-    background: #fff;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    padding: 15px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    min-height: 120px;
-    transition: transform 0.2s, box-shadow 0.2s;
-    cursor: pointer; /* Importante para indicar que es clickeable */
-}
-
-.list-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    border-color: #00aaff;
-}
-
-.list-card-content h3 {
-    margin-top: 0;
-    font-size: 16px;
-    color: #222;
-    margin-bottom: 8px;
-    font-weight: bold;
-}
-
-.list-desc {
-    font-size: 13px;
-    color: #666;
-    margin: 0;
-    line-height: 1.4;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-.list-card-footer {
-    margin-top: 15px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-top: 1px solid #f0f0f0;
-    padding-top: 10px;
-    font-size: 12px;
-    color: #888;
-}
-
-/* Botones */
-.empty-state {
-    text-align: center;
-    padding: 20px;
-    background: #f0f0f0;
-    border-radius: 8px;
-}
-
-.start-list-btn {
-  background: #00aaff;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 20px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: bold;
-  margin-top: 10px;
-  transition: background 0.2s;
-}
-
-.start-list-btn:hover {
-    background: #008ecc;
-}
-
-.btn-create-mini {
-  background: transparent;
-  color: #00aaff;
-  border: 1px solid #00aaff;
-  padding: 4px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: bold;
-  transition: all 0.2s;
-}
-
-.btn-create-mini:hover {
-  background: #00aaff;
-  color: white;
-}
+/* LISTS & NETWORK */
+.section-header-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; margin-bottom: 20px; padding-bottom: 10px; }
+.lists-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+.list-card { background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; min-height: 140px; cursor: pointer; transition: all 0.2s; }
+.list-card:hover { transform: translateY(-3px); box-shadow: 0 5px 20px rgba(0,0,0,0.05); border-color: #00cc66; }
+.list-card-content h3 { margin: 0 0 10px 0; font-size: 18px; color: #333; }
+.list-desc { font-size: 13px; color: #777; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.list-card-footer { margin-top: 20px; display: flex; justify-content: space-between; color: #aaa; font-size: 12px; border-top: 1px solid #f9f9f9; padding-top: 10px; }
+.btn-create-mini { background: transparent; color: #00cc66; border: 1px solid #00cc66; padding: 5px 12px; border-radius: 20px; cursor: pointer; font-size: 11px; font-weight: bold; }
+.btn-create-mini:hover { background: #00cc66; color: white; }
+.empty-state { text-align: center; padding: 40px; background: #fff; border: 1px dashed #ccc; border-radius: 8px; }
+.start-list-btn { background: #00cc66; color: white; border: none; padding: 12px 24px; border-radius: 30px; cursor: pointer; font-weight: bold; margin-top: 15px; }
 </style>
