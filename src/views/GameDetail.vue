@@ -41,8 +41,21 @@
         </div>
 
         <div class="right-section card">
-          <h3 class="section-title">MY ACTIVITY</h3>
+          
+          <div class="activity-header-row">
+            <h3 class="section-title">MY ACTIVITY</h3>
 
+            <button 
+              class="fav-btn" 
+              :class="{ 'is-active': isFavorite }" 
+              @click="toggleFavorite"
+              title="Añadir a favoritos"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="fav-icon">
+                <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
+              </svg>
+            </button>
+          </div>
           <div class="activity-buttons">
             <button 
               class="btn status played" 
@@ -183,6 +196,7 @@ const reviews = ref([])
 const userRating = ref(0)
 const showReviewModal = ref(false)
 const showReportModal = ref(false)
+const isFavorite = ref(false)
 const selectedReviewId = ref(null)
 const userStatus = ref(null) 
 
@@ -228,6 +242,24 @@ const fetchReviews = async () => {
     }))
   } catch (err) {
     console.error("Error loading reviews:", err)
+  }
+}
+
+// 2. Función para cargar el estado del usuario (Status, Rating y Favorito)
+const fetchUserActivity = async () => {
+  try {
+    // Usamos el endpoint checkStatus que ya tienes en el backend
+    const res = await api.get(`activity/check/${route.params.id}`)
+    
+    if (res.data) {
+      // Sincronizamos los datos del backend con el frontend
+      userStatus.value = res.data.status
+      userRating.value = res.data.rating
+      // Convertimos a booleano por seguridad (0/1 a false/true)
+      isFavorite.value = Boolean(res.data.is_favorite)
+    }
+  } catch (err) {
+    console.error("Error cargando actividad del usuario:", err)
   }
 }
 
@@ -279,6 +311,24 @@ const toggleReport = (review) => {
     showReportModal.value = true
 }
 
+// 3. Función para activar/desactivar el corazón
+const toggleFavorite = async () => {
+  // Cambio optimista (cambia la UI inmediatamente antes de que responda el servidor)
+  isFavorite.value = !isFavorite.value
+
+  try {
+    // Enviamos solo lo necesario, el backend usará COALESCE para mantener el status/rating actual
+    await api.post('/activity', {
+      gameId: route.params.id,
+      isFavorite: isFavorite.value
+    })
+  } catch (err) {
+    // Si falla, revertimos el cambio visual
+    isFavorite.value = !isFavorite.value
+    console.error("Error actualizando favorito:", err)
+  }
+}
+
 const closeReportModal = () => {
     showReportModal.value = false
     selectedReviewId.value = null
@@ -303,6 +353,7 @@ const submitReport = async (reason) => {
 onMounted(() => {
   fetchGameDetail()
   fetchReviews()
+  fetchUserActivity()
 })
 </script>
 
@@ -706,6 +757,52 @@ onMounted(() => {
 
 .flag-icon {
   transition: 0.2s;
+}
+
+/* Contenedor para alinear Título y Corazón */
+.activity-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 1rem; /* Espacio antes de los botones de status */
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e0e0e0; /* Opcional: una línea separadora sutil */
+}
+
+.section-title {
+  margin: 0; /* Quitamos margen para que se alinee bien con el botón */
+}
+
+/* El botón del corazón */
+.fav-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background-color 0.2s, transform 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fav-btn:hover {
+  background-color: rgba(0,0,0,0.05);
+  transform: scale(1.1);
+}
+
+.fav-icon {
+  width: 28px;
+  height: 28px;
+  color: #ccc; /* Color gris cuando está desactivado */
+  transition: color 0.3s ease, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Estado Activo (Like) */
+.fav-btn.is-active .fav-icon {
+  color: #ff4757; /* Rojo corazón */
+  transform: scale(1.1);
 }
 
 @keyframes heartPop {
