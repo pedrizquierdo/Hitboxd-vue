@@ -29,12 +29,13 @@
             
             <swiper
               :modules="modules"
-              :free-mode="true"
+              :loop="true"
               :slides-per-view="'auto'"
               :space-between="20"
-              :loop="true"
               :breakpoints="swiperBreakpoints"
               :navigation="{ prevEl: '.prev-friends', nextEl: '.next-friends' }"
+              :mousewheel="{ forceToAxis: true }"
+              :free-mode="{ enabled: true, sticky: false, momentumRatio: 0.5 }"
               class="my-swiper"
             >
               <swiper-slide v-for="(act, index) in friendsActivity" :key="index" class="swiper-item">
@@ -65,9 +66,11 @@
               :modules="modules"
               :loop="true"
               :slides-per-view="'auto'"
+              :space-between="20"
               :breakpoints="swiperBreakpoints"
               :navigation="{ prevEl: '.prev-new', nextEl: '.next-new' }"
-              :free-mode="true"
+              :mousewheel="{ forceToAxis: true }"
+              :free-mode="{ enabled: true, sticky: false, momentumRatio: 0.5 }"
               class="my-swiper"
             >
               <swiper-slide v-for="game in newGames" :key="game.igdb_id" class="swiper-item">
@@ -92,11 +95,13 @@
             
             <swiper
               :modules="modules"
-              :free-mode="true"
-              :slides-per-view="'auto'"
               :loop="true"
+              :slides-per-view="'auto'"
+              :space-between="20"
               :breakpoints="swiperBreakpoints"
               :navigation="{ prevEl: '.prev-pop', nextEl: '.next-pop' }"
+              :mousewheel="{ forceToAxis: true }"
+              :free-mode="{ enabled: true, sticky: false, momentumRatio: 0.5 }"
               class="my-swiper"
             >
               <swiper-slide v-for="game in popularGames" :key="game.igdb_id" class="swiper-item">
@@ -122,7 +127,7 @@ import Footer from '@/components/common/PageFooter.vue';
 import GameCard from '@/components/common/GameCard.vue';
 import ActivityCard from '@/components/activity/ActivityCard.vue';
 import { Swiper, SwiperSlide } from 'swiper/vue';
-import { Navigation, FreeMode } from 'swiper/modules';
+import { Navigation, FreeMode, Mousewheel } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/free-mode';
@@ -132,7 +137,7 @@ const userName = ref('Player');
 const newGames = ref([]);
 const popularGames = ref([]);
 const friendsActivity = ref([]);
-const modules = [Navigation, FreeMode];
+const modules = [Navigation, FreeMode, Mousewheel];
 
 const swiperBreakpoints = {
   320: { slidesPerView: 2.2, spaceBetween: 15 }, 
@@ -263,10 +268,6 @@ h3 {
 
 .swiper-item > * {
   width: 100%;
-}
-
-:deep(.swiper-wrapper) {
-  transition-timing-function: linear; 
 }
 
 .nav-btn {
