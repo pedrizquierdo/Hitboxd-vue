@@ -64,24 +64,21 @@
             >
               Played
             </button>
-            
             <button 
               class="btn status pending" 
-              :class="{ 'active-status': userStatus === 'pending' }"
-              @click="setUserStatus('pending')"
+              :class="{ 'active-status': userStatus === 'plan_to_play' }"
+              @click="setUserStatus('plan_to_play')"
             >
               Pending
             </button>
-            
             <button 
               class="btn status abandoned" 
-              :class="{ 'active-status': userStatus === 'abandoned' }"
-              @click="setUserStatus('abandoned')"
+              :class="{ 'active-status': userStatus === 'dropped' }"
+              @click="setUserStatus('dropped')"
             >
               Abandoned
             </button>
           </div>
-
           <div class="rating-section">
             <p>Rate</p>
             <StarRating v-model="userRating" />
@@ -183,6 +180,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { watch } from 'vue'
 import api from '@/api/axios.js'
 
 import ReviewModal from '@/components/reviews/reviewModal.vue'
@@ -218,9 +216,35 @@ const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString(undefined, options);
 }
 
-const setUserStatus = (status) => {
-  userStatus.value = userStatus.value === status ? null : status;
-  console.log('Nuevo estado de juego:', userStatus.value);
+watch(userRating, async (newRating) => {
+  try {
+    await api.post('/activity', {
+      gameId: route.params.id,
+      rating: newRating
+    })
+    console.log("Calificación guardada:", newRating);
+  } catch (err) {
+    console.error("Error guardando la calificación:", err);
+  }
+})
+
+const setUserStatus = async (status) => {
+  
+  const newStatus = userStatus.value === status ? null : status;
+  userStatus.value = newStatus;
+
+  try {
+    
+    await api.post('/activity', {
+      gameId: route.params.id,
+      status: newStatus 
+      
+    })
+    console.log("Estado guardado:", newStatus);
+  } catch (err) {
+    console.error("Error guardando el estado:", err);
+    
+  }
 }
 
 const fetchGameDetail = async () => {
@@ -247,14 +271,14 @@ const fetchReviews = async () => {
 
 const fetchUserActivity = async () => {
   try {
-    // Usamos el endpoint checkStatus que ya tienes en el backend
+    
     const res = await api.get(`activity/check/${route.params.id}`)
     
     if (res.data) {
-      // Sincronizamos los datos del backend con el frontend
+      
       userStatus.value = res.data.status
       userRating.value = res.data.rating
-      // Convertimos a booleano por seguridad (0/1 a false/true)
+      
       isLiked.value = Boolean(res.data.is_liked)
     }
   } catch (err) {
@@ -286,18 +310,18 @@ const toggleSpoiler = (review) => {
 }
 
 const toggleLike = async () => {
-  // Cambio visual inmediato (Optimista)
+  
   isLiked.value = !isLiked.value
 
   try {
-    // Enviamos al backend el campo nuevo
+    
     await api.post('/activity', {
       gameId: route.params.id,
-      isLiked: isLiked.value, // <--- Importante: enviar isLiked
-      // No enviamos isFavorite, así no tocamos tu Top 4
+      isLiked: isLiked.value, // 
+      
     })
   } catch (err) {
-    // Si falla, revertimos
+    
     isLiked.value = !isLiked.value
     console.error("Error dando like:", err)
   }
@@ -310,19 +334,18 @@ const toggleReport = (review) => {
     showReportModal.value = true
 }
 
-// 3. Función para activar/desactivar el corazón
 const toggleFavorite = async () => {
-  // Cambio optimista (cambia la UI inmediatamente antes de que responda el servidor)
+  
   isFavorite.value = !isFavorite.value
 
   try {
-    // Enviamos solo lo necesario, el backend usará COALESCE para mantener el status/rating actual
+    
     await api.post('/activity', {
       gameId: route.params.id,
       isFavorite: isFavorite.value
     })
   } catch (err) {
-    // Si falla, revertimos el cambio visual
+    
     isFavorite.value = !isFavorite.value
     console.error("Error actualizando favorito:", err)
   }
@@ -339,7 +362,6 @@ const submitReport = async (reason) => {
         reason: reason
       })
 
-      // Actualizar la review marcada como reportada
       const review = reviews.value.find(r => r.id_review === selectedReviewId.value)
       if (review) review.is_reported = true
 
@@ -536,28 +558,29 @@ onMounted(() => {
 }
 
 .played.active-status {
-    background: var(--brand-green); 
+    background: var(--brand-green, #10B981); 
     color: white;
 }
-.pending.active-status {
-    background: var(--brand-yellow); 
-    color: black; 
-}
-.abandoned.active-status {
-    background: var(--brand-red); 
-    color: white;
-}
-
 .played:hover:not(.active-status) { 
-    background: var(--brand-green); 
+    background: var(--brand-green, #10B981); 
     color: white; 
 }
-.pending:hover:not(.active-status) { 
-    background: var(--brand-yellow); 
+
+.pending.active-status {
+    background: var(--brand-yellow, #FBBF24); 
     color: black; 
 }
+.pending:hover:not(.active-status) { 
+    background: var(--brand-yellow, #FBBF24); 
+    color: black; 
+}
+
+.abandoned.active-status {
+    background: var(--brand-red, #EF4444); 
+    color: white;
+}
 .abandoned:hover:not(.active-status) { 
-    background: var(--brand-red); 
+    background: var(--brand-red, #EF4444); 
     color: white; 
 }
 
@@ -631,8 +654,6 @@ onMounted(() => {
     min-height: 50px;
 }
 
-/* --- ESTILOS PARA EL EFECTO SPOILER (BLUR Y OVERLAY) --- */
-
 .review-content-wrapper {
     position: relative;
     margin-top: 1rem;
@@ -640,49 +661,44 @@ onMounted(() => {
     overflow: hidden; 
 }
 
-/* Aplica el filtro blur al texto cuando los spoilers están ocultos */
 .review-content-wrapper.has-spoilers-hidden .review-text {
     filter: blur(5px);
     transition: filter 0.3s ease;
     user-select: none; 
 }
 
-/* El overlay */
 .spoiler-overlay {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(45, 45, 45, 0.95); /* Fondo oscuro casi sólido */
+    background-color: rgba(45, 45, 45, 0.95); 
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 5;
 }
 
-/* BOTÓN SPOILER ESTILIZADO */
 .spoiler-btn {
-    background-color: #2d2d2d; /* Fondo oscuro que contraste un poco */
+    background-color: #2d2d2d; 
     color: #ffffff;
     font-size: 0.9rem;
     font-weight: bold;
     text-transform: uppercase;
     letter-spacing: 1px;
     padding: 10px 24px;
-    border: 2px solid #888; /* Contorno gris */
-    border-radius: 50px; /* Borde completamente redondo (pill shape) */
+    border: 2px solid #888; 
+    border-radius: 50px; 
     cursor: pointer;
     transition: all 0.2s ease-in-out;
 }
 
 .spoiler-btn:hover {
-    background-color: #444; /* Un poco más claro al hover */
-    border-color: #fff; /* Borde blanco al hover para resaltar */
+    background-color: #444; 
+    border-color: #fff; 
     transform: scale(1.05);
 }
-
-/* --- ESTILOS PARA BOTONES DE ACCIÓN (LIKE) --- */
 
 .review-actions {
     display: flex;
@@ -758,22 +774,20 @@ onMounted(() => {
   transition: 0.2s;
 }
 
-/* Contenedor para alinear Título y Corazón */
 .activity-header-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  margin-bottom: 1rem; /* Espacio antes de los botones de status */
+  margin-bottom: 1rem; 
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid #e0e0e0; /* Opcional: una línea separadora sutil */
+  border-bottom: 1px solid #e0e0e0; 
 }
 
 .section-title {
-  margin: 0; /* Quitamos margen para que se alinee bien con el botón */
+  margin: 0; 
 }
 
-/* El botón del corazón */
 .fav-btn {
   background: none;
   border: none;
@@ -794,13 +808,12 @@ onMounted(() => {
 .fav-icon {
   width: 28px;
   height: 28px;
-  color: #ccc; /* Color gris cuando está desactivado */
+  color: #ccc; 
   transition: color 0.3s ease, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-/* Estado Activo (Like) */
 .fav-btn.is-active .fav-icon {
-  color: #ff4757; /* Rojo corazón */
+  color: #ff4757; 
   transform: scale(1.1);
 }
 
@@ -810,7 +823,6 @@ onMounted(() => {
   100% { transform: scale(1); }
 }
 
-/* ESTILOS PARA ANIMACIONES */
 .fade-in {
   animation: fadeIn 0.7s ease;
 }
