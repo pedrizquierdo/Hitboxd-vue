@@ -188,8 +188,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router' // Importamos useRouter
+import { ref, onMounted, computed, watch, nextTick } from 'vue' // Agregamos nextTick
+import { useRoute, useRouter } from 'vue-router'
 import api from '@/api/axios.js'
 
 import ReviewModal from '@/components/reviews/reviewModal.vue'
@@ -198,7 +198,7 @@ import ReportModal from '@/components/reviews/reportModal.vue'
 import Footer from '@/components/common/PageFooter.vue'
 import Nav from '@/components/common/Nav.vue'
 
-const router = useRouter() // Inicializamos router
+const router = useRouter()
 const route = useRoute()
 
 const game = ref({})
@@ -208,14 +208,16 @@ const showReviewModal = ref(false)
 const showReportModal = ref(false)
 const isLiked = ref(false)
 const selectedReviewId = ref(null)
-const userStatus = ref(null) 
+const userStatus = ref(null)
+
+// Bandera para evitar que el watcher se dispare al cargar los datos iniciales
+const isLoadingActivity = ref(false)
 
 const currentUserId = Number(localStorage.getItem("user_id"));
 
 const releaseYear = computed(() => {
   const date = game.value?.release_date;
   if (!date) return "N/A";
-  
   const year = new Date(date).getFullYear();
   return isNaN(year) ? "N/A" : year;
 });
@@ -226,56 +228,53 @@ const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString(undefined, options);
 }
 
-// --- FUNCIÓN DE NAVEGACIÓN A PERFIL ---
 const goToUserProfile = (username) => {
-  if (username) {
-    router.push(`/u/${username}`);
+  if (username) router.push(`/u/${username}`);
+}
+
+// --- FUNCIÓN UNIFICADA DE GUARDADO ---
+// Esta función se encarga de enviar cualquier cambio a la API
+const saveActivity = async (payload) => {
+  if (!game.value.id_game) return;
+
+  try {
+    // Combinamos el ID del juego con los datos que queremos cambiar
+    await api.post('/activity', {
+      gameId: game.value.id_game,
+      ...payload 
+    })
+    console.log("Actividad guardada:", payload);
+  } catch (err) {
+    console.error("Error guardando actividad:", err);
   }
 }
 
-// ... (Resto de tus funciones: watchers, status, like, fetchs) ...
-// (Se mantienen igual, solo agrego el imports y la función nueva arriba)
-
-watch(userRating, async (newRating) => {
-  if (!game.value.id_game) return;
-  try {
-    await api.post('/activity', {
-      gameId: game.value.id_game,
-      rating: newRating
-    })
-    console.log("Calificación guardada:", newRating);
-  } catch (err) {
-    console.error("Error guardando la calificación:", err);
+// Watcher mejorado: Solo guarda si NO estamos cargando datos
+watch(userRating, (newRating) => {
+  if (!isLoadingActivity.value) {
+    saveActivity({ rating: newRating })
   }
 })
 
 const setUserStatus = async (status) => {
-  const newStatus = userStatus.value === status ? null : status;
+  const newStatus = userStatus.value === status ? null : status; // Toggle lógica
   userStatus.value = newStatus;
-  if (!game.value.id_game) return;
-
-  try {
-    await api.post('/activity', {
-      gameId: game.value.id_game,
-      status: newStatus
-    })
-    console.log("Estado guardado:", newStatus);
-  } catch (err) {
-    console.error("Error guardando el estado:", err);
-  }
+  
+  // Enviamos status explícitamente (incluso si es null)
+  await saveActivity({ status: newStatus })
 }
 
 const toggleLike = async () => {
+  // Cambio optimista (cambia la UI primero)
+  const previousValue = isLiked.value;
   isLiked.value = !isLiked.value
-  if (!game.value.id_game) return;
 
   try {
-    await api.post('/activity', {
-      gameId: game.value.id_game, 
-      isLiked: isLiked.value
-    })
+    // Enviamos "isLiked" tal cual lo espera tu backend corregido
+    await saveActivity({ isLiked: isLiked.value })
   } catch (err) {
-    isLiked.value = !isLiked.value
+    // Si falla, revertimos el cambio visual
+    isLiked.value = previousValue;
     console.error("Error dando like:", err)
   }
 }
@@ -304,20 +303,28 @@ const fetchReviews = async (gameId) => {
 
 const fetchUserActivity = async (gameId) => {
   try {
+    isLoadingActivity.value = true; // PAUSA EL WATCHER
     const res = await api.get(`activity/check/${gameId}`)
+    
     if (res.data) {
       userStatus.value = res.data.status
-      userRating.value = res.data.rating
-      isLiked.value = Boolean(res.data.is_liked)
+      userRating.value = res.data.rating || 0 // Asegura que sea número
+      isLiked.value = Boolean(res.data.is_liked) // Asegura booleano
     }
+    
+    // Esperamos un ciclo de Vue para soltar el watcher
+    await nextTick();
+    isLoadingActivity.value = false; // REACTIVA EL WATCHER
+
   } catch (err) {
     console.error("Error cargando actividad del usuario:", err)
+    isLoadingActivity.value = false;
   }
 }
 
+// ... (Tus funciones de Reviews y Report se mantienen igual) ...
 const submitReview = async (data) => {
   if (!game.value.id_game) return;
-
   try {
     const payload = {
         id_game: game.value.id_game, 
@@ -325,7 +332,6 @@ const submitReview = async (data) => {
         rating: data.rating,  
         has_spoilers: data.has_spoilers, 
     };
-    
     await api.post('/reviews', payload)
     showReviewModal.value = false
     await fetchReviews(game.value.id_game) 
@@ -334,13 +340,10 @@ const submitReview = async (data) => {
   }
 }
 
-const toggleSpoiler = (review) => {
-    review.showContent = !review.showContent; 
-}
+const toggleSpoiler = (review) => { review.showContent = !review.showContent; }
 
 const toggleReport = (review) => {
     if (review.id_user === currentUserId) return; 
-
     selectedReviewId.value = review.id_review
     showReportModal.value = true
 }
@@ -352,9 +355,7 @@ const closeReportModal = () => {
 
 const submitReport = async (reason) => {
     try {
-      await api.post(`/reviews/${selectedReviewId.value}/report`, {
-        reason: reason
-      })
+      await api.post(`/reviews/${selectedReviewId.value}/report`, { reason: reason })
       const review = reviews.value.find(r => r.id_review === selectedReviewId.value)
       if (review) review.is_reported = true
       closeReportModal()
