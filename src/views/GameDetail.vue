@@ -131,6 +131,20 @@
                 </svg>
                 <span class="like-count">{{ review.likes || 0 }}</span>
               </button>
+
+              <button
+                v-if="review.id_user !== currentUserId"
+                class="report-btn"
+                :class="{ 'reported': review.is_reported }"
+                @click="toggleReport(review)"
+                title="Report this review"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+                  viewBox="0 0 24 24" class="flag-icon">
+                  <path d="M3 3v18h2v-6h4l1 2h7V5h-7l-1-2H3z"/>
+                </svg>
+              </button>
+
             </div>
           </div>
         </div>
@@ -140,6 +154,12 @@
         v-if="showReviewModal"
         @close="showReviewModal = false" 
         @submit="submitReview"
+      />
+
+      <ReportModal 
+        v-if="showReportModal"
+        @close="closeReportModal"
+        @submit="submitReport"
       />
 
     </div> <Footer />
@@ -154,6 +174,7 @@ import api from '@/api/axios.js'
 
 import ReviewModal from '@/components/reviews/reviewModal.vue'
 import StarRating from '@/components/reviews/starRating.vue'
+import ReportModal from '@/components/reviews/reportModal.vue'
 import Footer from '@/components/common/PageFooter.vue'
 import Nav from '@/components/common/Nav.vue'
 
@@ -161,7 +182,11 @@ const game = ref({})
 const reviews = ref([])
 const userRating = ref(0)
 const showReviewModal = ref(false)
+const showReportModal = ref(false)
+const selectedReviewId = ref(null)
 const userStatus = ref(null) 
+
+const currentUserId = Number(localStorage.getItem("user_id"));
 
 const releaseYear = computed(() => {
   const date = game.value?.release_date;
@@ -199,6 +224,7 @@ const fetchReviews = async () => {
     reviews.value = res.data.map(review => ({
       ...review,
       showContent: !review.has_spoilers, 
+      is_reported: review.is_reported || false
     }))
   } catch (err) {
     console.error("Error loading reviews:", err)
@@ -243,6 +269,34 @@ const toggleLike = async (review) => {
         console.error("Error toggling like:", err);
         review.is_liked = previousLikedState;
         review.likes = previousLikesCount;
+    }
+}
+
+const toggleReport = (review) => {
+    if (review.id_user === currentUserId) return; 
+
+    selectedReviewId.value = review.id_review
+    showReportModal.value = true
+}
+
+const closeReportModal = () => {
+    showReportModal.value = false
+    selectedReviewId.value = null
+}
+
+const submitReport = async (reason) => {
+    try {
+      await api.post(`/reviews/${selectedReviewId.value}/report`, {
+        reason: reason
+      })
+
+      // Actualizar la review marcada como reportada
+      const review = reviews.value.find(r => r.id_review === selectedReviewId.value)
+      if (review) review.is_reported = true
+
+      closeReportModal()
+    } catch (err) {
+      console.error("Error sending report:", err)
     }
 }
 
@@ -587,6 +641,7 @@ onMounted(() => {
     margin-top: 1rem;
     padding-top: 0.5rem;
     border-top: 1px solid #e0e0e0;
+    gap: 10px;
 }
 
 .like-btn {
@@ -625,6 +680,32 @@ onMounted(() => {
 .like-count {
     font-weight: 600;
     font-family: sans-serif;
+}
+
+.report-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  margin-left: 10px;
+  padding: 5px 8px;
+  border-radius: 4px;
+  color: #999;
+  transition: 0.2s;
+}
+
+.report-btn:hover {
+  background-color: rgba(0,0,0,0.05);
+  transform: scale(1.1);
+  color: #e63946;
+}
+
+.report-btn.reported {
+  color: #e63946;
+  cursor: default;
+}
+
+.flag-icon {
+  transition: 0.2s;
 }
 
 @keyframes heartPop {
