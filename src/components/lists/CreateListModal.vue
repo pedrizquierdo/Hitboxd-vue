@@ -130,7 +130,7 @@ const removeGame = (idToRemove) => {
 // --- CREAR LISTA ---
 const createList = async () => {
   if (!listName.value.trim()) {
-    alert("The list needs a name")
+    console.log("The list needs a name")
     return
   }
 
@@ -191,7 +191,7 @@ const createList = async () => {
 
   } catch (error) {
     console.error("Error FATAL creando lista:", error)
-    alert("Hubo un error al crear la lista.")
+    console.log("Hubo un error al crear la lista.")
   }
 }
 </script>

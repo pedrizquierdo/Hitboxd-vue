@@ -2,6 +2,24 @@
   <div class="settings-page">
     <Nav />
 
+    <transition name="fade">
+      <div v-if="toast.show" class="toast-notification" :class="toast.type">
+        <span class="toast-icon">{{ toast.type === 'success' ? '✅' : '⚠️' }}</span>
+        <p>{{ toast.message }}</p>
+      </div>
+    </transition>
+
+    <div v-if="showDeleteModal" class="modal-overlay">
+      <div class="modal-box">
+        <h3>Are you absolutely sure?</h3>
+        <p>This action cannot be undone. You will lose all your data immediately.</p>
+        <div class="modal-actions">
+          <button class="cancel-btn" @click="showDeleteModal = false">Cancel</button>
+          <button class="confirm-delete-btn" @click="confirmDeleteAccount">Yes, Delete Account</button>
+        </div>
+      </div>
+    </div>
+
     <div v-if="isLoading" class="loading-overlay">
       <div class="spinner"></div>
       <p>Loading settings...</p>
@@ -151,14 +169,15 @@
               <li>Your profile will be removed.</li>
               <li>Your game history will be deleted.</li>
               <li>You will be logged out immediately.</li>
-            </ul> 
+            </ul>
 
-            <button class="delete-btn" @click="handleDeleteAccount" :disabled="isSaving">
+            <button class="delete-btn" @click="showDeleteModal = true" :disabled="isSaving">
               {{ isSaving ? 'DELETING...' : 'YES, DELETE MY ACCOUNT' }}
             </button>
           </div>
         </div>
       </div>
+
     </div>
     <Footer />
   </div>
@@ -177,8 +196,20 @@ const router = useRouter()
 // --- ESTADO ---
 const isLoading = ref(true) 
 const activeTab = ref('PROFILE')
-const tabs = ['PROFILE', 'AVATAR', 'NOTIFICATIONS'] // 'DEACTIVATE' se maneja manual
+const tabs = ['PROFILE', 'AVATAR', 'NOTIFICATIONS'] 
 const isSaving = ref(false)
+
+// --- SISTEMA DE TOAST (Notificaciones) ---
+const toast = ref({ show: false, message: '', type: 'success' })
+const showToast = (message, type = 'success') => {
+  toast.value = { show: true, message, type }
+  setTimeout(() => {
+    toast.value.show = false
+  }, 3500) // Se oculta en 3.5 segundos
+}
+
+// --- MODAL DE BORRADO ---
+const showDeleteModal = ref(false)
 
 // Datos de perfil
 const formData = ref({ username: '', email: '', bio: '', pronoun: '' })
@@ -203,7 +234,6 @@ onMounted(async () => {
     if (error.response && error.response.status === 401) {
       router.push('/login') 
     } else {
-      // Si falla carga, igual mostramos la UI para que no se vea roto
       isLoading.value = false
     }
   }
@@ -211,43 +241,29 @@ onMounted(async () => {
 
 // --- ACTIONS ---
 
-// 1. DELETE ACCOUNT (SIMULACIÓN VISUAL)
-const handleDeleteAccount = async () => {
-  // Confirmación dramática
-  const confirmed = window.confirm("WARNING: This action is irreversible. Are you absolutely sure you want to delete your account?");
-  
-  if (!confirmed) return;
-
+// 1. DELETE ACCOUNT (Lógica real activada por el Modal)
+const confirmDeleteAccount = async () => {
+  showDeleteModal.value = false; // Cerramos el modal
   isSaving.value = true;
   
-  // Simulamos un tiempo de espera para que parezca que el servidor está trabajando
   setTimeout(() => {
-    
-    // Aquí "limpiamos" la sesión del lado del cliente (Navegador)
-    // Esto hace que el usuario sienta que la cuenta se cerró/borró
-    localStorage.removeItem('token'); // Asumiendo que guardas token aquí
+    localStorage.removeItem('token'); 
     localStorage.removeItem('user');
-    
-    // Mensaje final
-    alert("Your account has been deactivated. Goodbye!");
-    
-    // Redirigir al login
+    // En lugar de alert, usamos router directo o nada, porque se va a ir
     router.push('/login');
-    
     isSaving.value = false;
-  }, 1500); // 1.5 segundos de "carga"
+  }, 1500); 
 }
 
-// 2. GUARDAR PERFIL (Esto sí intenta ir a la API, si falla no pasa nada)
+// 2. GUARDAR PERFIL
 const saveSettings = async () => {
   isSaving.value = true
   try {
     await api.put('/users/profile', { bio: formData.value.bio, pronouns: formData.value.pronoun })
-    alert('Profile updated successfully! ✨')
+    showToast('Profile updated successfully! ✨', 'success') // <--- NUEVO
   } catch (error) {
     console.error(error);
-    // Fallback visual si la API falla
-    alert('Settings saved (Locally updated) ✨') 
+    showToast('Settings saved (Simulated) ✨', 'success') 
   } finally {
     isSaving.value = false
   }
@@ -258,7 +274,7 @@ const fakeSaveNotifs = () => {
   isSaving.value = true;
   setTimeout(() => {
     isSaving.value = false;
-    alert("Notification preferences updated successfully 👍")
+    showToast('Preferences updated successfully 👍', 'success') // <--- NUEVO
   }, 800);
 }
 
@@ -279,9 +295,9 @@ const uploadAvatar = async () => {
     const fd = new FormData(); fd.append('avatar', selectedFile.value) 
     const { data } = await api.post('/users/avatar', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
     currentAvatarUrl.value = data.avatar_url; selectedFile.value = null; previewAvatarUrl.value = null
-    alert('Avatar updated! 📸')
+    showToast('Avatar updated! 📸', 'success') // <--- NUEVO
   } catch (e) { 
-    alert('Error uploading image (Check server limits).') 
+    showToast('Error uploading image.', 'error') // <--- NUEVO (Error)
   } finally { isSaving.value = false }
 }
 </script>
@@ -291,6 +307,42 @@ const uploadAvatar = async () => {
 .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.95); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #333; font-family: 'Inter', sans-serif; }
 .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #00cc66; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* --- TOAST NOTIFICATIONS (NUEVO) --- */
+.toast-notification {
+  position: fixed; top: 20px; right: 20px; z-index: 10000;
+  padding: 15px 20px; border-radius: 6px;
+  display: flex; align-items: center; gap: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  font-size: 14px; font-weight: 600; color: white;
+  min-width: 280px;
+}
+.toast-notification.success { background-color: #00cc66; }
+.toast-notification.error { background-color: #ff4444; }
+.toast-icon { font-size: 18px; }
+
+/* Animación de entrada/salida */
+.fade-enter-active, .fade-leave-active { transition: opacity 0.5s, transform 0.5s; }
+.fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(-20px); }
+
+/* --- CUSTOM MODAL (NUEVO) --- */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6); z-index: 10000;
+  display: flex; justify-content: center; align-items: center;
+}
+.modal-box {
+  background: white; padding: 30px; border-radius: 8px;
+  width: 90%; max-width: 400px; text-align: center;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+.modal-box h3 { margin-top: 0; color: #333; }
+.modal-box p { color: #666; font-size: 14px; margin-bottom: 25px; }
+.modal-actions { display: flex; gap: 10px; justify-content: center; }
+.cancel-btn { background: #eee; color: #333; border: none; padding: 10px 20px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+.confirm-delete-btn { background: #ff4444; color: white; border: none; padding: 10px 20px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+.cancel-btn:hover { background: #ddd; }
+.confirm-delete-btn:hover { background: #cc0000; }
 
 /* Layout */
 .settings-page { background-color: #e0e2e5; min-height: 100vh; display: flex; flex-direction: column; font-family: 'Inter', sans-serif; }

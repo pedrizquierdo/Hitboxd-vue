@@ -5,7 +5,7 @@
     type="button"
   >
     <span v-if="!minimal">🚪 </span> 
-    Cerrar Sesión
+    LOG OUT
   </button>
 </template>
 
@@ -13,7 +13,6 @@
 import { useRouter } from 'vue-router';
 import api from '@/api/axios';
 
-// Recibimos una propiedad para saber si debe verse como texto simple o botón
 defineProps({
   minimal: {
     type: Boolean,
@@ -24,27 +23,29 @@ defineProps({
 const router = useRouter();
 
 const handleLogout = async () => {
-  // 1. Intentar avisar al backend
+  // 1. Try to notify backend
   try {
     await api.post('/auth/logout');
   } catch (error) {
-    console.error("Aviso: El servidor no respondió al logout, forzando cierre local.");
+    console.error("Warning: Server did not respond to logout, forcing local logout.");
   }
 
-  // 2. Limpieza Local
-  const storageKey = import.meta.env.VITE_KEY_STORAGE;
+  // 2. Local Cleanup
+  // Asegúrate que esta variable de entorno exista, si no, usa un string fijo como 'token'
+  const storageKey = import.meta.env.VITE_KEY_STORAGE || 'token';
   
   localStorage.removeItem(storageKey);
   sessionStorage.removeItem(storageKey);
   localStorage.removeItem('user_data'); 
+  localStorage.removeItem('token'); // Por si acaso usas este nombre común también
 
-  // 3. CAMBIO AQUÍ: Redirigir a la Landing Page (Raíz)
-  router.push('/'); 
+  // 3. Redirect to Landing Page
+  router.push('/login'); // O router.push('/') dependiendo de tu ruta pública
 };
 </script>
 
 <style scoped>
-/* Estilo Base (Botón Rojo para Settings) */
+/* Base Style (Red Button) */
 .btn-logout {
   background-color: #FF4444;
   color: white;
@@ -66,7 +67,7 @@ const handleLogout = async () => {
   background-color: #CC0000;
 }
 
-/* Estilo Minimal (Texto plano para el Nav Dropdown) */
+/* Minimal Style (For Nav Dropdowns) */
 .btn-logout.is-minimal {
   background-color: transparent;
   color: #2d2d2d;
