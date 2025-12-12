@@ -4,9 +4,17 @@
       <p>© Hitboxd Limited. Made by <a href="#">fans</a> in Sonora Mexico. Game data from IGDB.</p>
 
       <div class="socials">
-        <span><img src="/assets/Twitter Bird.png" alt="twitter icon" /></span>
-        <span><img src="/assets/Facebook Circled.png" alt="facebook icon" /></span>
-        <span><img src="/assets/Instagram.png" alt="instagram icon" /></span>
+        <a href="https://x.com/HitboxdOfficial" target="_blank" rel="noopener noreferrer">
+          <img src="/assets/Twitter Bird.png" alt="twitter icon" />
+        </a>
+
+        <a href="https://www.facebook.com/profile.php?id=61584755349206&sk=photos" target="_blank" rel="noopener noreferrer">
+          <img src="/assets/Facebook Circled.png" alt="facebook icon" />
+        </a>
+
+        <a href="https://www.instagram.com/hitboxd/" target="_blank" rel="noopener noreferrer">
+          <img src="/assets/Instagram.png" alt="instagram icon" />
+        </a>
       </div>
     </div>
   </footer>
