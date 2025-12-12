@@ -151,7 +151,8 @@ const moderationAction = async (action, reviewId) => {
                   await api.delete(`/reviews/${reviewId}`);
                   alert(`Reseña ${reviewId} eliminada.`);
             } else if (action === 'Aprobar') {
-                  alert(`ACCIÓN SIMULADA: Reseña ${reviewId} Aprobada (Reportes Limpiados).`);
+                        await api.put(`/reviews/${reviewId}/approve`);
+                        alert(`Reseña ${reviewId} Aprobada.`);
             }
 
             await fetchReportedReviews();
@@ -163,7 +164,6 @@ const moderationAction = async (action, reviewId) => {
 };
 
 
-// --- CICLO DE VIDA ---
 onMounted(() => {
   fetchAdminInfo();
   fetchGames();
@@ -172,7 +172,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* --- VARIABLES --- */
 :root {
   --color-bg-light: #f5f5f5;
   --color-panel-dark: #3a3a3a;

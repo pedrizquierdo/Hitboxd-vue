@@ -16,7 +16,7 @@
           <span>{{ option.label }}</span>
         </label>
       </div>
-
+      
       <textarea
         v-if="selectedReason === 'other'"
         class="other-textarea"
