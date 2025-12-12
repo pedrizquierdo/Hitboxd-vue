@@ -47,9 +47,9 @@
 
             <button 
               class="fav-btn" 
-              :class="{ 'is-active': isFavorite }" 
+              :class="{ 'is-active': isLiked }" 
               @click="toggleFavorite"
-              title="Añadir a favoritos"
+              title="Me gusta (like)"
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="fav-icon">
                 <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
@@ -196,7 +196,7 @@ const reviews = ref([])
 const userRating = ref(0)
 const showReviewModal = ref(false)
 const showReportModal = ref(false)
-const isFavorite = ref(false)
+const isLiked = ref(false)
 const selectedReviewId = ref(null)
 const userStatus = ref(null) 
 
@@ -245,7 +245,6 @@ const fetchReviews = async () => {
   }
 }
 
-// 2. Función para cargar el estado del usuario (Status, Rating y Favorito)
 const fetchUserActivity = async () => {
   try {
     // Usamos el endpoint checkStatus que ya tienes en el backend
@@ -256,7 +255,7 @@ const fetchUserActivity = async () => {
       userStatus.value = res.data.status
       userRating.value = res.data.rating
       // Convertimos a booleano por seguridad (0/1 a false/true)
-      isFavorite.value = Boolean(res.data.is_favorite)
+      isLiked.value = Boolean(res.data.is_liked)
     }
   } catch (err) {
     console.error("Error cargando actividad del usuario:", err)
@@ -286,22 +285,22 @@ const toggleSpoiler = (review) => {
     review.showContent = !review.showContent; 
 }
 
-const toggleLike = async (review) => {
-    const previousLikedState = review.is_liked;
-    const previousLikesCount = review.likes || 0;
+const toggleLike = async () => {
+  // Cambio visual inmediato (Optimista)
+  isLiked.value = !isLiked.value
 
-    review.is_liked = !review.is_liked;
-    review.likes = review.is_liked 
-        ? previousLikesCount + 1 
-        : previousLikesCount - 1;
-
-    try {
-        await api.post(`/reviews/${review.id_review}/like`);
-    } catch (err) {
-        console.error("Error toggling like:", err);
-        review.is_liked = previousLikedState;
-        review.likes = previousLikesCount;
-    }
+  try {
+    // Enviamos al backend el campo nuevo
+    await api.post('/activity', {
+      gameId: route.params.id,
+      isLiked: isLiked.value, // <--- Importante: enviar isLiked
+      // No enviamos isFavorite, así no tocamos tu Top 4
+    })
+  } catch (err) {
+    // Si falla, revertimos
+    isLiked.value = !isLiked.value
+    console.error("Error dando like:", err)
+  }
 }
 
 const toggleReport = (review) => {
