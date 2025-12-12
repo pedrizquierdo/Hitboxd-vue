@@ -24,25 +24,22 @@ defineProps({
 const router = useRouter();
 
 const handleLogout = async () => {
-  // 1. Intentar avisar al backend (para borrar cookie HttpOnly)
+  // 1. Intentar avisar al backend
   try {
     await api.post('/auth/logout');
   } catch (error) {
     console.error("Aviso: El servidor no respondió al logout, forzando cierre local.");
   }
 
-  // 2. Limpieza Local (Usando tu variable de entorno)
+  // 2. Limpieza Local
   const storageKey = import.meta.env.VITE_KEY_STORAGE;
   
-  // Limpiamos ambos por seguridad (ya que tu login usa uno u otro según 'Remember me')
   localStorage.removeItem(storageKey);
   sessionStorage.removeItem(storageKey);
-  
-  // Limpiamos cualquier rastro de usuario
   localStorage.removeItem('user_data'); 
 
-  // 3. Redirigir al Login (o al Landing)
-  router.push('/login');
+  // 3. CAMBIO AQUÍ: Redirigir a la Landing Page (Raíz)
+  router.push('/'); 
 };
 </script>
 
@@ -85,6 +82,6 @@ const handleLogout = async () => {
 
 .btn-logout.is-minimal:hover {
   background-color: transparent;
-  color: #00AEEF; /* Tu color cyan de marca */
+  color: #00AEEF;
 }
 </style>
