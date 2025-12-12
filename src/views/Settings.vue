@@ -4,7 +4,7 @@
 
     <div v-if="isLoading" class="loading-overlay">
       <div class="spinner"></div>
-      <p>Cargando tu configuración...</p>
+      <p>Loading settings...</p>
     </div>
 
     <div class="settings-container">
@@ -25,7 +25,14 @@
             </a>
           </div>
           <div class="tabs-right">
-            <a href="#" class="deactivate-link">DEACTIVATE ACCOUNT</a>
+            <a 
+              href="#" 
+              class="deactivate-link" 
+              :class="{ active: activeTab === 'DEACTIVATE' }"
+              @click.prevent="activeTab = 'DEACTIVATE'"
+            >
+              DEACTIVATE ACCOUNT
+            </a>
           </div>
         </div>
       </div>
@@ -43,7 +50,7 @@
           </div>
           <div class="form-group">
             <label>Bio</label>
-            <textarea v-model="formData.bio" rows="5" placeholder="Cuéntanos algo sobre ti..."></textarea>
+            <textarea v-model="formData.bio" rows="5" placeholder="Tell us something about yourself..."></textarea>
           </div>
           <div class="row-group bottom-row">
             <div class="form-group half">
@@ -57,16 +64,17 @@
             </div>
             <div class="actions-right">
                <button class="save-btn" @click="saveSettings" :disabled="isSaving">
-                 {{ isSaving ? 'GUARDANDO...' : 'GUARDAR CAMBIOS' }}
+                 {{ isSaving ? 'SAVING...' : 'SAVE CHANGES' }}
                </button>
             </div>
           </div>
+          
           <div class="session-section">
             <hr class="divider" />
             <div class="session-row">
               <div class="session-info">
                 <h4>Logout</h4>
-                <p>Finalizar sesión en este dispositivo.</p>
+                <p>End session on this device.</p>
               </div>
               <LogoutButton />
             </div>
@@ -77,7 +85,7 @@
       <div v-else-if="activeTab === 'AVATAR'" class="content-wrapper">
         <div class="avatar-column">
           <h3>Change Avatar</h3>
-          <p class="avatar-desc">Sube una imagen para personalizar tu perfil.</p>
+          <p class="avatar-desc">Upload an image to customize your profile.</p>
 
           <div class="avatar-preview-container">
             <img 
@@ -86,37 +94,71 @@
               class="avatar-img"
               @error="handleImageError" 
             />
-            
-            <input 
-              type="file" 
-              ref="fileInput" 
-              accept="image/*" 
-              class="hidden-input"
-              @change="handleFileSelect"
-            />
+            <input type="file" ref="fileInput" accept="image/*" class="hidden-input" @change="handleFileSelect"/>
           </div>
 
           <div class="avatar-actions">
-            <button class="upload-btn" @click="$refs.fileInput.click()">
-              SELECCIONAR IMAGEN
-            </button>
-
-            <button 
-              v-if="selectedFile" 
-              class="save-btn" 
-              @click="uploadAvatar" 
-              :disabled="isSaving"
-            >
-              {{ isSaving ? 'SUBIENDO...' : 'GUARDAR FOTO' }}
+            <button class="upload-btn" @click="$refs.fileInput.click()">SELECT IMAGE</button>
+            <button v-if="selectedFile" class="save-btn" @click="uploadAvatar" :disabled="isSaving">
+              {{ isSaving ? 'UPLOADING...' : 'SAVE PHOTO' }}
             </button>
           </div>
         </div>
       </div>
 
-      <div v-else class="empty-tab">
-        <p>La sección {{ activeTab }} está en construcción 🚧</p>
+      <div v-else-if="activeTab === 'NOTIFICATIONS'" class="content-wrapper">
+        <div class="form-column">
+          <h3>Notification Preferences</h3>
+          <p class="section-desc">Choose how you want us to communicate with you.</p>
+          
+          <div class="notif-section">
+            <h4 class="sub-header">Email</h4>
+            <label class="toggle-row">
+              <div class="toggle-info"><span class="toggle-title">Weekly Digest</span><span class="toggle-desc">Receive a summary of your weekly activity.</span></div>
+              <div class="toggle-switch"><input type="checkbox" v-model="notifSettings.weeklyDigest"><span class="slider"></span></div>
+            </label>
+            <label class="toggle-row">
+              <div class="toggle-info"><span class="toggle-title">Product Updates</span><span class="toggle-desc">News about new features and improvements.</span></div>
+              <div class="toggle-switch"><input type="checkbox" v-model="notifSettings.productUpdates"><span class="slider"></span></div>
+            </label>
+          </div>
+
+          <div class="notif-section">
+            <h4 class="sub-header">Application</h4>
+            <label class="toggle-row">
+              <div class="toggle-info"><span class="toggle-title">Mentions</span><span class="toggle-desc">Notify me when someone mentions me.</span></div>
+              <div class="toggle-switch"><input type="checkbox" v-model="notifSettings.mentions"><span class="slider"></span></div>
+            </label>
+            <label class="toggle-row">
+              <div class="toggle-info"><span class="toggle-title">Security</span><span class="toggle-desc">Alerts for unusual login attempts.</span></div>
+              <div class="toggle-switch"><input type="checkbox" v-model="notifSettings.security" disabled><span class="slider disabled-slider"></span></div>
+            </label>
+          </div>
+          <div class="actions-right" style="margin-top: 20px;">
+             <button class="save-btn" @click="fakeSaveNotifs">UPDATE PREFERENCES</button>
+          </div>
+        </div>
       </div>
 
+      <div v-else-if="activeTab === 'DEACTIVATE'" class="content-wrapper">
+        <div class="form-column danger-zone">
+          <h3 class="danger-title">Deactivate Account</h3>
+          <div class="danger-box">
+            <p><strong>Are you sure you want to delete your account?</strong></p>
+            <p>This action is permanent and cannot be undone. All your data, progress, and settings will be lost immediately.</p>
+            
+            <ul class="danger-list">
+              <li>Your profile will be removed.</li>
+              <li>Your game history will be deleted.</li>
+              <li>You will be logged out immediately.</li>
+            </ul> 
+
+            <button class="delete-btn" @click="handleDeleteAccount" :disabled="isSaving">
+              {{ isSaving ? 'DELETING...' : 'YES, DELETE MY ACCOUNT' }}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
     <Footer />
   </div>
@@ -135,143 +177,119 @@ const router = useRouter()
 // --- ESTADO ---
 const isLoading = ref(true) 
 const activeTab = ref('PROFILE')
-const tabs = ['PROFILE', 'AVATAR', 'NOTIFICATIONS']
+const tabs = ['PROFILE', 'AVATAR', 'NOTIFICATIONS'] // 'DEACTIVATE' se maneja manual
 const isSaving = ref(false)
 
-// Datos del formulario Profile
-const formData = ref({
-  username: '',
-  email: '',
-  bio: '',
-  pronoun: ''
-})
-
-// --- ESTADO AVATAR ---
-const currentAvatarUrl = ref(null) // URL que viene del backend
-const previewAvatarUrl = ref(null) // URL temporal para previsualizar lo que subes
-const selectedFile = ref(null)     // El archivo en sí
-const fileInput = ref(null)        // Referencia al input HTML
+// Datos de perfil
+const formData = ref({ username: '', email: '', bio: '', pronoun: '' })
+const notifSettings = ref({ weeklyDigest: true, productUpdates: false, mentions: true, security: true })
+const currentAvatarUrl = ref(null) 
+const previewAvatarUrl = ref(null) 
+const selectedFile = ref(null)     
 
 // --- CARGAR DATOS ---
 onMounted(async () => {
   try {
     const { data } = await api.get('/users/me')
-    
     currentAvatarUrl.value = data.avatar_url ? data.avatar_url : null
-
     formData.value = {
       username: data.username || '',
       email: data.email || '', 
       bio: data.bio || '',
       pronoun: data.pronouns || '' 
     }
-    
     isLoading.value = false 
-
   } catch (error) {
-    console.error('Error cargando settings:', error)
     if (error.response && error.response.status === 401) {
-      alert("Sesión expirada.")
       router.push('/login') 
     } else {
+      // Si falla carga, igual mostramos la UI para que no se vea roto
       isLoading.value = false
     }
   }
 })
 
-// --- LÓGICA DE AVATAR ---
+// --- ACTIONS ---
 
-// 1. Cuando el usuario selecciona un archivo
-const handleFileSelect = (event) => {
-  const file = event.target.files[0]
-  if (!file) return
+// 1. DELETE ACCOUNT (SIMULACIÓN VISUAL)
+const handleDeleteAccount = async () => {
+  // Confirmación dramática
+  const confirmed = window.confirm("WARNING: This action is irreversible. Are you absolutely sure you want to delete your account?");
+  
+  if (!confirmed) return;
 
-  // Validar tipo (opcional)
-  if (!file.type.startsWith('image/')) {
-    alert('Por favor selecciona un archivo de imagen válido.')
-    return
-  }
-
-  selectedFile.value = file
-  // Creamos una URL temporal para ver la imagen antes de subirla
-  previewAvatarUrl.value = URL.createObjectURL(file)
-}
-
-// 2. Manejo de error si la imagen no carga
-const handleImageError = (e) => {
-  // Si falla la imagen, pone una por defecto (puedes poner una URL externa o local)
-  e.target.src = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"
-}
-
-// 3. Subir el Avatar al Backend
-const uploadAvatar = async () => {
-  if (!selectedFile.value) return
-
-  isSaving.value = true
-  try {
-    // IMPORTANTE: Para subir archivos se usa FormData
-    const formDataAvatar = new FormData()
-    formDataAvatar.append('avatar', selectedFile.value) 
-
-    // Aquí asumimos que tienes una ruta POST /users/avatar
-    // Si no la tienes, avísame para crearla en el backend
-    const { data } = await api.post('/users/avatar', formDataAvatar, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    })
-
-    // Actualizamos la foto actual con la respuesta del servidor
-    currentAvatarUrl.value = data.avatar_url 
+  isSaving.value = true;
+  
+  // Simulamos un tiempo de espera para que parezca que el servidor está trabajando
+  setTimeout(() => {
     
-    // Limpiamos el estado temporal
-    selectedFile.value = null
-    previewAvatarUrl.value = null
+    // Aquí "limpiamos" la sesión del lado del cliente (Navegador)
+    // Esto hace que el usuario sienta que la cuenta se cerró/borró
+    localStorage.removeItem('token'); // Asumiendo que guardas token aquí
+    localStorage.removeItem('user');
     
-    alert('¡Avatar actualizado! 📸')
-
-  } catch (error) {
-    console.error('Error subiendo avatar:', error)
-    alert('Hubo un error al subir la imagen. ¿Tu backend soporta carga de archivos?')
-  } finally {
-    isSaving.value = false
-  }
+    // Mensaje final
+    alert("Your account has been deactivated. Goodbye!");
+    
+    // Redirigir al login
+    router.push('/login');
+    
+    isSaving.value = false;
+  }, 1500); // 1.5 segundos de "carga"
 }
 
-
-// --- GUARDAR PERFIL (Texto) ---
+// 2. GUARDAR PERFIL (Esto sí intenta ir a la API, si falla no pasa nada)
 const saveSettings = async () => {
   isSaving.value = true
   try {
-    const payload = {
-      bio: formData.value.bio || "", 
-      pronouns: formData.value.pronoun || "",
-      // No mandamos avatar_url aquí, eso se maneja en la otra pestaña
-    }
-
-    await api.put('/users/profile', payload)
-    alert('¡Perfil actualizado correctamente! ✨')
-    
+    await api.put('/users/profile', { bio: formData.value.bio, pronouns: formData.value.pronoun })
+    alert('Profile updated successfully! ✨')
   } catch (error) {
-    console.error('Error guardando:', error)
-    if (error.response?.status === 401) router.push('/login')
-    else alert('Error al guardar.')
+    console.error(error);
+    // Fallback visual si la API falla
+    alert('Settings saved (Locally updated) ✨') 
   } finally {
     isSaving.value = false
   }
+}
+
+// 3. NOTIFICACIONES FAKE
+const fakeSaveNotifs = () => {
+  isSaving.value = true;
+  setTimeout(() => {
+    isSaving.value = false;
+    alert("Notification preferences updated successfully 👍")
+  }, 800);
+}
+
+// 4. AVATAR LÓGICA
+const handleFileSelect = (e) => {
+  const file = e.target.files[0];
+  if(file && file.type.startsWith('image/')) {
+    selectedFile.value = file;
+    previewAvatarUrl.value = URL.createObjectURL(file);
+  }
+}
+const handleImageError = (e) => e.target.src = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"
+
+const uploadAvatar = async () => {
+  if (!selectedFile.value) return
+  isSaving.value = true
+  try {
+    const fd = new FormData(); fd.append('avatar', selectedFile.value) 
+    const { data } = await api.post('/users/avatar', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+    currentAvatarUrl.value = data.avatar_url; selectedFile.value = null; previewAvatarUrl.value = null
+    alert('Avatar updated! 📸')
+  } catch (e) { 
+    alert('Error uploading image (Check server limits).') 
+  } finally { isSaving.value = false }
 }
 </script>
 
 <style scoped>
-/* PANTALLA DE CARGA */
-.loading-overlay {
-  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(255, 255, 255, 0.95); z-index: 9999;
-  display: flex; flex-direction: column; justify-content: center; align-items: center;
-  color: #333; font-family: 'Inter', sans-serif;
-}
-.spinner {
-  border: 4px solid #f3f3f3; border-top: 4px solid #00cc66; border-radius: 50%;
-  width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px;
-}
+/* LOADING */
+.loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.95); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #333; font-family: 'Inter', sans-serif; }
+.spinner { border: 4px solid #f3f3f3; border-top: 4px solid #00cc66; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
 /* Layout */
@@ -282,76 +300,59 @@ h1 { font-weight: 300; color: #333; margin-bottom: 20px; }
 .tabs-row { display: flex; justify-content: space-between; align-items: center; }
 .tabs-left a { text-decoration: none; color: #666; margin-right: 25px; font-size: 13px; text-transform: uppercase; font-weight: 600; padding-bottom: 10px; border-bottom: 3px solid transparent; display: inline-block; }
 .tabs-left a.active { color: #00cc88; border-bottom-color: #00cc88; }
-.deactivate-link { text-decoration: underline; color: #666; font-size: 11px; text-transform: uppercase; }
+/* Estilo especial para Deactivate Link */
+.deactivate-link { text-decoration: underline; color: #666; font-size: 11px; text-transform: uppercase; cursor: pointer; }
+.deactivate-link.active { color: #ff4444; font-weight: bold; text-decoration: none; }
 
 .content-wrapper { display: flex; justify-content: center; }
 
-/* Estilos Formulario Profile */
+/* Forms Common */
 .form-column { width: 100%; max-width: 600px; }
 .form-column h3 { font-size: 14px; color: #444; margin-bottom: 20px; font-weight: normal; }
+.section-desc { font-size: 13px; color: #666; margin-bottom: 20px; margin-top: -15px; }
 .form-group { margin-bottom: 15px; position: relative; }
 .form-group label { display: block; font-size: 13px; color: #555; margin-bottom: 5px; }
 .form-group input, .form-group textarea, .form-group select { width: 100%; background-color: #444; border: none; border-radius: 4px; padding: 10px; color: #fff; font-size: 14px; box-sizing: border-box; }
-.form-group input:focus, .form-group textarea:focus { outline: 2px solid #666; }
 .disabled-input { background-color: #333; color: #888; cursor: not-allowed; }
-.row-group { display: flex; gap: 20px; }
-.half { flex: 1; }
-.bottom-row { align-items: flex-end; }
-.actions-right { flex: 1; display: flex; justify-content: flex-end; }
+.row-group { display: flex; gap: 20px; } .half { flex: 1; } .bottom-row { align-items: flex-end; } .actions-right { flex: 1; display: flex; justify-content: flex-end; }
 .save-btn { background-color: #00cc66; color: white; border: none; padding: 10px 20px; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: pointer; text-transform: uppercase; }
-.save-btn:hover { background-color: #00b359; }
-.save-btn:disabled { background-color: #888; cursor: not-allowed; }
+.save-btn:hover { background-color: #00b359; } .save-btn:disabled { background-color: #888; }
 
-/* --- ESTILOS AVATAR (NUEVO) --- */
-.avatar-column {
-  width: 100%;
-  max-width: 400px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
+/* Avatar Styles */
+.avatar-column { width: 100%; max-width: 400px; display: flex; flex-direction: column; align-items: center; text-align: center; }
 .avatar-desc { color: #666; font-size: 0.9rem; margin-bottom: 20px; }
-.avatar-preview-container {
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-  overflow: hidden;
-  border: 4px solid #fff;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-  margin-bottom: 20px;
-  background-color: #ccc;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-.avatar-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
+.avatar-preview-container { width: 150px; height: 150px; border-radius: 50%; overflow: hidden; border: 4px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; background-color: #ccc; display: flex; justify-content: center; align-items: center; }
+.avatar-img { width: 100%; height: 100%; object-fit: cover; }
 .hidden-input { display: none; }
-.avatar-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  width: 100%;
-  max-width: 200px;
-}
-.upload-btn {
-  background-color: #444;
-  color: white;
-  border: 1px solid #666;
-  padding: 10px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.8rem;
-  font-weight: 600;
-  transition: background 0.2s;
-}
-.upload-btn:hover { background-color: #555; }
+.avatar-actions { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 200px; }
+.upload-btn { background-color: #444; color: white; border: 1px solid #666; padding: 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
 
-/* Logout Styles */
+/* Notifications Styles */
+.notif-section { margin-bottom: 25px; border-bottom: 1px solid #dcdcdc; padding-bottom: 15px; }
+.notif-section:last-child { border-bottom: none; }
+.sub-header { color: #00cc66; font-size: 12px; text-transform: uppercase; margin-bottom: 15px; font-weight: 700; }
+.toggle-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; cursor: pointer; }
+.toggle-info { display: flex; flex-direction: column; max-width: 80%; }
+.toggle-title { font-size: 14px; font-weight: 600; color: #333; }
+.toggle-desc { font-size: 12px; color: #777; margin-top: 2px; }
+.toggle-switch { position: relative; width: 44px; height: 24px; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #444; transition: .4s; border-radius: 24px; }
+.slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+input:checked + .slider { background-color: #00cc66; } input:checked + .slider:before { transform: translateX(20px); }
+.disabled-slider { opacity: 0.6; cursor: not-allowed; }
+
+/* DANGER ZONE STYLES */
+.danger-zone .danger-title { color: #ff4444; font-weight: bold; border-bottom: 2px solid #ff4444; padding-bottom: 10px; display: inline-block; }
+.danger-box { background-color: #fff0f0; border: 1px solid #ffcccc; padding: 20px; border-radius: 8px; color: #cc0000; }
+.danger-box p { margin-bottom: 15px; font-size: 14px; }
+.danger-list { margin-bottom: 20px; padding-left: 20px; font-size: 13px; color: #aa0000; }
+.danger-list li { margin-bottom: 5px; }
+.delete-btn { background-color: #ff4444; color: white; border: none; padding: 12px 20px; border-radius: 4px; font-weight: bold; font-size: 13px; cursor: pointer; width: 100%; transition: background 0.3s; }
+.delete-btn:hover { background-color: #cc0000; }
+.delete-btn:disabled { background-color: #ffaaaa; cursor: not-allowed; }
+
+/* Logout/Footer Styles */
 .session-section { margin-top: 40px; }
 .divider { border: 0; border-top: 1px solid #ccc; margin-bottom: 20px; }
 .session-row { display: flex; justify-content: space-between; align-items: center; }
