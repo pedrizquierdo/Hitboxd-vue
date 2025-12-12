@@ -57,27 +57,32 @@
 import { ref } from 'vue'
 import api from '@/api/axios'
 
-const emit = defineEmits(['switch', 'close'])
+defineEmits(['switch', 'close'])
 
 const username = ref('')
 const email = ref('')
 const password = ref('')
 const isLoading = ref(false)
+const errorMessage = ref('')
 
 const register = () => {
   isLoading.value = true
-
+  errorMessage.value = ''
+  
   api.post('auth/register', {
     username: username.value,
     email: email.value,
     password: password.value
   })
   .then(response => {
-    console.log(response);
-    emit('switch');
+    console.log("Registro y Auto-Login exitoso", response.data);
+    const storageKey = import.meta.env.VITE_KEY_STORAGE || 'isAuthenticated';
+    localStorage.setItem(storageKey, 'true');
+    window.location.href = '/tracker';
   })
   .catch(error => {
     console.error(error);
+    errorMessage.value = error.response?.data?.message || "Error al registrarse. Intenta con otro usuario/email.";
   })
   .finally(() => {
     isLoading.value = false;
@@ -86,6 +91,15 @@ const register = () => {
 </script>
 
 <style scoped>
+
+.error-msg {
+  color: #ff4444;
+  font-size: 0.85rem;
+  text-align: center;
+  margin-top: 10px;
+  font-weight: 600;
+}
+
 .register-wrapper {
   width: 100%;
   display: flex;

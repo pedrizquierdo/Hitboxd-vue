@@ -383,7 +383,9 @@ onMounted(async () => {
       try {
         const res = await api.get('/activity/all');
         watchlist.value = res.data;
-      } catch (e) { watchlistError.value = true; }
+      } catch (e) { watchlistError.value = true;
+        console.error("Error watchlist", e);
+       }
 
       try {
         const res = await api.get('/activity/feed');
