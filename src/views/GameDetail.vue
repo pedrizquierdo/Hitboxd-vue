@@ -48,7 +48,7 @@
             <button 
               class="fav-btn" 
               :class="{ 'is-active': isLiked }" 
-              @click="toggleFavorite"
+              @click="toggleLike"
               title="Me gusta (like)"
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="fav-icon">
@@ -582,6 +582,11 @@ onMounted(() => {
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+
+.fav-btn:hover .fav-icon {
+  color: #ff4757;
+  transform: scale(1.1);
 }
 
 .write-review-btn {
