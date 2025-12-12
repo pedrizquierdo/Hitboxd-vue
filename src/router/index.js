@@ -8,6 +8,7 @@ import UserProfile from '@/views/UserProfile.vue'
 import AdminDashboard from '@/views/AdminDashboard.vue'
 import ListDetail from '@/views/ListDetail.vue'
 import ProfileSettings from '@/views/ProfileSettings.vue'
+import PublicProfile from '@/views/PublicProfile.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -18,78 +19,79 @@ const router = createRouter({
       component: LandingPage,
     },
     {
+      path: '/home',
+      name: 'HomeFeed',
+      component: () => import('@/views/HomeFeed.vue'), 
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/game/:slug',
       name: 'GameDetail',
-      component: GameDetail,
+      component: () => import('@/views/GameDetail.vue'),
       props: true,
     },
     {
-      path: '/home',
-      name: 'HomeFeed',
-      component: HomeFeed,
-    },
-      {
       path: '/tracker',
       name: 'TinderComponent',
-      component: TinderPage,
+      component: () => import('@/views/TinderPage.vue'),
     },
     {
       path: '/catalogo',
-      name: 'catalogo',
-      component: Catalogo,
+      name: 'Catalogo',
+      component: () => import('@/views/Catalogo.vue'),
     },
     {
       path: '/profile',
-      name: 'UserProfile',
-      component: UserProfile,
-
+      name: 'MyProfile',
+      component: () => import('@/views/UserProfile.vue'), 
+      meta: { requiresAuth: true }
     },
     {
-      path: '/games',
-      name: 'catalogo',
-      component: Catalogo,
+      path: '/u/:username', 
+      name: 'PublicProfile',
+      component: () => import('@/views/PublicProfile.vue'),
     },
-
     {
       path: '/admin',
       name: 'AdminDashboard',
-      component: AdminDashboard,
+      component: () => import('@/views/AdminDashboard.vue'),
+      meta: { requiresAuth: true } 
     },
-
-        {
+    {
       path: '/lists/:listId',
-     name: 'ListDetail',
-      component: ListDetail,
+      name: 'ListDetail',
+      component: () => import('@/views/ListDetail.vue'),
       props: true,
     },
     {
       path: '/settings',
       name: 'Settings',
-      component: ProfileSettings,
+      component: () => import('@/views/ProfileSettings.vue'),
+      meta: { requiresAuth: true }
+    },
+    { 
+      path: '/:pathMatch(.*)*', 
+      redirect: '/' 
     }
   ],
 })
 
-// --- GUARDIANES DE NAVEGACIÓN (Se mantienen las correcciones anteriores) ---
 
 router.beforeEach((to, from, next) => {
-  const isAuthenticated = localStorage.getItem(import.meta.env.VITE_KEY_STORAGE)
-  // Nota: Aquí podrías añadir la lógica para 'requiresAdmin'
 
-  // 1. Redirigir si falta autenticación en ruta protegida
+  const storageKey = import.meta.env.VITE_KEY_STORAGE || 'isAuthenticated';
+  const isAuthenticated = localStorage.getItem(storageKey) || sessionStorage.getItem(storageKey);
+
   if (to.meta.requiresAuth && !isAuthenticated) {
-    next({ name: 'Auth' })
-    return
-  }
+    next({ name: 'Auth' });
+  } 
+  else if (to.name === 'Auth' && isAuthenticated) {
+    next({ name: 'HomeFeed' });
+  } 
 
-  // 2. Redirigir si está autenticado y trata de ir a Auth
-  if (to.name === 'Auth' && isAuthenticated) {
-    next({ name: 'HomeFeed' })
-    return
+  else {
+    next();
   }
-
-  // 3. Continuar la navegación normal
-  next()
 })
 
 export default router
