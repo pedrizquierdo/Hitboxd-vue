@@ -71,6 +71,18 @@
                </button>
             </div>
           </div>
+
+          <div class="session-section">
+            <hr class="divider" />
+            <div class="session-row">
+              <div class="session-info">
+                <h4>Cerrar Sesión</h4>
+                <p>Finalizar sesión en este dispositivo</p>
+              </div>
+              <LogoutButton />
+            </div>
+          </div>
+
         </div>
 
         <div class="favorites-column">
@@ -120,6 +132,8 @@ import Nav from '@/components/common/Nav.vue'
 import Footer from '@/components/common/PageFooter.vue'
 import GameSearchModal from '@/components/lists/GameSearchModal.vue' 
 import api from '@/api/axios.js'
+// 2. IMPORTACIÓN DEL COMPONENTE
+import LogoutButton from '@/components/auth/LogoutButton.vue';
 
 const router = useRouter()
 
@@ -272,6 +286,32 @@ h1 { font-weight: 300; color: #333; margin-bottom: 20px; }
 .fav-game-poster img { width: 100%; height: 100%; object-fit: cover; }
 .remove-fav { position: absolute; top: -8px; right: -8px; background: #ff4444; color: white; border: 2px solid #e0e2e5; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-weight: bold; line-height: 1; display: flex; justify-content: center; align-items: center; z-index: 10; }
 .drag-hint { font-size: 11px; color: #888; margin-top: 15px; text-align: center; }
+
+/* 3. ESTILOS DE LA SECCIÓN DE SESIÓN */
+.session-section {
+  margin-top: 40px;
+}
+.divider {
+  border: 0;
+  border-top: 1px solid #ccc; /* Combina con el header-section */
+  margin-bottom: 20px;
+}
+.session-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.session-info h4 {
+  font-size: 13px;
+  color: #444;
+  margin: 0 0 4px 0;
+  text-transform: uppercase;
+}
+.session-info p {
+  font-size: 12px;
+  color: #666;
+  margin: 0;
+}
 
 @media (max-width: 768px) { .content-grid { grid-template-columns: 1fr; gap: 30px; } .tabs-row { flex-direction: column; align-items: flex-start; gap: 10px; } .fav-grid { justify-content: space-between; } .fav-slot { flex: 1; height: auto; aspect-ratio: 2/3; } }
 </style>

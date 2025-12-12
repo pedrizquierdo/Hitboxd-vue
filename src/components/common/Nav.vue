@@ -1,4 +1,4 @@
-  <template>
+<template>
   <nav class="navbar">
     <div class="navbar-inner">
       <HitboxdLogo />
@@ -10,6 +10,11 @@
           <ul v-if="profileMenu" class="dropdown-menu">
             <li><router-link to="/profile" @click="toggleProfileMenu">My Profile</router-link></li>
             <li><router-link to="/settings" @click="toggleProfileMenu">Settings</router-link></li>
+            
+            <li class="separator"></li>
+            <li>
+              <LogoutButton :minimal="true" @click="toggleProfileMenu" />
+            </li>
           </ul>
         </li>
         <li><router-link to="/games">CATALOG</router-link></li>
@@ -73,6 +78,9 @@
         <li><router-link to="/games" @click="toggleMobileMenu">CATALOGO</router-link></li>
         <li><router-link to="/lists" @click="toggleMobileMenu">LISTS</router-link></li>
         <li><router-link to="/members" @click="toggleMobileMenu">MEMBERS</router-link></li>
+        <li class="mobile-logout-container">
+           <LogoutButton :minimal="true" />
+        </li>
       </ul>
     </div>
 
@@ -90,6 +98,8 @@ import { useRouter } from "vue-router";
 import HitboxdLogo from "@/components/common/Logo.vue";
 import api from '@/api/axios';
 import ReviewModal from '@/components/reviews/reviewModal.vue';
+// 3. IMPORTAMOS EL COMPONENTE
+import LogoutButton from '@/components/auth/LogoutButton.vue';
 
 const router = useRouter();
 
@@ -111,7 +121,7 @@ const handleReviewSubmit = (reviewData) => {
 };
 
 
-// --- Filtro de Búsqueda Dinámico (Corregido para mostrar todos los juegos por defecto) ---
+// --- Filtro de Búsqueda Dinámico ---
 const filteredGames = computed(() => {
     if (!searchQuery.value) {
         return allGames.value;
@@ -200,14 +210,6 @@ const toggleSearch = () => {
   padding: 0 2rem;
 }
 
-/* Nuevo estilo para que el router-link no rompa la disposición del logo */
-.logo-link {
-    display: flex;
-    align-items: center;
-    text-decoration: none; /* Asegura que no tenga subrayado */
-}
-
-
 /* Links, Dropdown y Auth Buttons */
 .nav-links {
   display: flex;
@@ -245,6 +247,15 @@ const toggleSearch = () => {
 .dropdown-menu li:hover {
   background: #f3f4f6;
 }
+
+/* 4. ESTILOS EXTRA PARA EL LOGOUT EN DROPDOWN */
+.separator {
+  border-top: 1px solid #eee;
+  margin: 4px 0;
+  padding: 0 !important;
+  height: 0;
+}
+
 .nav-right {
   display: flex;
   align-items: center;
@@ -390,6 +401,12 @@ const toggleSearch = () => {
 }
 .mobile-links li a:hover {
   background-color: #e5e7eb;
+}
+
+/* Ajuste para el botón de logout en móvil */
+.mobile-logout-container {
+  padding: 10px 2rem;
+  border-bottom: 1px solid #e0e0e0;
 }
 
 @media (max-width: 850px) {
