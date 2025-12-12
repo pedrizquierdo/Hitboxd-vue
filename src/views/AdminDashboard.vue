@@ -2,60 +2,56 @@
 <Nav />
    <div class="page-wrapper">
     <div class="bg-texture"></div> <div class="admin-dashboard-wrapper">
-        <h1 class="main-title">Panel de Moderación</h1>
+        <h1 class="main-title">Moderation Panel</h1>
 
         <section class="stats-grid">
-            <div class="stat-card">
-                <span class="stat-number">12345</span>
-                <span class="stat-label">Usuarios (Estimado)</span>
-            </div>
             <div class="stat-card stat-card-active">
                 <span class="stat-number">{{ totalGamesCount }}</span>
-                <span class="stat-label">Juegos en Caché (Mínimo)</span>
+                <span class="stat-label">Cached games</span>
             </div>
             <div class="stat-card stat-card-alert">
                 <span class="stat-number">{{ reportedReviews.length }}</span>
-                <span class="stat-label">Denuncias Pendientes</span>
+                <span class="stat-label">Pending Complaints</span>
             </div>
             <div class="stat-card">
                 <span class="stat-number">{{ adminInfo.id_user ? adminInfo.id_user : 'N/A' }}</span>
-                <span class="stat-label">ID Admin Logueado</span>
+                <span class="stat-label">ID Admin Logged in</span>
             </div>
         </section>
 
         <section class="admin-panels-grid">
 
             <div class="panel catalog-management-panel full-width-panel">
-                <h2>Catálogo de Juegos (Trending)</h2>
+                <h2>Games Catalog (Trending)</h2>
                 <div class="data-table">
                     <div class="table-header">
                         <span>ID</span>
-                        <span>Título</span>
-                        <span>Desarrollador</span>
-                        <span>Acción</span>
+                        <span>Title</span>
+                        <span>Developer</span>
+                        <span>Action</span>
                     </div>
-                    <div v-if="games.length === 0" class="loading-state">Cargando juegos o sin resultados...</div>
+                    <div v-if="games.length === 0" class="loading-state">Loading games or no results...</div>
 
                     <div v-for="game in games.slice(0, 10)" :key="game.id_game" class="table-row">
                         <span>{{ game.id_game }}</span>
                         <span>{{ game.title }}</span>
                         <span>{{ game.developer || 'N/A' }}</span>
-                        <button @click="viewGame(game.slug)" class="btn-action view">Ver</button>
+                        <button @click="viewGame(game.id_game)" class="btn-action view">View</button>
                     </div>
                 </div>
             </div>
 
             <div class="panel moderation-reviews-panel">
-                <h2>Moderación de Reseñas (Denunciadas)</h2>
+                <h2>Review Moderation (Reported)</h2>
                 <div class="data-table">
                     <div class="table-header reviews-header-columns">
                         <span>ID</span>
-                        <span>Juego</span>
-                        <span>Usuario</span>
+                        <span>Game</span>
+                        <span>User</span>
                         <span># Rep.</span>
-                        <span>Acción</span>
+                        <span>Action</span>
                     </div>
-                    <div v-if="reportedReviews.length === 0" class="loading-state">Cargando reseñas o No hay reseñas pendientes de moderación.</div>
+                    <div v-if="reportedReviews.length === 0" class="loading-state">Loading reviews or No reviews pending moderation.</div>
 
                     <div v-for="review in reportedReviews" :key="review.id_review" class="table-row reviews-row-columns">
                         <span>{{ review.id_review }}</span>
@@ -64,8 +60,8 @@
                         <span :title="review.all_reasons">{{ review.report_count }}</span>
                         <div class="action-buttons">
                             <button @click="viewReview(review)" class="btn-action view">Ver</button>
-                            <button @click="moderationAction('Eliminar', review.id_review)" class="btn-action delete">Eliminar</button>
-                            <button @click="moderationAction('Aprobar', review.id_review)" class="btn-action approve">Aprobar</button>
+                            <button @click="moderationAction('Eliminar', review.id_review)" class="btn-action delete">Delete</button>
+                            <button @click="moderationAction('Aprobar', review.id_review)" class="btn-action approve">Aprove</button>
                         </div>
                     </div>
                 </div>
@@ -227,7 +223,7 @@ onMounted(() => {
   max-width: 1200px;
   margin: 0 auto 40px;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 20px;
 }
 
@@ -370,16 +366,16 @@ onMounted(() => {
 
 .btn-action.view {
   background-color: var(--color-btn-view);
-  color : white;
+  color : rgb(27,172,254)
 }
 
 .btn-action.delete {
   background-color: var(--color-btn-delete);
-  color: white;
+  color: rgb(254,70,77)
 }
 .btn-action.approve {
    background-color: var(--color-btn-approve);
-      color: white;
+      color:  rgb(19,221,123)
 }
 
 
