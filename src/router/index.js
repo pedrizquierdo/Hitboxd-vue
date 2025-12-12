@@ -7,7 +7,7 @@ import Catalogo from '@/views/Catalogo.vue'
 import UserProfile from '@/views/UserProfile.vue'
 import AdminDashboard from '@/views/AdminDashboard.vue'
 import ListDetail from '@/views/ListDetail.vue'
-import Settings from '@/views/Settings.vue'
+import ProfileSettings from '@/views/ProfileSettings.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -65,7 +65,7 @@ const router = createRouter({
     {
       path: '/settings',
       name: 'Settings',
-      component: Settings,
+      component: ProfileSettings,
     }
   ],
 })
