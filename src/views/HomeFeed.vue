@@ -21,32 +21,33 @@
             <span class="line"></span>
           </div>
 
-          <div class="carousel-wrapper">
-            <button class="nav-btn prev" @click="scrollList(friendsScroll, 'left')">
-              <i class="fas fa-chevron-left">&lt;</i>
-            </button>
+          <div class="carousel-wrapper" v-if="friendsActivity.length > 0">
+            <button class="nav-btn prev prev-friends"><i class="fas fa-chevron-left">&lt;</i></button>
+            <button class="nav-btn next next-friends"><i class="fas fa-chevron-right">&gt;</i></button>
             
             <div class="fade-left"></div>
             
-            <div v-if="friendsActivity.length > 0" class="horizontal-scroll" ref="friendsScroll">
-              <ActivityCard 
-                v-for="(act, index) in friendsActivity" 
-                :key="index" 
-                :activity="act"
-                class="scroll-item"
-              />
-            </div>
-            
-             <div v-else class="empty-state">
-                <p>It's quiet here...</p>
-             </div>
+            <swiper
+              :modules="modules"
+              :free-mode="true"
+              :slides-per-view="'auto'"
+              :space-between="20"
+              :loop="true"
+              :breakpoints="swiperBreakpoints"
+              :navigation="{ prevEl: '.prev-friends', nextEl: '.next-friends' }"
+              class="my-swiper"
+            >
+              <swiper-slide v-for="(act, index) in friendsActivity" :key="index" class="swiper-item">
+                <ActivityCard :activity="act" />
+              </swiper-slide>
+            </swiper>
 
             <div class="fade-right"></div>
-            
-            <button class="nav-btn next" @click="scrollList(friendsScroll, 'right')">
-              <i class="fas fa-chevron-right">&gt;</i>
-            </button>
           </div>
+          
+           <div v-else class="empty-state">
+              <p>It's quiet here...</p>
+           </div>
         </section>
 
         <section class="game-section">
@@ -56,15 +57,25 @@
           </div>
           
           <div class="carousel-wrapper">
-            <button class="nav-btn prev" @click="scrollList(newGamesScroll, 'left')">&lt;</button>
+            <button class="nav-btn prev prev-new">&lt;</button>
+            <button class="nav-btn next next-new">&gt;</button>
             <div class="fade-left"></div>
             
-            <div class="horizontal-scroll" ref="newGamesScroll">
-              <GameCard v-for="game in newGames" :key="game.igdb_id" :game="game" class="scroll-item" />
-            </div>
+            <swiper
+              :modules="modules"
+              :loop="true"
+              :slides-per-view="'auto'"
+              :breakpoints="swiperBreakpoints"
+              :navigation="{ prevEl: '.prev-new', nextEl: '.next-new' }"
+              :free-mode="true"
+              class="my-swiper"
+            >
+              <swiper-slide v-for="game in newGames" :key="game.igdb_id" class="swiper-item">
+                <GameCard :game="game" />
+              </swiper-slide>
+            </swiper>
             
             <div class="fade-right"></div>
-            <button class="nav-btn next" @click="scrollList(newGamesScroll, 'right')">&gt;</button>
           </div>
         </section>
 
@@ -75,15 +86,25 @@
           </div>
           
           <div class="carousel-wrapper">
-            <button class="nav-btn prev" @click="scrollList(popularScroll, 'left')">&lt;</button>
+             <button class="nav-btn prev prev-pop">&lt;</button>
+            <button class="nav-btn next next-pop">&gt;</button>
             <div class="fade-left"></div>
             
-            <div class="horizontal-scroll" ref="popularScroll">
-              <GameCard v-for="game in popularGames" :key="game.igdb_id" :game="game" class="scroll-item" />
-            </div>
+            <swiper
+              :modules="modules"
+              :free-mode="true"
+              :slides-per-view="'auto'"
+              :loop="true"
+              :breakpoints="swiperBreakpoints"
+              :navigation="{ prevEl: '.prev-pop', nextEl: '.next-pop' }"
+              class="my-swiper"
+            >
+              <swiper-slide v-for="game in popularGames" :key="game.igdb_id" class="swiper-item">
+                <GameCard :game="game" />
+              </swiper-slide>
+            </swiper>
             
             <div class="fade-right"></div>
-            <button class="nav-btn next" @click="scrollList(popularScroll, 'right')">&gt;</button>
           </div>
         </section>
 
@@ -100,25 +121,24 @@ import Nav from '@/components/common/Nav.vue';
 import Footer from '@/components/common/PageFooter.vue';
 import GameCard from '@/components/common/GameCard.vue';
 import ActivityCard from '@/components/activity/ActivityCard.vue';
+import { Swiper, SwiperSlide } from 'swiper/vue';
+import { Navigation, FreeMode } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/free-mode';
 
 const loading = ref(true);
 const userName = ref('Player');
 const newGames = ref([]);
 const popularGames = ref([]);
 const friendsActivity = ref([]);
-const friendsScroll = ref(null);
-const newGamesScroll = ref(null);
-const popularScroll = ref(null);
-const scrollList = (elementRef, direction) => {
-  if (!elementRef) return;
-  
-  const scrollAmount = 300;
-  const target = direction === 'left' ? -scrollAmount : scrollAmount;
-  
-  elementRef.scrollBy({
-    left: target,
-    behavior: 'smooth'
-  });
+const modules = [Navigation, FreeMode];
+
+const swiperBreakpoints = {
+  320: { slidesPerView: 2.2, spaceBetween: 15 }, 
+  640: { slidesPerView: 3.5, spaceBetween: 15 },
+  768: { slidesPerView: 4.5, spaceBetween: 20 },
+  1024: { slidesPerView: 5.5, spaceBetween: 20 }, 
 };
 
 const fetchData = async () => {
@@ -229,11 +249,31 @@ h3 {
   width: 100%;
 }
 
+.my-swiper {
+  padding: 10px 0 20px 0; 
+  z-index: 0;
+  cursor: default 
+}
+
+.swiper-item {
+  height: auto;
+  display: flex;
+  justify-content: center;
+}
+
+.swiper-item > * {
+  width: 100%;
+}
+
+:deep(.swiper-wrapper) {
+  transition-timing-function: linear; 
+}
+
 .nav-btn {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  z-index: 10;
+  z-index: 20;
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid #ddd;
   border-radius: 50%;
@@ -262,6 +302,7 @@ h3 {
   height: 95%; 
   z-index: 5;
   pointer-events: none; 
+  z-index: 10;
 }
 
 .fade-left {
