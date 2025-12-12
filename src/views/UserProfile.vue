@@ -4,7 +4,7 @@
 
     <div v-if="isLoading" class="loading-container">
       <div class="spinner"></div>
-      <p>Cargando perfil...</p>
+      <p>Loading profile...</p>
     </div>
 
     <div v-else class="profile-container">
@@ -19,14 +19,14 @@
           <span v-if="pronouns" class="pronouns-badge">{{ pronouns }}</span>
           <p v-if="bio" class="bio-text">{{ bio }}</p>
 
-                    <button
+          <button
             v-if="isAdmin"
             @click="goToAdminPanel"
             class="admin-profile-btn"
           >
             ⚙️ Panel Admin
           </button>
-                  </div>
+        </div>
 
         <div class="profile-stats">
           <div class="stat-block">
@@ -40,7 +40,7 @@
           </div>
           <div class="divider"></div>
           <div class="stat-block">
-            <span class="stat-number">0</span>
+            <span class="stat-number">{{ following_count || 0 }}</span>
             <span class="stat-label">Following</span>
           </div>
         </div>
@@ -93,14 +93,22 @@
         <h2 class="section-title">FRIENDS ACTIVITY FEED</h2>
         <div v-if="activityFeed.length > 0" class="activity-list">
           <div v-for="(act, index) in activityFeed" :key="index" class="activity-card">
-            <div class="activity-icon">🎮</div>
+            
+            <div class="activity-icon" :class="act.status">
+                {{ getStatusIcon(act.status) }}
+            </div>
+            
             <div class="activity-content">
-              <p>
-                <strong>User {{ act.id_user }}</strong>
-                {{ act.status }}
-                <strong>{{ getGameTitle(act.id_game) }}</strong>
+              <p class="activity-text">
+                <strong class="user-link">
+                    {{ act.username || `User #${act.id_user}` }}
+                </strong>
+                
+                <span class="status-text"> {{ getStatusLabel(act.status) }} </span>
+                
+                <strong class="game-link">{{ getGameTitle(act.id_game) }}</strong>
               </p>
-              <small>{{ formatDate(act.created_at) }}</small>
+              <small class="activity-date">{{ formatDate(act.created_at) }}</small>
             </div>
           </div>
         </div>
@@ -108,7 +116,8 @@
       </section>
 
       <section v-show="activeTab === 'GAMES'" class="section">
-         <h2 class="section-title">GAMELIST</h2> <div v-if="watchlistError" class="error-box">
+         <h2 class="section-title">GAMELIST</h2> 
+         <div v-if="watchlistError" class="error-box">
             <p>⚠️ <strong>Server Error:</strong> Unable to load gamelist.</p>
          </div>
 
@@ -184,20 +193,20 @@
         <h2 class="section-title">DIARY LOG</h2>
         <div v-if="reviews.length > 0" class="diary-list">
            <div v-for="entry in reviews" :key="entry.id_review" class="diary-entry">
-              <div class="diary-date">
+             <div class="diary-date">
                  <span class="day">{{ new Date(entry.created_at).getDate() }}</span>
                  <span class="month">{{ new Date(entry.created_at).toLocaleString('default', { month: 'short' }) }}</span>
                  <span class="year">{{ new Date(entry.created_at).getFullYear() }}</span>
-              </div>
-              <div class="diary-poster">
+             </div>
+             <div class="diary-poster">
                  <div class="mini-poster-placeholder">🎮</div>
-              </div>
-              <div class="diary-info">
+             </div>
+             <div class="diary-info">
                  <span class="diary-game-title">{{ getGameTitle(entry.id_game) }}</span>
                  <div class="diary-rating">
                     <span v-for="n in 5" :key="n" :class="{ 'star-filled': n <= entry.rating, 'star-empty': n > entry.rating }">★</span>
                  </div>
-              </div>
+             </div>
            </div>
         </div>
         <p v-else class="section-text">Diary is empty. Write a review to add an entry!</p>
@@ -243,8 +252,6 @@ const avatar = ref("")
 const bio = ref("")
 const pronouns = ref("")
 const currentUserId = ref(null)
-
-// ESTADO AÑADIDO: Para controlar la visibilidad del botón Admin
 const isAdmin = ref(false)
 
 // Datos de Contenido
@@ -258,12 +265,10 @@ const followers_count = ref(0);
 const following_count = ref(0);
 const games_count = ref(0);
 
-// COMPUTED: Filtramos los juegos que tienen is_favorite = true para la pestaña LIKES
 const likedGames = computed(() => {
   return watchlist.value.filter(game => game.is_favorite || game.is_liked);
 })
 
-// UI States
 const activeTab = ref("PROFILE")
 const tabs = ["PROFILE", "ACTIVITY", "GAMES", "REVIEWS", "LISTS", "NETWORK", "DIARY", "LIKES"]
 const isModalOpen = ref(false)
@@ -271,7 +276,34 @@ const isModalOpen = ref(false)
 const openModal = () => { isModalOpen.value = true }
 const closeModal = () => { isModalOpen.value = false }
 
-// --- Helpers ---
+// --- TRADUCTOR DE ACTIVIDAD (NUEVO) ---
+const getStatusLabel = (status) => {
+    const map = {
+        'plan_to_play': 'plans to play',
+        'played': 'played',
+        'completed': 'completed',
+        'abandoned': 'abandoned',
+        'dropped': 'dropped',
+        'playing': 'is currently playing',
+        'wishlist': 'added to wishlist'
+    };
+    return map[status] || status; // Si no encuentra, pone el original
+}
+
+const getStatusIcon = (status) => {
+    const map = {
+        'plan_to_play': '📅',
+        'played': '✅',
+        'completed': '🏆',
+        'abandoned': '🗑️',
+        'dropped': '🗑️',
+        'playing': '🕹️',
+        'wishlist': '🎁'
+    };
+    return map[status] || '📝';
+}
+
+// --- Helpers Generales ---
 const getCoverUrl = (url) => {
   if (!url) return 'https://placehold.co/150x220?text=No+Cover';
   return url.replace('t_thumb', 't_cover_big');
@@ -287,34 +319,29 @@ const getGameTitle = (gameId) => {
   if (gamesCache.value[gameId]) {
     return gamesCache.value[gameId].title || gamesCache.value[gameId].name;
   }
-  return `Game ID: ${gameId}...`;
+  return `Game...`;
 }
 
 const editList = (list) => {
     const listId = list.id_list || list.id;
-    if (listId) {
-        router.push({ name: 'ListDetail', params: { listId: listId } });
-    }
+    if (listId) router.push({ name: 'ListDetail', params: { listId: listId } });
 };
 
-// FUNCIÓN AÑADIDA: Redirige al panel de administración
 const goToAdminPanel = () => {
-    if (isAdmin.value) {
-        // Usa el nombre de la ruta que definiste en router/index.js: 'AdminDashboard'
-        router.push({ name: 'AdminDashboard' });
-    }
+    if (isAdmin.value) router.push({ name: 'AdminDashboard' });
 };
 
 const handleListCreated = (newListData) => {
   userLists.value.unshift(newListData);
 }
 
-// Cargar nombres de juegos para el cache
+// --- LOGICA DE CARGA DE JUEGOS ---
 const enrichDataWithGameInfo = async () => {
+  // Solo buscamos JUEGOS, ya no usuarios porque no tienes la API
   const gameIdsToFetch = new Set();
+
   reviews.value.forEach(r => { if(r.id_game) gameIdsToFetch.add(r.id_game) });
   activityFeed.value.forEach(a => { if(a.id_game) gameIdsToFetch.add(a.id_game) });
-  // También enriquecer likes si vienen de watchlist pero no tienen titulo
   watchlist.value.forEach(g => { if(g.id_game) gameIdsToFetch.add(g.id_game) });
 
   const promises = Array.from(gameIdsToFetch).map(async (id) => {
@@ -334,7 +361,6 @@ onMounted(async () => {
   try {
     isLoading.value = true;
 
-    // 1. Obtener Usuario
     const { data: userData } = await api.get("/users/me");
 
     currentUserId.value = userData.id_user || userData.id;
@@ -346,51 +372,34 @@ onMounted(async () => {
     following_count.value = userData.following_count || 0;
     games_count.value = userData.games_count || 0;
 
-    // LÓGICA AÑADIDA: Verificar si el usuario es administrador
-    // Asumimos que el campo que indica el rol es 'role' y el valor es 'admin'
-    if (userData.role && userData.role === 'admin') {
-        isAdmin.value = true;
-    }
+    if (userData.role && userData.role === 'admin') isAdmin.value = true;
 
     if (currentUserId.value) {
-      // 2. Cargar datos en paralelo (con manejo de errores individual)
-
-      // REVIEWS (Para la pestaña REVIEWS y DIARY)
       try {
         const res = await api.get(`/reviews/user/${currentUserId.value}`);
-        reviews.value = res.data.sort((a,b) => new Date(b.created_at) - new Date(a.created_at)); // Ordenar por fecha
+        reviews.value = res.data.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
       } catch (e) { console.error("Error reviews", e); }
 
-      // WATCHLIST (Para GAMES y LIKES)
       try {
         const res = await api.get('/activity/all');
         watchlist.value = res.data;
-      } catch (e) {
-        console.error("Error watchlist (500)", e);
-        watchlistError.value = true;
-      }
+      } catch (e) { watchlistError.value = true; }
 
-      // FEED (Para ACTIVITY)
       try {
         const res = await api.get('/activity/feed');
         activityFeed.value = res.data;
       } catch (e) { console.error("Error feed", e); }
 
-      // LISTAS
       try {
         const res = await api.get(`/lists/user/${currentUserId.value}`);
         userLists.value = res.data;
       } catch (e) { console.error("Error listas", e); }
 
-      // Cargar Nombres
       await enrichDataWithGameInfo();
     }
 
   } catch (error) {
-    if (error.response && error.response.status === 401) {
-       // Si el token expira o es inválido, redirige a login
-       router.push("/login");
-    }
+    if (error.response && error.response.status === 401) router.push("/login");
   } finally {
     isLoading.value = false;
   }
@@ -399,7 +408,6 @@ onMounted(async () => {
 
 <style scoped>
 /* GENERAL */
-/* ... (el resto de los estilos generales) ... */
 .profile-page { display: flex; flex-direction: column; min-height: 100vh; background-color: #f8f9fa; font-family: 'Inter', sans-serif; }
 .profile-container { width: 90%; max-width: 1100px; margin: 40px auto; flex: 1; }
 .loading-container { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 50vh; color: #666; }
@@ -410,14 +418,7 @@ onMounted(async () => {
 .profile-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
 .profile-avatar { width: 110px; height: 110px; border-radius: 50%; overflow: hidden; border: 5px solid #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.1); background: #000; flex-shrink: 0; z-index: 2; }
 .avatar-img { width: 100%; height: 100%; object-fit: cover; }
-.profile-info {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    margin-left: -350px;
-    /* Ajuste para dar espacio al botón */
-    padding-bottom: 10px;
-}
+.profile-info { display: flex; flex-direction: column; justify-content: center; margin-left: -350px; padding-bottom: 10px; }
 .username { font-size: 32px; margin: 0; color: #333; font-weight: 700; }
 .pronouns-badge { display: inline-block; background-color: #e0e0e0; color: #666; font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 4px; margin-top: 4px; margin-bottom: 8px; width: fit-content; }
 .bio-text { color: #666; font-size: 14px; margin-top: 5px; max-width: 400px;}
@@ -427,30 +428,11 @@ onMounted(async () => {
 .stat-label { font-size: 11px; text-transform: uppercase; color: #888; letter-spacing: 0.5px; }
 .divider { width: 1px; height: 30px; background: #eee; }
 
-/* ESTILO AÑADIDO: Botón de Administrador en el perfil */
-.admin-profile-btn {
-    align-self: flex-start;
-    margin-top: 15px;
-    background: transparent;
-    color: #cc0066; /* Un color distintivo para admin */
-    border: 1px solid #cc0066;
-    padding: 8px 16px;
-    border-radius: 25px;
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    transition: background 0.2s, color 0.2s;
-}
-
-.admin-profile-btn:hover {
-    background: #cc0066;
-    color: white;
-}
-/* FIN ESTILO AÑADIDO */
+/* Botón Admin */
+.admin-profile-btn { align-self: flex-start; margin-top: 15px; background: transparent; color: #cc0066; border: 1px solid #cc0066; padding: 8px 16px; border-radius: 25px; cursor: pointer; font-size: 13px; font-weight: 600; letter-spacing: 0.5px; transition: background 0.2s, color 0.2s; }
+.admin-profile-btn:hover { background: #cc0066; color: white; }
 
 /* TABS */
-/* ... (el resto de los estilos) ... */
 .profile-tabs { display: flex; align-items: center; gap: 25px; border-bottom: 1px solid #e0e0e0; margin-top: 20px; padding-bottom: 0; overflow-x: auto; }
 .profile-tabs a { text-decoration: none; font-size: 13px; color: #666; font-weight: 600; padding-bottom: 15px; border-bottom: 3px solid transparent; transition: all 0.2s; white-space: nowrap; }
 .profile-tabs a:hover { color: #333; }
@@ -460,10 +442,29 @@ onMounted(async () => {
 .section { margin-top: 40px; }
 .section-title { font-size: 13px; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; color: #999; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;}
 .section-text { font-size: 14px; color: #666; }
-.error-text { color: #888; font-style: italic; font-size: 13px; }
 .error-box { padding: 20px; background: #fff0f0; border: 1px solid #ffcccc; border-radius: 6px; color: #d8000c; text-align: center; margin-bottom: 20px;}
 
-/* GAMES GRID (Usado en Profile, Games y Likes) */
+/* ACTIVITY FEED STYLES (MEJORADO) */
+.activity-list { display: flex; flex-direction: column; gap: 15px; }
+.activity-card { background: #fff; padding: 15px; border: 1px solid #eee; border-radius: 8px; display: flex; gap: 15px; align-items: center; transition: box-shadow 0.2s; }
+.activity-card:hover { box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+
+.activity-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 20px; background: #f0f0f0; flex-shrink: 0; }
+/* Colores por estado */
+.activity-icon.plan_to_play { background: #e3f2fd; color: #2196f3; }
+.activity-icon.played { background: #e8f5e9; color: #4caf50; }
+.activity-icon.completed { background: #fff3e0; color: #ff9800; }
+.activity-icon.abandoned { background: #ffebee; color: #f44336; }
+
+.activity-content { flex: 1; }
+.activity-text { margin: 0; font-size: 14px; color: #444; line-height: 1.4; }
+.user-link { color: #333; font-weight: 700; cursor: pointer; }
+.status-text { color: #666; font-style: normal; margin: 0 4px; }
+.game-link { color: #333; font-weight: 700; cursor: pointer; }
+.game-link:hover, .user-link:hover { text-decoration: underline; color: #00cc66; }
+.activity-date { color: #999; font-size: 11px; margin-top: 4px; display: block; }
+
+/* GAMES & LIKES GRID */
 .fav-games-grid, .games-grid-layout { display: flex; gap: 15px; flex-wrap: wrap; }
 .game-poster-card { width: 120px; height: 180px; background: #ddd; border-radius: 6px; overflow: hidden; position: relative; transition: transform 0.2s; cursor: pointer; }
 .game-poster-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
@@ -472,7 +473,7 @@ onMounted(async () => {
 .game-poster-card:hover .game-title-hover { opacity: 1; }
 .heart-icon { position: absolute; top: 5px; right: 5px; font-size: 14px; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
 
-/* REVIEWS & MINI REVIEWS */
+/* REVIEWS & MINI */
 .reviews-list { display: flex; flex-direction: column; gap: 20px; }
 .review-card-full { background: white; padding: 20px; border-radius: 8px; border: 1px solid #eee; }
 .review-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
@@ -489,12 +490,7 @@ onMounted(async () => {
 .stars { color: #00cc66; font-weight: bold; }
 .review-content { font-size: 13px; color: #555; margin: 0; font-style: italic;}
 
-/* ACTIVITY FEED */
-.activity-list { display: flex; flex-direction: column; gap: 10px; }
-.activity-card { background: #fff; padding: 10px; border: 1px solid #eee; border-radius: 4px; font-size: 13px; display: flex; gap: 10px; align-items: center;}
-.activity-icon { background: #f0f0f0; width: 30px; height: 30px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 16px; }
-
-/* DIARY (Log Cronológico) */
+/* DIARY */
 .diary-list { border-top: 1px solid #eee; }
 .diary-entry { display: flex; padding: 15px 0; border-bottom: 1px solid #eee; align-items: center; gap: 20px; }
 .diary-date { display: flex; flex-direction: column; align-items: center; min-width: 50px; color: #666; }
