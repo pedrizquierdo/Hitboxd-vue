@@ -1,68 +1,115 @@
 <template>
   <div class="page-wrapper">
+    <div><Nav /></div>
     <div class="catalog-container">
-      <div class="bg-texture"></div>
-      <div class="catalog-header">
-        <h1>GAME LIBRARY</h1>
+      <div class="catalog-header-actions">
+        <button class="search-btn" @click="toggleSearch">
+          <svg v-if="!showSearchInput" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <svg v-else width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+        <input 
+          v-if="showSearchInput"
+          v-model="searchQuery"
+          type="text" 
+          placeholder="Search game in library..." 
+          class="catalog-search-input fade-in"
+          ref="searchInputRef"
+        />
       </div>
       <div v-if="loading" class="loading-state">
         <div class="spinner"></div>
         <p>Loading library...</p>
       </div>
-      <div v-else class="library-content fade-in">
-        <section class="game-section">
-          <h3 class="section-title">POPULAR GAMES THIS WEEK</h3>
-          <div class="carousel-wrapper">
-            <button class="nav-btn left" @click="scrollRow('trending', -1)">&#8249;</button>
-            <div class="carousel-track" id="trending">
-              <div class="carousel-item" v-for="game in trendingGames" :key="game.id_game">
+      <div v-else class="library-content fade-in">       
+        <div v-if="searchQuery" class="search-results-container">
+           <h3 class="section-title">SEARCH RESULTS ({{ filteredGames.length }})</h3>          
+           <div v-if="filteredGames.length > 0" class="results-grid">
+             <div class="grid-item" v-for="game in filteredGames" :key="game.id_game">
                 <GameCard :game="game" />
+             </div>
+           </div>           
+           <div v-else class="no-results">
+              <p>No games found for "{{ searchQuery }}"</p>
+           </div>
+        </div>
+        <div v-else class="default-view">
+          <section class="game-section">
+            <h3 class="section-title">POPULAR GAMES THIS WEEK</h3>
+            <div class="carousel-wrapper">
+              <button class="nav-btn left" @click="scrollRow('trending', -1)">&#8249;</button>
+              <div class="carousel-track" id="trending">
+                <div class="carousel-item" v-for="game in trendingGames" :key="game.id_game">
+                  <GameCard :game="game" />
+                </div>
               </div>
+              <button class="nav-btn right" @click="scrollRow('trending', 1)">&#8250;</button>
             </div>
-            <button class="nav-btn right" @click="scrollRow('trending', 1)">&#8250;</button>
-          </div>
-        </section>
-        <section class="game-section">
-          <h3 class="section-title">TOP RATED</h3>
-          <div class="carousel-wrapper">
-            <button class="nav-btn left" @click="scrollRow('top', -1)">&#8249;</button>
-            <div class="carousel-track" id="top">
-               <div class="carousel-item" v-for="game in topGames" :key="game.id_game">
-                <GameCard :game="game" />
+          </section>
+          <section class="game-section">
+            <h3 class="section-title">TOP RATED</h3>
+            <div class="carousel-wrapper">
+              <button class="nav-btn left" @click="scrollRow('top', -1)">&#8249;</button>
+              <div class="carousel-track" id="top">
+                 <div class="carousel-item" v-for="game in topGames" :key="game.id_game">
+                  <GameCard :game="game" />
+                </div>
               </div>
+              <button class="nav-btn right" @click="scrollRow('top', 1)">&#8250;</button>
             </div>
-            <button class="nav-btn right" @click="scrollRow('top', 1)">&#8250;</button>
-          </div>
-        </section>
-        <section class="game-section">
-          <h3 class="section-title">NEW RELEASES</h3>
-          <div class="carousel-wrapper">
-             <button class="nav-btn left" @click="scrollRow('new', -1)">&#8249;</button>
-            <div class="carousel-track" id="new">
-               <div class="carousel-item" v-for="game in newGames" :key="game.id_game">
-                <GameCard :game="game" />
+          </section>
+          <section class="game-section">
+            <h3 class="section-title">NEW RELEASES</h3>
+            <div class="carousel-wrapper">
+               <button class="nav-btn left" @click="scrollRow('new', -1)">&#8249;</button>
+              <div class="carousel-track" id="new">
+                 <div class="carousel-item" v-for="game in newGames" :key="game.id_game">
+                  <GameCard :game="game" />
+                </div>
               </div>
+               <button class="nav-btn right" @click="scrollRow('new', 1)">&#8250;</button>
             </div>
-             <button class="nav-btn right" @click="scrollRow('new', 1)">&#8250;</button>
-          </div>
-        </section>
-      </div>
+          </section>
+        </div> </div>
     </div>
     <Footer />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed, nextTick } from 'vue';
 import api from '@/api/axios';
 import Footer from '@/components/common/PageFooter.vue';
 import GameCard from '@/components/common/GameCard.vue';
-import Logo from '@/components/common/Logo.vue';
+import Nav from '@/components/common/Nav.vue';
 
 const loading = ref(true);
+const allGames = ref([]);
 const trendingGames = ref([]);
 const topGames = ref([]);
 const newGames = ref([]);
+
+
+const showSearchInput = ref(false);
+const searchQuery = ref('');
+const searchInputRef = ref(null);
+
+const filteredGames = computed(() => {
+  if (!searchQuery.value) return [];
+  const query = searchQuery.value.toLowerCase();
+  return allGames.value.filter(game => 
+    game.title.toLowerCase().includes(query)
+  );
+});
+
+const toggleSearch = async () => {
+  showSearchInput.value = !showSearchInput.value;
+  if (!showSearchInput.value) {
+    searchQuery.value = ''; // Limpiar si cerramos
+  } else {
+    await nextTick();
+    if(searchInputRef.value) searchInputRef.value.focus();
+  }
+};
 
 const scrollRow = (id, direction) => {
   const container = document.getElementById(id);
@@ -75,9 +122,11 @@ const scrollRow = (id, direction) => {
 const fetchGames = async () => {
   try {
     const res = await api.get('/games/trending?limit=90');
-    trendingGames.value = res.data.slice(0, 30);
-    topGames.value = res.data.slice(30, 60);
-    newGames.value = res.data.slice(60, 90);
+    const newRes = await api.get('/games/new?limit=90');
+    allGames.value = res.data; 
+    trendingGames.value = res.data.slice(0, 45);
+    topGames.value = res.data.slice(45, 90);
+    newGames.value = newRes.data.slice(0, 90);
   } catch (error) {
     console.error("Error fetching games:", error);
   } finally {
@@ -97,7 +146,6 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
 }
-
 .catalog-container {
   width: 100%;
   max-width: 1280px;
@@ -107,19 +155,55 @@ onMounted(() => {
   position: relative;
   overflow-x: hidden; 
 }
-
-.bg-texture {
-  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-  background-image: url('/assets/bg-texture.jpg');
-  background-size: 400px; opacity: 0.1; z-index: -1;
+.catalog-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+  height: 40px;
 }
-
-.catalog-header h1 {
-  font-family: 'Courier Prime', monospace;
-  font-size: 2.5rem;
+.search-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #555;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s;
+  padding: 0;
+}
+.search-btn:hover {
+  color: var(--brand-cyan, #00AEEF);
+}
+.catalog-search-input {
+  flex: 1;
+  max-width: 400px;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+  outline: none;
+}
+.catalog-search-input:focus {
+  border-color: var(--brand-cyan, #00AEEF);
+}
+.search-results-container {
+  margin-top: 20px;
+}
+.results-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: flex-start;
+}
+.grid-item {
+  width: 180px;
+}
+.no-results {
   text-align: center;
-  margin-bottom: 2rem;
-  margin-top: 1rem;
+  margin-top: 40px;
+  font-size: 1.2rem;
+  color: #666;
 }
 
 .game-section {
@@ -199,7 +283,7 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
-  .carousel-item {
+  .carousel-item, .grid-item {
     min-width: 100px; 
     width: 100px; 
   }
@@ -210,6 +294,10 @@ onMounted(() => {
   }
   .section-title {
     font-size: 1.2rem;
+  }
+  .results-grid {
+      justify-content: center;
+      gap: 10px;
   }
 }
 
