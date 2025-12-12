@@ -8,7 +8,7 @@
     </div>
 
     <div v-else class="profile-container">
-      
+
       <div class="profile-header">
         <div class="profile-avatar">
           <img :src="avatar || 'https://placehold.co/150'" class="avatar-img" />
@@ -18,7 +18,15 @@
           <h1 class="username">{{ username }}</h1>
           <span v-if="pronouns" class="pronouns-badge">{{ pronouns }}</span>
           <p v-if="bio" class="bio-text">{{ bio }}</p>
-        </div>
+
+                    <button
+            v-if="isAdmin"
+            @click="goToAdminPanel"
+            class="admin-profile-btn"
+          >
+            ⚙️ Panel Admin
+          </button>
+                  </div>
 
         <div class="profile-stats">
           <div class="stat-block">
@@ -39,7 +47,7 @@
       </div>
 
       <nav class="profile-tabs">
-        <a 
+        <a
           v-for="tab in tabs"
           :key="tab"
           href="#"
@@ -52,11 +60,11 @@
 
       <section v-show="activeTab === 'PROFILE'" class="section">
         <h2 class="section-title">FAVORITE GAMES</h2>
-        
+
         <div v-if="likedGames.length > 0" class="fav-games-grid">
-          <div 
-            v-for="game in likedGames.slice(0, 4)" 
-            :key="game.id_game" 
+          <div
+            v-for="game in likedGames.slice(0, 4)"
+            :key="game.id_game"
             class="game-poster-card"
           >
             <img :src="getCoverUrl(game.cover_url)" alt="Game Cover" />
@@ -88,8 +96,8 @@
             <div class="activity-icon">🎮</div>
             <div class="activity-content">
               <p>
-                <strong>User {{ act.id_user }}</strong> 
-                {{ act.status }} 
+                <strong>User {{ act.id_user }}</strong>
+                {{ act.status }}
                 <strong>{{ getGameTitle(act.id_game) }}</strong>
               </p>
               <small>{{ formatDate(act.created_at) }}</small>
@@ -140,14 +148,14 @@
         </div>
 
         <div v-if="userLists.length > 0" class="lists-grid">
-          <div 
-            v-for="list in userLists" 
-            :key="list.id_list || list.id" 
+          <div
+            v-for="list in userLists"
+            :key="list.id_list || list.id"
             class="list-card"
-            @click="editList(list)" 
+            @click="editList(list)"
           >
             <div class="list-card-content">
-              <h3>{{ list.title || list.name }}</h3> 
+              <h3>{{ list.title || list.name }}</h3>
               <p class="list-desc">{{ list.description || 'Sin descripción' }}</p>
             </div>
             <div class="list-card-footer">
@@ -156,7 +164,7 @@
             </div>
           </div>
         </div>
-        
+
         <div v-else class="empty-state">
           <p class="section-text">YOU HAVEN'T CREATED ANY LISTS YET.</p>
           <button class="start-list-btn" @click="openModal">
@@ -207,14 +215,14 @@
          <p v-else class="section-text">You haven't liked any games yet.</p>
       </section>
 
-    </div> 
-    
-    <CreateListModal 
-      :open="isModalOpen" 
+    </div>
+
+    <CreateListModal
+      :open="isModalOpen"
       @close="closeModal"
       @created="handleListCreated"
     />
-    
+
     <Footer />
   </div>
 </template>
@@ -224,8 +232,8 @@ import { ref, onMounted, computed } from "vue"
 import { useRouter } from "vue-router"
 import Nav from "@/components/common/Nav.vue"
 import Footer from "@/components/common/PageFooter.vue"
-import CreateListModal from "@/components/lists/CreateListModal.vue" 
-import api from "@/api/axios.js" 
+import CreateListModal from "@/components/lists/CreateListModal.vue"
+import api from "@/api/axios.js"
 
 const router = useRouter()
 const isLoading = ref(true)
@@ -236,13 +244,16 @@ const bio = ref("")
 const pronouns = ref("")
 const currentUserId = ref(null)
 
+// ESTADO AÑADIDO: Para controlar la visibilidad del botón Admin
+const isAdmin = ref(false)
+
 // Datos de Contenido
 const watchlist = ref([])
 const watchlistError = ref(false)
-const reviews = ref([])     
-const activityFeed = ref([]) 
-const userLists = ref([])   
-const gamesCache = ref({}) 
+const reviews = ref([])
+const activityFeed = ref([])
+const userLists = ref([])
+const gamesCache = ref({})
 const followers_count = ref(0);
 const following_count = ref(0);
 const games_count = ref(0);
@@ -274,7 +285,7 @@ const formatDate = (dateString) => {
 const getGameTitle = (gameId) => {
   if (!gameId) return 'Unknown Game';
   if (gamesCache.value[gameId]) {
-    return gamesCache.value[gameId].title || gamesCache.value[gameId].name; 
+    return gamesCache.value[gameId].title || gamesCache.value[gameId].name;
   }
   return `Game ID: ${gameId}...`;
 }
@@ -283,6 +294,14 @@ const editList = (list) => {
     const listId = list.id_list || list.id;
     if (listId) {
         router.push({ name: 'ListDetail', params: { listId: listId } });
+    }
+};
+
+// FUNCIÓN AÑADIDA: Redirige al panel de administración
+const goToAdminPanel = () => {
+    if (isAdmin.value) {
+        // Usa el nombre de la ruta que definiste en router/index.js: 'AdminDashboard'
+        router.push({ name: 'AdminDashboard' });
     }
 };
 
@@ -302,7 +321,7 @@ const enrichDataWithGameInfo = async () => {
       if (gamesCache.value[id]) return;
       try {
           const { data } = await api.get(`/games/${id}`);
-          gamesCache.value[id] = data; 
+          gamesCache.value[id] = data;
       } catch (error) {
           console.error(`Error fetching game ${id}:`, error);
       }
@@ -314,10 +333,10 @@ const enrichDataWithGameInfo = async () => {
 onMounted(async () => {
   try {
     isLoading.value = true;
-    
+
     // 1. Obtener Usuario
     const { data: userData } = await api.get("/users/me");
-    
+
     currentUserId.value = userData.id_user || userData.id;
     username.value = userData.username;
     avatar.value = userData.avatar_url;
@@ -326,10 +345,16 @@ onMounted(async () => {
     followers_count.value = userData.followers_count || 0;
     following_count.value = userData.following_count || 0;
     games_count.value = userData.games_count || 0;
-    
+
+    // LÓGICA AÑADIDA: Verificar si el usuario es administrador
+    // Asumimos que el campo que indica el rol es 'role' y el valor es 'admin'
+    if (userData.role && userData.role === 'admin') {
+        isAdmin.value = true;
+    }
+
     if (currentUserId.value) {
       // 2. Cargar datos en paralelo (con manejo de errores individual)
-      
+
       // REVIEWS (Para la pestaña REVIEWS y DIARY)
       try {
         const res = await api.get(`/reviews/user/${currentUserId.value}`);
@@ -338,11 +363,11 @@ onMounted(async () => {
 
       // WATCHLIST (Para GAMES y LIKES)
       try {
-        const res = await api.get('/activity/all'); 
+        const res = await api.get('/activity/all');
         watchlist.value = res.data;
-      } catch (e) { 
+      } catch (e) {
         console.error("Error watchlist (500)", e);
-        watchlistError.value = true; 
+        watchlistError.value = true;
       }
 
       // FEED (Para ACTIVITY)
@@ -354,25 +379,27 @@ onMounted(async () => {
       // LISTAS
       try {
         const res = await api.get(`/lists/user/${currentUserId.value}`);
-        userLists.value = res.data; 
+        userLists.value = res.data;
       } catch (e) { console.error("Error listas", e); }
 
       // Cargar Nombres
       await enrichDataWithGameInfo();
     }
-    
+
   } catch (error) {
     if (error.response && error.response.status === 401) {
+       // Si el token expira o es inválido, redirige a login
        router.push("/login");
     }
   } finally {
-    isLoading.value = false; 
+    isLoading.value = false;
   }
 })
 </script>
 
 <style scoped>
 /* GENERAL */
+/* ... (el resto de los estilos generales) ... */
 .profile-page { display: flex; flex-direction: column; min-height: 100vh; background-color: #f8f9fa; font-family: 'Inter', sans-serif; }
 .profile-container { width: 90%; max-width: 1100px; margin: 40px auto; flex: 1; }
 .loading-container { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 50vh; color: #666; }
@@ -383,7 +410,14 @@ onMounted(async () => {
 .profile-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
 .profile-avatar { width: 110px; height: 110px; border-radius: 50%; overflow: hidden; border: 5px solid #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.1); background: #000; flex-shrink: 0; z-index: 2; }
 .avatar-img { width: 100%; height: 100%; object-fit: cover; }
-.profile-info { display: flex; flex-direction: column; justify-content: center; margin-left: -350px; }
+.profile-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin-left: -350px;
+    /* Ajuste para dar espacio al botón */
+    padding-bottom: 10px;
+}
 .username { font-size: 32px; margin: 0; color: #333; font-weight: 700; }
 .pronouns-badge { display: inline-block; background-color: #e0e0e0; color: #666; font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 4px; margin-top: 4px; margin-bottom: 8px; width: fit-content; }
 .bio-text { color: #666; font-size: 14px; margin-top: 5px; max-width: 400px;}
@@ -393,7 +427,30 @@ onMounted(async () => {
 .stat-label { font-size: 11px; text-transform: uppercase; color: #888; letter-spacing: 0.5px; }
 .divider { width: 1px; height: 30px; background: #eee; }
 
+/* ESTILO AÑADIDO: Botón de Administrador en el perfil */
+.admin-profile-btn {
+    align-self: flex-start;
+    margin-top: 15px;
+    background: transparent;
+    color: #cc0066; /* Un color distintivo para admin */
+    border: 1px solid #cc0066;
+    padding: 8px 16px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    transition: background 0.2s, color 0.2s;
+}
+
+.admin-profile-btn:hover {
+    background: #cc0066;
+    color: white;
+}
+/* FIN ESTILO AÑADIDO */
+
 /* TABS */
+/* ... (el resto de los estilos) ... */
 .profile-tabs { display: flex; align-items: center; gap: 25px; border-bottom: 1px solid #e0e0e0; margin-top: 20px; padding-bottom: 0; overflow-x: auto; }
 .profile-tabs a { text-decoration: none; font-size: 13px; color: #666; font-weight: 600; padding-bottom: 15px; border-bottom: 3px solid transparent; transition: all 0.2s; white-space: nowrap; }
 .profile-tabs a:hover { color: #333; }
