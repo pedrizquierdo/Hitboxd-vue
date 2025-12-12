@@ -55,6 +55,7 @@
         </div>
       </div>
 
+      <!-- TAB PROFILE -->
       <div v-if="activeTab === 'PROFILE'" class="content-wrapper">
         <div class="form-column">
           <h3>Profile</h3>
@@ -81,7 +82,7 @@
               </select>
             </div>
             <div class="actions-right">
-               <button class="save-btn" @click="saveSettings" :disabled="isSaving">
+               <button class="save-btn" @click="saveProfile" :disabled="isSaving">
                  {{ isSaving ? 'SAVING...' : 'SAVE CHANGES' }}
                </button>
             </div>
@@ -100,25 +101,46 @@
         </div>
       </div>
 
+      <!-- TAB AVATAR (CORREGIDO: URL & PIXEL ART) -->
       <div v-else-if="activeTab === 'AVATAR'" class="content-wrapper">
         <div class="avatar-column">
           <h3>Change Avatar</h3>
-          <p class="avatar-desc">Upload an image to customize your profile.</p>
+          <p class="avatar-desc">Choose a pixel art style or paste an image URL.</p>
 
+          <!-- Previsualización -->
           <div class="avatar-preview-container">
+            <!-- Mostramos lo que hay en el input (preview) o lo que ya tiene guardado -->
             <img 
-              :src="previewAvatarUrl || currentAvatarUrl || '/assets/default-avatar.png'" 
+              :src="avatarForm.url || currentAvatarUrl || '/assets/default-avatar.png'" 
               alt="Avatar Preview" 
               class="avatar-img"
               @error="handleImageError" 
             />
-            <input type="file" ref="fileInput" accept="image/*" class="hidden-input" @change="handleFileSelect"/>
           </div>
 
           <div class="avatar-actions">
-            <button class="upload-btn" @click="$refs.fileInput.click()">SELECT IMAGE</button>
-            <button v-if="selectedFile" class="save-btn" @click="uploadAvatar" :disabled="isSaving">
-              {{ isSaving ? 'UPLOADING...' : 'SAVE PHOTO' }}
+            <!-- Botón Mágico: Randomize -->
+            <button class="random-btn" @click="generateRandomAvatar">
+              🎲 RANDOM PIXEL ART
+            </button>
+
+            <div class="divider-text">or paste URL</div>
+
+            <!-- Input de URL Manual -->
+            <input 
+              type="text" 
+              v-model="avatarForm.url" 
+              placeholder="https://imgur.com/..." 
+              class="url-input"
+            />
+
+            <!-- Guardar -->
+            <button 
+              class="save-btn avatar-save" 
+              @click="saveAvatar" 
+              :disabled="isSaving"
+            >
+              {{ isSaving ? 'SAVING...' : 'SAVE NEW AVATAR' }}
             </button>
           </div>
         </div>
@@ -199,13 +221,13 @@ const activeTab = ref('PROFILE')
 const tabs = ['PROFILE', 'AVATAR', 'NOTIFICATIONS'] 
 const isSaving = ref(false)
 
-// --- SISTEMA DE TOAST (Notificaciones) ---
+// --- SISTEMA DE TOAST ---
 const toast = ref({ show: false, message: '', type: 'success' })
 const showToast = (message, type = 'success') => {
   toast.value = { show: true, message, type }
   setTimeout(() => {
     toast.value.show = false
-  }, 3500) // Se oculta en 3.5 segundos
+  }, 3500)
 }
 
 // --- MODAL DE BORRADO ---
@@ -214,25 +236,33 @@ const showDeleteModal = ref(false)
 // Datos de perfil
 const formData = ref({ username: '', email: '', bio: '', pronoun: '' })
 const notifSettings = ref({ weeklyDigest: true, productUpdates: false, mentions: true, security: true })
+
+// --- ESTADO AVATAR (Simplificado para URL) ---
 const currentAvatarUrl = ref(null) 
-const previewAvatarUrl = ref(null) 
-const selectedFile = ref(null)     
+const avatarForm = ref({ url: '' }) 
 
 // --- CARGAR DATOS ---
 onMounted(async () => {
   try {
     const { data } = await api.get('/users/me')
-    currentAvatarUrl.value = data.avatar_url ? data.avatar_url : null
+    
+    currentAvatarUrl.value = data.avatar_url
+    // Inicializamos el input con la URL actual para que el usuario la vea/edite
+    avatarForm.value.url = data.avatar_url || ''
+
     formData.value = {
       username: data.username || '',
       email: data.email || '', 
       bio: data.bio || '',
       pronoun: data.pronouns || '' 
     }
+    
     isLoading.value = false 
+
   } catch (error) {
+    console.error('Error cargando settings:', error)
     if (error.response && error.response.status === 401) {
-      router.push('/login') 
+      router.push('/') 
     } else {
       isLoading.value = false
     }
@@ -241,29 +271,41 @@ onMounted(async () => {
 
 // --- ACTIONS ---
 
-// 1. DELETE ACCOUNT (Lógica real activada por el Modal)
+// 1. DELETE ACCOUNT
 const confirmDeleteAccount = async () => {
-  showDeleteModal.value = false; // Cerramos el modal
+  showDeleteModal.value = false;
   isSaving.value = true;
   
-  setTimeout(() => {
-    localStorage.removeItem('token'); 
-    localStorage.removeItem('user');
-    // En lugar de alert, usamos router directo o nada, porque se va a ir
-    router.push('/login');
-    isSaving.value = false;
-  }, 1500); 
+  try {
+      // Llamada real para desactivar/borrar cuenta si tienes el endpoint
+      await api.put('/users/softdelete'); 
+      
+      localStorage.removeItem('token'); 
+      localStorage.removeItem(import.meta.env.VITE_KEY_STORAGE || 'isAuthenticated');
+      router.push('/');
+  } catch (error) {
+      showToast('Error deleting account', error);
+  } finally {
+      isSaving.value = false;
+  }
 }
 
-// 2. GUARDAR PERFIL
-const saveSettings = async () => {
+// 2. GUARDAR PERFIL (Texto)
+const saveProfile = async () => {
   isSaving.value = true
   try {
-    await api.put('/users/profile', { bio: formData.value.bio, pronouns: formData.value.pronoun })
-    showToast('Profile updated successfully! ✨', 'success') // <--- NUEVO
+    const payload = {
+      bio: formData.value.bio || "", 
+      pronouns: formData.value.pronoun || "",
+    }
+
+    await api.put('/users/profile', payload)
+    showToast('Profile updated successfully! ✨', 'success')
+    
   } catch (error) {
-    console.error(error);
-    showToast('Settings saved (Simulated) ✨', 'success') 
+    console.error('Error guardando:', error)
+    if (error.response?.status === 401) router.push('/')
+    else showToast('Error saving profile.', 'error')
   } finally {
     isSaving.value = false
   }
@@ -274,31 +316,46 @@ const fakeSaveNotifs = () => {
   isSaving.value = true;
   setTimeout(() => {
     isSaving.value = false;
-    showToast('Preferences updated successfully 👍', 'success') // <--- NUEVO
+    showToast('Preferences updated successfully 👍', 'success')
   }, 800);
 }
 
-// 4. AVATAR LÓGICA
-const handleFileSelect = (e) => {
-  const file = e.target.files[0];
-  if(file && file.type.startsWith('image/')) {
-    selectedFile.value = file;
-    previewAvatarUrl.value = URL.createObjectURL(file);
-  }
+// 4. LÓGICA DE AVATAR (URL / DiceBear)
+const generateRandomAvatar = () => {
+  // Generamos una semilla aleatoria
+  const randomSeed = Math.random().toString(36).substring(7);
+  // Asignamos la nueva URL al input y a la vista previa
+  avatarForm.value.url = `https://api.dicebear.com/7.x/pixel-art/svg?seed=${randomSeed}`;
 }
-const handleImageError = (e) => e.target.src = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"
 
-const uploadAvatar = async () => {
-  if (!selectedFile.value) return
+const handleImageError = (e) => {
+  // Fallback si la URL no es válida
+  e.target.src = "https://placehold.co/150x150?text=Invalid+URL"
+}
+
+const saveAvatar = async () => {
+  if (!avatarForm.value.url) return;
+
   isSaving.value = true
   try {
-    const fd = new FormData(); fd.append('avatar', selectedFile.value) 
-    const { data } = await api.post('/users/avatar', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
-    currentAvatarUrl.value = data.avatar_url; selectedFile.value = null; previewAvatarUrl.value = null
-    showToast('Avatar updated! 📸', 'success') // <--- NUEVO
-  } catch (e) { 
-    showToast('Error uploading image.', 'error') // <--- NUEVO (Error)
-  } finally { isSaving.value = false }
+    // Usamos el endpoint PUT /users/profile que ya soporta 'avatar_url'
+    await api.put('/users/profile', {
+      avatar_url: avatarForm.value.url
+    })
+
+    // Actualizamos la variable de estado principal
+    currentAvatarUrl.value = avatarForm.value.url
+    showToast('Avatar updated! 📸', 'success')
+    
+    // Opcional: Recargar para actualizar el Navbar
+    setTimeout(() => window.location.reload(), 1000);
+
+  } catch (error) {
+    console.error('Error guardando avatar:', error)
+    showToast('Error updating avatar.', 'error')
+  } finally {
+    isSaving.value = false
+  }
 }
 </script>
 
@@ -308,7 +365,7 @@ const uploadAvatar = async () => {
 .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #00cc66; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-/* --- TOAST NOTIFICATIONS (NUEVO) --- */
+/* TOAST */
 .toast-notification {
   position: fixed; top: 20px; right: 20px; z-index: 10000;
   padding: 15px 20px; border-radius: 6px;
@@ -320,12 +377,10 @@ const uploadAvatar = async () => {
 .toast-notification.success { background-color: #00cc66; }
 .toast-notification.error { background-color: #ff4444; }
 .toast-icon { font-size: 18px; }
-
-/* Animación de entrada/salida */
 .fade-enter-active, .fade-leave-active { transition: opacity 0.5s, transform 0.5s; }
 .fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(-20px); }
 
-/* --- CUSTOM MODAL (NUEVO) --- */
+/* MODAL */
 .modal-overlay {
   position: fixed; top: 0; left: 0; width: 100%; height: 100%;
   background: rgba(0,0,0,0.6); z-index: 10000;
@@ -352,7 +407,6 @@ h1 { font-weight: 300; color: #333; margin-bottom: 20px; }
 .tabs-row { display: flex; justify-content: space-between; align-items: center; }
 .tabs-left a { text-decoration: none; color: #666; margin-right: 25px; font-size: 13px; text-transform: uppercase; font-weight: 600; padding-bottom: 10px; border-bottom: 3px solid transparent; display: inline-block; }
 .tabs-left a.active { color: #00cc88; border-bottom-color: #00cc88; }
-/* Estilo especial para Deactivate Link */
 .deactivate-link { text-decoration: underline; color: #666; font-size: 11px; text-transform: uppercase; cursor: pointer; }
 .deactivate-link.active { color: #ff4444; font-weight: bold; text-decoration: none; }
 
@@ -365,19 +419,25 @@ h1 { font-weight: 300; color: #333; margin-bottom: 20px; }
 .form-group { margin-bottom: 15px; position: relative; }
 .form-group label { display: block; font-size: 13px; color: #555; margin-bottom: 5px; }
 .form-group input, .form-group textarea, .form-group select { width: 100%; background-color: #444; border: none; border-radius: 4px; padding: 10px; color: #fff; font-size: 14px; box-sizing: border-box; }
+.form-group input:focus, .form-group textarea:focus { outline: 2px solid #666; }
 .disabled-input { background-color: #333; color: #888; cursor: not-allowed; }
 .row-group { display: flex; gap: 20px; } .half { flex: 1; } .bottom-row { align-items: flex-end; } .actions-right { flex: 1; display: flex; justify-content: flex-end; }
-.save-btn { background-color: #00cc66; color: white; border: none; padding: 10px 20px; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: pointer; text-transform: uppercase; }
-.save-btn:hover { background-color: #00b359; } .save-btn:disabled { background-color: #888; }
+.save-btn { background-color: #00cc66; color: white; border: none; padding: 10px 20px; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: pointer; text-transform: uppercase; transition: 0.2s;}
+.save-btn:hover { background-color: #00b359; } .save-btn:disabled { background-color: #888; cursor: not-allowed; }
 
-/* Avatar Styles */
+/* Avatar Styles (CORREGIDO) */
 .avatar-column { width: 100%; max-width: 400px; display: flex; flex-direction: column; align-items: center; text-align: center; }
 .avatar-desc { color: #666; font-size: 0.9rem; margin-bottom: 20px; }
 .avatar-preview-container { width: 150px; height: 150px; border-radius: 50%; overflow: hidden; border: 4px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; background-color: #ccc; display: flex; justify-content: center; align-items: center; }
 .avatar-img { width: 100%; height: 100%; object-fit: cover; }
-.hidden-input { display: none; }
-.avatar-actions { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 200px; }
-.upload-btn { background-color: #444; color: white; border: 1px solid #666; padding: 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
+.avatar-actions { display: flex; flex-direction: column; gap: 15px; width: 100%; max-width: 280px; }
+
+.random-btn { background-color: #6A0DAD; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; transition: background 0.2s; }
+.random-btn:hover { background-color: #550a8c; }
+
+.divider-text { font-size: 0.8rem; color: #888; margin: 5px 0; }
+.url-input { background-color: #fff; border: 1px solid #ccc; padding: 10px; border-radius: 4px; width: 100%; color: #333; font-size: 0.9rem; }
+.avatar-save { width: 100%; margin-top: 10px; }
 
 /* Notifications Styles */
 .notif-section { margin-bottom: 25px; border-bottom: 1px solid #dcdcdc; padding-bottom: 15px; }
@@ -394,17 +454,16 @@ h1 { font-weight: 300; color: #333; margin-bottom: 20px; }
 input:checked + .slider { background-color: #00cc66; } input:checked + .slider:before { transform: translateX(20px); }
 .disabled-slider { opacity: 0.6; cursor: not-allowed; }
 
-/* DANGER ZONE STYLES */
+/* Danger Zone */
 .danger-zone .danger-title { color: #ff4444; font-weight: bold; border-bottom: 2px solid #ff4444; padding-bottom: 10px; display: inline-block; }
 .danger-box { background-color: #fff0f0; border: 1px solid #ffcccc; padding: 20px; border-radius: 8px; color: #cc0000; }
 .danger-box p { margin-bottom: 15px; font-size: 14px; }
 .danger-list { margin-bottom: 20px; padding-left: 20px; font-size: 13px; color: #aa0000; }
 .danger-list li { margin-bottom: 5px; }
 .delete-btn { background-color: #ff4444; color: white; border: none; padding: 12px 20px; border-radius: 4px; font-weight: bold; font-size: 13px; cursor: pointer; width: 100%; transition: background 0.3s; }
-.delete-btn:hover { background-color: #cc0000; }
-.delete-btn:disabled { background-color: #ffaaaa; cursor: not-allowed; }
+.delete-btn:hover { background-color: #cc0000; } .delete-btn:disabled { background-color: #ffaaaa; cursor: not-allowed; }
 
-/* Logout/Footer Styles */
+/* Logout */
 .session-section { margin-top: 40px; }
 .divider { border: 0; border-top: 1px solid #ccc; margin-bottom: 20px; }
 .session-row { display: flex; justify-content: space-between; align-items: center; }

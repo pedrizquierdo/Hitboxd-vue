@@ -9,9 +9,6 @@
       :key="n"
       class="star"
       :class="{ 
-        // Lógica de activación:
-        // Si está deshabilitado, se activa si n <= modelValue
-        // Si está habilitado, se activa si n <= hoverValue (si hay hover) o n <= modelValue
         'active': n <= (disabled ? modelValue : (hoverValue || modelValue))
       }"
       @click="disabled ? null : update(n)"
