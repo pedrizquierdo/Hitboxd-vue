@@ -35,6 +35,7 @@ const router = createRouter({
       path: '/tracker',
       name: 'TinderComponent',
       component: TinderPage,
+      meta: { requiresAuth: true }
     },
     {
       path: '/games',
