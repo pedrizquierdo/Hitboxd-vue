@@ -66,18 +66,27 @@ const releaseYear = computed(() => {
   return isNaN(year) ? "N/A" : year;
 });
 
-const fetchRandomGame = async () => {
-  loading.value = true;
-  currentGame.value = null;
+const fetchRandomGame = async (retryCount = 0) => {
+  if (retryCount === 0) {
+      loading.value = true;
+      currentGame.value = null;
+  }
+
+  if (retryCount > 10) {
+      loading.value = false;
+      console.error("No se encontraron juegos válidos tras varios intentos.");
+      return;
+  }
+  let randomId = 0; 
 
   try {
-    const randomId = Math.floor(Math.random() * 12) + 1;
+    randomId = Math.floor(Math.random() * 1000) + 1; 
+    
     const res = await api.get(`/games/${randomId}`); 
     currentGame.value = res.data;
+    loading.value = false; 
   } catch (err) {
-    console.error("Error al cargar el juego:", err);
-  } finally {
-    loading.value = false;
+    fetchRandomGame(retryCount + 1);
   }
 };
 
@@ -91,7 +100,7 @@ const handleBack = () => {
 };
 const goToDetail = () => {
   if (currentGame.value) {
-    router.push(`/game/${currentGame.value.id_game}`);
+    router.push(`/game/${currentGame.value.slug}`);
   }
 };
 

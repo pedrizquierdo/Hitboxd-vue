@@ -113,20 +113,37 @@ const toggleSearch = async () => {
 
 const scrollRow = (id, direction) => {
   const container = document.getElementById(id);
-  if(container) {
-    const scrollAmount = 500; 
-    container.scrollBy({ left: scrollAmount * direction, behavior: 'smooth' });
+  
+  if (container) {
+    const scrollAmount = 500;
+    const currentScroll = container.scrollLeft;
+    const maxScroll = container.scrollWidth - container.clientWidth; 
+    const tolerance = 5; 
+    if (direction === 1) {
+      if (currentScroll >= maxScroll - tolerance) {
+        container.scrollTo({ left: 0, behavior: 'smooth' });
+      } else {
+        container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+      }
+    } 
+    else {
+      if (currentScroll <= tolerance) {
+        container.scrollTo({ left: maxScroll, behavior: 'smooth' });
+      } else {
+        container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+      }
+    }
   }
 };
 
 const fetchGames = async () => {
   try {
-    const res = await api.get('/games/trending?limit=90');
-    const newRes = await api.get('/games/new?limit=90');
+    const res = await api.get('/games/trending?limit=400');
+    const newRes = await api.get('/games/new?limit=12');
     allGames.value = res.data; 
-    trendingGames.value = res.data.slice(0, 45);
-    topGames.value = res.data.slice(45, 90);
-    newGames.value = newRes.data.slice(0, 90);
+    trendingGames.value = res.data.slice(0, 200);
+    topGames.value = res.data.slice(200, 400);
+    newGames.value = newRes.data.slice(0, 12);
   } catch (error) {
     console.error("Error fetching games:", error);
   } finally {
