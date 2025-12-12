@@ -2,7 +2,7 @@
   <nav class="navbar">
     <div class="navbar-inner">
       <HitboxdLogo />
-      
+
       <ul class="nav-links desktop-links">
         <li class="nav-item dropdown">
           <span @click="toggleProfileMenu">
@@ -18,7 +18,6 @@
           </ul>
         </li>
         <li><router-link to="/games">CATALOG</router-link></li>
-        <li><router-link to="/lists">LISTS</router-link></li>
       </ul>
 
       <div class="nav-right">
@@ -64,13 +63,13 @@
           <h3>Elige un juego para reseñar</h3>
           <button class="close-picker" @click="showGamePicker = false">&times;</button>
         </div>
-        
+
         <div class="picker-input-wrapper">
           <span class="search-icon">🔍</span>
-          <input 
-            type="text" 
-            v-model="reviewSearchQuery" 
-            placeholder="Escribe el nombre del juego..." 
+          <input
+            type="text"
+            v-model="reviewSearchQuery"
+            placeholder="Escribe el nombre del juego..."
             class="picker-input"
             ref="pickerInputRef"
           />
@@ -79,17 +78,17 @@
         <div class="picker-results">
            <p v-if="!reviewSearchQuery" class="picker-hint">Empieza a escribir para buscar...</p>
            <p v-else-if="reviewFilteredGames.length === 0" class="picker-hint">No encontramos ese juego :(</p>
-           
-           <div 
-             v-for="game in reviewFilteredGames" 
-             :key="game.id_game" 
+
+           <div
+             v-for="game in reviewFilteredGames"
+             :key="game.id_game"
              class="picker-item"
              @click="selectGameForReview(game)"
            >
              <img :src="game.cover_url" class="picker-cover" />
              <div class="picker-info">
                <span class="picker-title">{{ game.title }}</span>
-               <span class="picker-year">JUEGO</span> 
+               <span class="picker-year">JUEGO</span>
              </div>
              <span class="picker-arrow">→</span>
            </div>
@@ -111,7 +110,7 @@
 
     <ReviewModal
       v-if="showReviewModal"
-      :selectedGame="gameToReview" 
+      :selectedGame="gameToReview"
       @close="showReviewModal = false"
       @submit="handleReviewSubmit"
     />
@@ -142,7 +141,7 @@ const searchQuery = ref('');
 const showGamePicker = ref(false);
 const reviewSearchQuery = ref('');
 const pickerInputRef = ref(null);
-const gameToReview = ref(null); 
+const gameToReview = ref(null);
 const showReviewModal = ref(false);
 
 // Toast System
@@ -186,9 +185,9 @@ const openGamePicker = async () => {
 };
 
 const selectGameForReview = (game) => {
-    gameToReview.value = game; 
-    showGamePicker.value = false; 
-    showReviewModal.value = true; 
+    gameToReview.value = game;
+    showGamePicker.value = false;
+    showReviewModal.value = true;
 };
 
 // --- ENVÍO DE RESEÑA (Lógica Correcta) ---
@@ -212,8 +211,8 @@ const handleReviewSubmit = async (reviewData) => {
     try {
         await api.post('/reviews', payload);
         showToast("¡Reseña publicada con éxito! 🎉", "success");
-        showReviewModal.value = false; 
-        gameToReview.value = null;     
+        showReviewModal.value = false;
+        gameToReview.value = null;
     } catch (error) {
         console.error("Error publicando reseña:", error);
         if (error.response && error.response.status === 400) {

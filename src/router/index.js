@@ -10,6 +10,7 @@ import ListDetail from '@/views/ListDetail.vue'
 import ProfileSettings from '@/views/ProfileSettings.vue'
 import PublicProfile from '@/views/PublicProfile.vue'
 
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -21,57 +22,57 @@ const router = createRouter({
     {
       path: '/home',
       name: 'HomeFeed',
-      component: () => import('@/views/HomeFeed.vue'), 
+      component: HomeFeed,
       meta: { requiresAuth: true }
     },
     {
       path: '/game/:slug',
       name: 'GameDetail',
-      component: () => import('@/views/GameDetail.vue'),
+      component: GameDetail,
       props: true,
     },
     {
       path: '/tracker',
       name: 'TinderComponent',
-      component: () => import('@/views/TinderPage.vue'),
+      component: TinderPage,
     },
     {
-      path: '/catalogo',
+      path: '/games',
       name: 'Catalogo',
-      component: () => import('@/views/Catalogo.vue'),
+      component: Catalogo,
     },
     {
       path: '/profile',
       name: 'MyProfile',
-      component: () => import('@/views/UserProfile.vue'), 
+      component: UserProfile,
       meta: { requiresAuth: true }
     },
     {
-      path: '/u/:username', 
+      path: '/u/:username',
       name: 'PublicProfile',
-      component: () => import('@/views/PublicProfile.vue'),
+      component: PublicProfile,
     },
     {
       path: '/admin',
       name: 'AdminDashboard',
-      component: () => import('@/views/AdminDashboard.vue'),
-      meta: { requiresAuth: true } 
+      component: AdminDashboard,
+      meta: { requiresAuth: true }
     },
     {
       path: '/lists/:listId',
       name: 'ListDetail',
-      component: () => import('@/views/ListDetail.vue'),
+      component: ListDetail,
       props: true,
     },
     {
       path: '/settings',
       name: 'Settings',
-      component: () => import('@/views/ProfileSettings.vue'),
+      component: ProfileSettings,
       meta: { requiresAuth: true }
     },
-    { 
-      path: '/:pathMatch(.*)*', 
-      redirect: '/' 
+    {
+      path: '/:pathMatch(.*)*',
+      redirect: '/'
     }
   ],
 })
@@ -84,10 +85,10 @@ router.beforeEach((to, from, next) => {
 
   if (to.meta.requiresAuth && !isAuthenticated) {
     next({ name: 'Auth' });
-  } 
+  }
   else if (to.name === 'Auth' && isAuthenticated) {
     next({ name: 'HomeFeed' });
-  } 
+  }
 
   else {
     next();
