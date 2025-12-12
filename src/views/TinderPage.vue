@@ -50,7 +50,6 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '@/api/axios';
-import Logo from '@/components/common/Logo.vue';
 import Footer from '@/components/common/PageFooter.vue';
 import Nav from '@/components/common/Nav.vue';
 
@@ -87,12 +86,15 @@ const fetchRandomGame = async (retryCount = 0) => {
     loading.value = false; 
   } catch (err) {
     fetchRandomGame(retryCount + 1);
+    console.error("Error fetching game, retrying...", err);
   }
 };
 
 
 const handleAction = (type) => {  
-  // Aquí es donde ira el api.post() de momento, solo carga todos los juegos.
+  api.post(`/activity/game/${currentGame.value.id_game}`, {
+    action: type
+  })
   fetchRandomGame();
 };
 const handleBack = () => {
