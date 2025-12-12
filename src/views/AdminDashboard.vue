@@ -27,7 +27,6 @@
 
             <div class="panel catalog-management-panel full-width-panel">
                 <h2>Catálogo de Juegos (Trending)</h2>
-                <p class="panel-note">Datos obtenidos de `/games/trending`. Limitado a 1000.</p>
                 <div class="data-table">
                     <div class="table-header">
                         <span>ID</span>
@@ -48,7 +47,6 @@
 
             <div class="panel moderation-reviews-panel">
                 <h2>Moderación de Reseñas (Denunciadas)</h2>
-                <p class="panel-note-alert">Datos obtenidos de `/reviews/reported`. Requiere token de Admin.</p>
                 <div class="data-table">
                     <div class="table-header reviews-header-columns">
                         <span>ID</span>
