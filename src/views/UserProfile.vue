@@ -22,12 +22,12 @@
 
         <div class="profile-stats">
           <div class="stat-block">
-            <span class="stat-number">{{ watchlist.length || 0 }}</span>
+            <span class="stat-number">{{ games_count || watchlist.length || 0 }}</span>
             <span class="stat-label">Games</span>
           </div>
           <div class="divider"></div>
           <div class="stat-block">
-            <span class="stat-number">0</span>
+            <span class="stat-number">{{ followers_count || 0 }}</span>
             <span class="stat-label">Followers</span>
           </div>
           <div class="divider"></div>
@@ -230,7 +230,6 @@ import api from "@/api/axios.js"
 const router = useRouter()
 const isLoading = ref(true)
 
-// Datos de Usuario
 const username = ref("")
 const avatar = ref("")
 const bio = ref("")
@@ -244,6 +243,9 @@ const reviews = ref([])
 const activityFeed = ref([]) 
 const userLists = ref([])   
 const gamesCache = ref({}) 
+const followers_count = ref(0);
+const following_count = ref(0);
+const games_count = ref(0);
 
 // COMPUTED: Filtramos los juegos que tienen is_favorite = true para la pestaña LIKES
 const likedGames = computed(() => {
@@ -302,7 +304,7 @@ const enrichDataWithGameInfo = async () => {
           const { data } = await api.get(`/games/${id}`);
           gamesCache.value[id] = data; 
       } catch (error) {
-          gamesCache.value[id] = { title: `Unknown Game (${id})` };
+          console.error(`Error fetching game ${id}:`, error);
       }
   });
   await Promise.all(promises);
@@ -314,12 +316,16 @@ onMounted(async () => {
     isLoading.value = true;
     
     // 1. Obtener Usuario
-    const { data: userData } = await api.get("/users/me")
+    const { data: userData } = await api.get("/users/me");
+    
     currentUserId.value = userData.id_user || userData.id;
-    username.value = userData.username
-    avatar.value = userData.avatar_url
-    bio.value = userData.bio
-    pronouns.value = userData.pronouns 
+    username.value = userData.username;
+    avatar.value = userData.avatar_url;
+    bio.value = userData.bio;
+    pronouns.value = userData.pronouns;
+    followers_count.value = userData.followers_count || 0;
+    following_count.value = userData.following_count || 0;
+    games_count.value = userData.games_count || 0;
     
     if (currentUserId.value) {
       // 2. Cargar datos en paralelo (con manejo de errores individual)
@@ -332,7 +338,7 @@ onMounted(async () => {
 
       // WATCHLIST (Para GAMES y LIKES)
       try {
-        const res = await api.get('/activity/watchlist');
+        const res = await api.get('/activity/all'); 
         watchlist.value = res.data;
       } catch (e) { 
         console.error("Error watchlist (500)", e);
