@@ -57,7 +57,7 @@ const router = createRouter({
     },
 
         {
-      path: '/lists',
+      path: '/lists/:listId',
      name: 'ListDetail',
       component: ListDetail,
       props: true,
