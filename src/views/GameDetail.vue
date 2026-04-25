@@ -355,7 +355,7 @@ onMounted(async () => {
   top: 0; left: 0;
   width: 100%;
   height: 100%;
-  background-image: url('/assets/bg-texture.jpg');
+  background-image: url('/assets/bg-texture.webp'), url('/assets/bg-texture.jpg');
   background-repeat: repeat;
   background-size: 400px;
   opacity: 0.1;

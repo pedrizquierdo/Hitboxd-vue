@@ -13,7 +13,7 @@
 
     <header class="hero">
       <div class="hero-image-placeholder">
-        <img src="/assets/hero_image.png" alt="Games Collage" class="collage-img" />
+        <img src="/assets/hero_image.webp" alt="Games Collage" class="collage-img" />
       </div>
 
       <h1 class="main-title">Play. Log. Share.</h1>
@@ -165,7 +165,7 @@ onMounted(() => {
     content: "";
     position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
-    background-image: url('/assets/bg-texture.jpg'); 
+    background-image: url('/assets/bg-texture.webp'), url('/assets/bg-texture.jpg');
     background-repeat: repeat;
     background-size: 400px; 
     opacity: 0.1; 

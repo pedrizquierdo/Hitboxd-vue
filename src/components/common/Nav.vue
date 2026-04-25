@@ -239,7 +239,7 @@ const toggleSearch = () => {
 <style scoped>
 /* NAVBAR BASE */
 .navbar { width: 100%; background-color: #e5e7eb; padding: 0.6rem 0; display: flex; flex-direction: column; align-items: center; position: sticky; top: 0; z-index: 100; }
-.navbar::before { content: ""; position: absolute; inset: 0; background-image: url('/assets/bg-texture.jpg'); background-size: 400px; opacity: 0.1; z-index: -1; pointer-events: none; }
+.navbar::before { content: ""; position: absolute; inset: 0; background-image: url('/assets/bg-texture.webp'), url('/assets/bg-texture.jpg'); background-size: 400px; opacity: 0.1; z-index: -1; pointer-events: none; }
 .navbar-inner { width: 100%; max-width: 1300px; display: flex; align-items: center; justify-content: flex-start; padding: 0 2rem; }
 .nav-links { display: flex; align-items: center; gap: 30px; list-style: none; font-weight: 500; margin-left: auto ; margin-right: 30px ; }
 .nav-item { position: relative; }
