@@ -4,7 +4,6 @@
     :class="['btn-logout', { 'is-minimal': minimal }]"
     type="button"
   >
-    <span v-if="!minimal">🚪 </span> 
     LOG OUT
   </button>
 </template>
@@ -27,7 +26,7 @@ const handleLogout = async () => {
   try {
     await api.post('/auth/logout');
   } catch (error) {
-    console.error("Warning: Server did not respond to logout, forcing local logout.");
+    console.error("Warning: Server did not respond to logout, forcing local logout.", error);
   }
 
   // 2. Local Cleanup

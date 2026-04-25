@@ -15,7 +15,7 @@
       <img :src="activity.cover_url" class="game-img" />
       
       <div v-if="activity.rating" class="rating-badge">
-        ★ {{ activity.rating }}
+        {{ activity.rating }}/5
       </div>
     </div>
 

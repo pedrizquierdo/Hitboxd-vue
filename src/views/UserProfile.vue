@@ -24,7 +24,7 @@
             @click="goToAdminPanel"
             class="admin-profile-btn"
           >
-            ⚙️ Panel Admin
+            Panel Admin
           </button>
         </div>
 
@@ -60,19 +60,17 @@
 
       <section v-show="activeTab === 'PROFILE'" class="section">
         <h2 class="section-title">FAVORITE GAMES</h2>
-
-        <div v-if="likedGames.length > 0" class="fav-games-grid">
-          <div
-            v-for="game in likedGames.slice(0, 4)"
-            :key="game.id_game"
-            class="game-poster-card"
-          >
-            <img :src="getCoverUrl(game.cover_url)" alt="Game Cover" />
-            <span class="game-title-hover">{{ game.title }}</span>
+          <div v-if="favoriteGames.length > 0" class="fav-games-grid">
+            <div
+              v-for="game in favoriteGames.slice(0, 4)" 
+              :key="game.id_game"
+              class="game-poster-card"
+            >
+              <img :src="getCoverUrl(game.cover_url)" alt="Game Cover" />
+              <span class="game-title-hover">{{ game.title }}</span>
+            </div>
           </div>
-        </div>
-        <p v-else class="section-text">No favorite games yet.</p>
-
+          <p v-else class="section-text">No favorite games yet.</p>
         <h2 class="section-title" style="margin-top: 40px;">RECENT REVIEWS</h2>
          <div v-if="reviews.length > 0" class="mini-reviews-list">
             <div v-for="review in reviews.slice(0, 3)" :key="review.id_review" class="mini-review-item">
@@ -80,7 +78,7 @@
                 {{ getGameTitle(review.id_game) }}
               </span>
               <div class="review-meta">
-                <span class="stars">★ {{ review.rating }}</span>
+                <span class="stars">{{ review.rating }}/5</span>
                 <span class="date">{{ formatDate(review.created_at) }}</span>
               </div>
               <p class="review-content">"{{ review.content }}"</p>
@@ -118,7 +116,7 @@
       <section v-show="activeTab === 'GAMES'" class="section">
          <h2 class="section-title">GAMELIST</h2> 
          <div v-if="watchlistError" class="error-box">
-            <p>⚠️ <strong>Server Error:</strong> Unable to load gamelist.</p>
+            <p><strong>Server Error:</strong> Unable to load gamelist.</p>
          </div>
 
          <div v-else-if="watchlist.length > 0" class="games-grid-layout">
@@ -136,7 +134,7 @@
           <div v-for="review in reviews" :key="review.id_review" class="review-card-full">
             <div class="review-header">
                <span class="game-name">{{ getGameTitle(review.id_game) }}</span>
-               <span v-if="review.rating" class="rating-badge">★ {{ review.rating }}</span>
+               <span v-if="review.rating" class="rating-badge">{{ review.rating }}/5</span>
             </div>
             <p class="review-body">{{ review.content }}</p>
             <div class="review-footer">
@@ -169,7 +167,7 @@
             </div>
             <div class="list-card-footer">
               <small>{{ list.games ? list.games.length : 0 }} GAMES</small>
-              <span class="list-icon">📝</span>
+              <span class="list-icon">LIST</span>
             </div>
           </div>
         </div>
@@ -183,11 +181,67 @@
       </section>
 
       <section v-show="activeTab === 'NETWORK'" class="section">
-        <h2 class="section-title">FOLLOWING & FRIENDS</h2>
-        <div class="network-grid">
-           <p class="section-text">No friends connected yet.</p>
+  
+  <div class="network-header">
+    <div class="network-tabs">
+      <button 
+        class="net-tab-btn" 
+        :class="{ active: networkSubTab === 'following' }" 
+        @click="networkSubTab = 'following'"
+      >
+        FOLLOWING <span class="count-badge">{{ following_count }}</span>
+      </button>
+      <button 
+        class="net-tab-btn" 
+        :class="{ active: networkSubTab === 'followers' }" 
+        @click="networkSubTab = 'followers'"
+      >
+        FOLLOWERS <span class="count-badge">{{ followers_count }}</span>
+      </button>
+    </div>
+
+    <div class="network-search">
+      <input type="text" v-model="networkSearch" placeholder="Find a user..." />
+    </div>
+  </div>
+
+  <div class="network-content">
+    
+    <div v-if="loadingNetwork" class="mini-loader">Loading...</div>
+
+    <div v-else-if="filteredNetworkList.length > 0" class="user-grid">
+      
+      <div 
+        v-for="user in filteredNetworkList" 
+        :key="user.id_user" 
+        class="user-card"
+        @click="goToUserProfile(user.username)"
+      >
+        <div class="user-card-header">
+           <img :src="user.avatar_url || 'https://placehold.co/100'" class="user-avatar" />
         </div>
-      </section>
+        
+        <div class="user-card-body">
+          <h4 class="user-name">{{ user.username }}</h4>
+          <span class="user-meta">
+            {{ user.games_count || 0 }} games logged
+          </span>
+        </div>
+
+        <button class="btn-follow-mini" @click.stop="toggleFollow(user)">
+           {{ user.is_following ? 'Following' : 'Follow' }}
+        </button>
+      </div>
+
+    </div>
+
+    <div v-else class="empty-network">
+      <p v-if="networkSubTab === 'following'">Not following anyone yet.</p>
+      <p v-else>No followers yet.</p>
+    </div>
+
+  </div>
+</section>
 
       <section v-show="activeTab === 'DIARY'" class="section">
         <h2 class="section-title">DIARY LOG</h2>
@@ -199,12 +253,12 @@
                  <span class="year">{{ new Date(entry.created_at).getFullYear() }}</span>
              </div>
              <div class="diary-poster">
-                 <div class="mini-poster-placeholder">🎮</div>
+                 <div class="mini-poster-placeholder"></div>
              </div>
              <div class="diary-info">
                  <span class="diary-game-title">{{ getGameTitle(entry.id_game) }}</span>
                  <div class="diary-rating">
-                    <span v-for="n in 5" :key="n" :class="{ 'star-filled': n <= entry.rating, 'star-empty': n > entry.rating }">★</span>
+                    <span v-for="n in 5" :key="n" :class="{ 'star-filled': n <= entry.rating, 'star-empty': n > entry.rating }"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg></span>
                  </div>
              </div>
            </div>
@@ -214,14 +268,14 @@
 
       <section v-show="activeTab === 'LIKES'" class="section">
         <h2 class="section-title">LIKED GAMES</h2>
-        <div v-if="likedGames.length > 0" class="games-grid-layout">
-            <div v-for="game in likedGames" :key="game.id_game" class="game-poster-card">
-               <img :src="getCoverUrl(game.cover_url)" alt="Game Cover" />
-               <span class="game-title-hover">{{ game.title }}</span>
-               <span class="heart-icon">❤️</span>
-            </div>
-         </div>
-         <p v-else class="section-text">You haven't liked any games yet.</p>
+          <div v-if="likedGames.length > 0" class="games-grid-layout">
+              <div v-for="game in likedGames" :key="game.id_game" class="game-poster-card">
+                <img :src="getCoverUrl(game.cover_url)" alt="Game Cover" />
+                <span class="game-title-hover">{{ game.title }}</span>
+                <span class="heart-icon"></span>
+              </div>
+          </div>
+          <p v-else class="section-text">You haven't liked any games yet.</p>
       </section>
 
     </div>
@@ -237,7 +291,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue"
+import { ref, onMounted, computed, watch } from "vue"
 import { useRouter } from "vue-router"
 import Nav from "@/components/common/Nav.vue"
 import Footer from "@/components/common/PageFooter.vue"
@@ -264,14 +318,61 @@ const gamesCache = ref({})
 const followers_count = ref(0);
 const following_count = ref(0);
 const games_count = ref(0);
+const networkSubTab = ref('following');
+const networkSearch = ref('');
+const followingList = ref([]);
+const followersList = ref([]);
+const loadingNetwork = ref(false);
+
+
+const favoriteGames = computed(() => {
+  return watchlist.value.filter(game => Boolean(game.is_favorite));
+})
 
 const likedGames = computed(() => {
-  return watchlist.value.filter(game => game.is_favorite || game.is_liked);
+  return watchlist.value.filter(game => Boolean(game.is_liked));
 })
 
 const activeTab = ref("PROFILE")
 const tabs = ["PROFILE", "ACTIVITY", "GAMES", "REVIEWS", "LISTS", "NETWORK", "DIARY", "LIKES"]
 const isModalOpen = ref(false)
+
+const filteredNetworkList = computed(() => {
+  const list = networkSubTab.value === 'following' ? followingList.value : followersList.value;
+  if (!networkSearch.value) return list;
+  return list.filter(u => u.username.toLowerCase().includes(networkSearch.value.toLowerCase()));
+});
+
+const fetchNetworkData = async () => {
+    if(!currentUserId.value) return; 
+    
+    loadingNetwork.value = true;
+    try {
+        const [resFollowing, resFollowers] = await Promise.all([
+            api.get(`/users/${currentUserId.value}/following`),
+            api.get(`/users/${currentUserId.value}/followers`)
+        ]);
+        
+        followingList.value = resFollowing.data;
+        followersList.value = resFollowers.data;
+        
+    } catch (err) {
+        console.error("Error cargando network:", err);
+    } finally {
+        loadingNetwork.value = false;
+    }
+}
+
+watch(activeTab, (newTab) => {
+    if (newTab === 'NETWORK') {
+        fetchNetworkData();
+    }
+});
+
+fetchNetworkData();
+const goToUserProfile = (username) => {
+    router.push({ name: 'UserProfile', params: { username } });
+};
 
 const openModal = () => { isModalOpen.value = true }
 const closeModal = () => { isModalOpen.value = false }
@@ -292,15 +393,15 @@ const getStatusLabel = (status) => {
 
 const getStatusIcon = (status) => {
     const map = {
-        'plan_to_play': '📅',
-        'played': '✅',
-        'completed': '🏆',
-        'abandoned': '🗑️',
-        'dropped': '🗑️',
-        'playing': '🕹️',
-        'wishlist': '🎁'
+        'plan_to_play': 'P',
+        'played': 'D',
+        'completed': 'C',
+        'abandoned': 'A',
+        'dropped': 'X',
+        'playing': 'G',
+        'wishlist': 'W'
     };
-    return map[status] || '📝';
+    return map[status] || '?';
 }
 
 // --- Helpers Generales ---
@@ -508,6 +609,143 @@ onMounted(async () => {
 .star-empty { color: #ddd; }
 
 /* LISTS & NETWORK */
+.network-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 10px;
+}
+
+.network-tabs {
+  display: flex;
+  gap: 15px;
+}
+
+.net-tab-btn {
+  background: none;
+  border: none;
+  font-size: 13px;
+  font-weight: 700;
+  color: #888;
+  cursor: pointer;
+  padding: 5px 0;
+  position: relative;
+}
+
+.net-tab-btn.active {
+  color: #333;
+}
+
+.net-tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -11px; /* Ajustar según padding del header */
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: #00cc66; /* Tu color verde */
+}
+
+.count-badge {
+  background: #eee;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 10px;
+  margin-left: 5px;
+  color: #666;
+}
+
+.network-search input {
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid #ddd;
+  font-size: 13px;
+  background: #f9f9f9;
+  outline: none;
+}
+
+/* GRID DE USUARIOS */
+.user-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 20px;
+}
+
+.user-card {
+  background: white;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+
+.user-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+  border-color: #00cc66;
+}
+
+.user-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 10px;
+  border: 2px solid #f0f0f0;
+}
+
+.user-name {
+  font-size: 14px;
+  font-weight: bold;
+  color: #333;
+  margin: 0 0 5px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.user-meta {
+  font-size: 11px;
+  color: #999;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.btn-follow-mini {
+  width: 100%;
+  padding: 6px 0;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  background: #f9f9f9;
+  color: #555;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-follow-mini:hover {
+  background: #333;
+  color: white;
+  border-color: #333;
+}
+
+.empty-network {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+  font-style: italic;
+}
+
+
 .section-header-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; margin-bottom: 20px; padding-bottom: 10px; }
 .lists-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
 .list-card { background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; min-height: 140px; cursor: pointer; transition: all 0.2s; }

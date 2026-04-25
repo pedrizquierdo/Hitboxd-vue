@@ -4,7 +4,6 @@
 
     <transition name="fade">
       <div v-if="toast.show" class="toast-notification" :class="toast.type">
-        <span class="toast-icon">{{ toast.type === 'success' ? '✅' : '⚠️' }}</span>
         <p>{{ toast.message }}</p>
       </div>
     </transition>
@@ -121,7 +120,7 @@
           <div class="avatar-actions">
             <!-- Botón Mágico: Randomize -->
             <button class="random-btn" @click="generateRandomAvatar">
-              🎲 RANDOM PIXEL ART
+              RANDOM PIXEL ART
             </button>
 
             <div class="divider-text">or paste URL</div>
@@ -300,7 +299,7 @@ const saveProfile = async () => {
     }
 
     await api.put('/users/profile', payload)
-    showToast('Profile updated successfully! ✨', 'success')
+    showToast('Profile updated successfully!', 'success')
     
   } catch (error) {
     console.error('Error guardando:', error)
@@ -316,7 +315,7 @@ const fakeSaveNotifs = () => {
   isSaving.value = true;
   setTimeout(() => {
     isSaving.value = false;
-    showToast('Preferences updated successfully 👍', 'success')
+    showToast('Preferences updated successfully', 'success')
   }, 800);
 }
 
@@ -345,7 +344,7 @@ const saveAvatar = async () => {
 
     // Actualizamos la variable de estado principal
     currentAvatarUrl.value = avatarForm.value.url
-    showToast('Avatar updated! 📸', 'success')
+    showToast('Avatar updated!', 'success')
     
     // Opcional: Recargar para actualizar el Navbar
     setTimeout(() => window.location.reload(), 1000);

@@ -4,7 +4,6 @@
 
     <transition name="fade">
       <div v-if="toast.show" class="toast-notification" :class="toast.type">
-        <span class="toast-icon">{{ toast.type === 'success' ? '✅' : '⚠️' }}</span>
         <p>{{ toast.message }}</p>
       </div>
     </transition>
@@ -171,7 +170,7 @@ const saveListDetails = async () => {
             title: editableTitle.value,
             description: editableDescription.value
         });
-        showToast("Lista actualizada con éxito ✨");
+        showToast("Lista actualizada con éxito");
     } catch (error) {
         console.error("Error guardando:", error);
         showToast("Error al guardar cambios", "error");
@@ -186,7 +185,7 @@ const executeDeleteList = async () => {
     isSaving.value = true;
     try {
         await api.delete(`/lists/${listId}`);
-        showToast("Lista eliminada correctamente 👋");
+        showToast("Lista eliminada correctamente");
         setTimeout(() => {
             router.push({ name: 'UserProfile' });
         }, 1000);

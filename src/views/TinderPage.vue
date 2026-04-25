@@ -10,10 +10,9 @@
       <div v-else-if="currentGame" class="matcher-content slide-up">
         <button class="action-btn skip" @click="handleAction('skip')">
           <span>SKIP</span>
-          <span class="icon">✕</span>
         </button>
           <button class="top-corner-btn" @click="handleBack">
-          <span class="icon-btn">🔙</span> </button>
+          <span class="icon-btn">&#8592;</span></button>
         <div class="game-poster-card" @click="goToDetail"> 
           <div class="poster-wrapper">
             <img 
@@ -34,7 +33,6 @@
         </div>
         <button class="action-btn played" @click="handleAction('played')">
           <span>PLAYED</span>
-          <span class="icon">✓</span>
         </button>
       </div>
       <div v-else class="sinDatos fade-in">

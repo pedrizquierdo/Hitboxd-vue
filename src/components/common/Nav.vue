@@ -26,7 +26,7 @@
         </button>
 
         <button @click="openGamePicker" class="review-btn">
-          ✎ Review
+          Review
         </button>
 
         <button class="menu-toggle-btn" @click="toggleMobileMenu">
@@ -38,7 +38,6 @@
 
     <transition name="fade">
       <div v-if="toast.show" class="toast-notification" :class="toast.type">
-        <span class="toast-icon">{{ toast.type === 'success' ? '✅' : '⚠️' }}</span>
         <p>{{ toast.message }}</p>
       </div>
     </transition>
@@ -65,7 +64,7 @@
         </div>
 
         <div class="picker-input-wrapper">
-          <span class="search-icon">🔍</span>
+          <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
           <input
             type="text"
             v-model="reviewSearchQuery"
@@ -210,7 +209,7 @@ const handleReviewSubmit = async (reviewData) => {
 
     try {
         await api.post('/reviews', payload);
-        showToast("¡Reseña publicada con éxito! 🎉", "success");
+        showToast("¡Reseña publicada con éxito!", "success");
         showReviewModal.value = false;
         gameToReview.value = null;
     } catch (error) {
@@ -241,8 +240,8 @@ const toggleSearch = () => {
 /* NAVBAR BASE */
 .navbar { width: 100%; background-color: #e5e7eb; padding: 0.6rem 0; display: flex; flex-direction: column; align-items: center; position: sticky; top: 0; z-index: 100; }
 .navbar::before { content: ""; position: absolute; inset: 0; background-image: url('/assets/bg-texture.jpg'); background-size: 400px; opacity: 0.1; z-index: -1; pointer-events: none; }
-.navbar-inner { width: 100%; max-width: 1300px; display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; }
-.nav-links { display: flex; align-items: center; gap: 30px; list-style: none; font-weight: 500; }
+.navbar-inner { width: 100%; max-width: 1300px; display: flex; align-items: center; justify-content: flex-start; padding: 0 2rem; }
+.nav-links { display: flex; align-items: center; gap: 30px; list-style: none; font-weight: 500; margin-left: auto ; margin-right: 30px ; }
 .nav-item { position: relative; }
 .nav-links a, .nav-links span { color: #2d2d2d; text-decoration: none; cursor: pointer; font-size: 0.85rem; letter-spacing: 0.5px; }
 .dropdown-menu { position: absolute; top: 22px; left: 0; background: white; border: 1px solid #d1d5db; border-radius: 6px; padding: 0.5rem 0; min-width: 150px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); z-index: 10; list-style: none; }
@@ -335,7 +334,7 @@ const toggleSearch = () => {
   .menu-toggle-btn { display: block; }
   .navbar-inner { padding: 0 1rem; }
   .review-btn { padding: 6px 10px; font-size: 0.8rem; }
-  .nav-right { gap: 10px; }
+  .nav-right { margin-left: auto; }
   .search-inner-container { width: 95%; }
   .picker-box { width: 95%; height: 80vh; max-height: none; }
 }

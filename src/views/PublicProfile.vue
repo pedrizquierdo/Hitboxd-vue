@@ -95,7 +95,7 @@
                 {{ getGameTitle(review.id_game) }}
               </span>
               <div class="review-meta">
-                <span class="stars">★ {{ review.rating }}</span>
+                <span class="stars">{{ review.rating }}/5</span>
                 <span class="date">{{ formatDate(review.created_at) }}</span>
               </div>
               <p class="review-content">"{{ review.content }}"</p>
@@ -123,7 +123,7 @@
           <div v-for="review in reviews" :key="review.id_review" class="review-card-full">
             <div class="review-header">
                <span class="game-name">{{ getGameTitle(review.id_game) }}</span>
-               <span v-if="review.rating" class="rating-badge">★ {{ review.rating }}</span>
+               <span v-if="review.rating" class="rating-badge">{{ review.rating }}/5</span>
             </div>
             <p class="review-body">{{ review.content }}</p>
             <div class="review-footer">
@@ -152,7 +152,7 @@
             </div>
             <div class="list-card-footer">
               <small>{{ list.games ? list.games.length : 0 }} GAMES</small>
-              <span class="list-icon">📝</span>
+              <span class="list-icon">LIST</span>
             </div>
           </div>
         </div>
@@ -165,7 +165,7 @@
         <div v-if="likedGames.length > 0" class="games-grid-layout">
             <div v-for="game in likedGames" :key="game.id_game" class="game-poster-card" @click="goToGame(game)">
                <img :src="getCoverUrl(game.cover_url)" alt="Game Cover" />
-               <span class="heart-icon">❤️</span>
+               <span class="heart-icon"></span>
                <span class="game-title-hover">{{ game.title }}</span>
             </div>
          </div>

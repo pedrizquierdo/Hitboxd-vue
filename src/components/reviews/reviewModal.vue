@@ -17,7 +17,7 @@
 
       <div class="spoiler-block">
           <input type="checkbox" id="hasSpoilers" v-model="hasSpoilers">
-          <label for="hasSpoilers">⚠️ Esta reseña contiene Spoilers</label>
+          <label for="hasSpoilers">Esta reseña contiene Spoilers</label>
       </div>
       <button class="submit-btn" @click="submit">SUBMIT</button>
     </div>
