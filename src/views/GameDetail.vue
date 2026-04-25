@@ -134,6 +134,7 @@
 import { ref, onMounted, computed, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '@/api/axios.js'
+import { useUserStore } from '@/stores/userStore'
 
 import ReviewModal from '@/components/reviews/reviewModal.vue'
 import StarRating from '@/components/reviews/starRating.vue'
@@ -156,7 +157,8 @@ const showReviewModal = ref(false)
 const showReportModal = ref(false)
 const selectedReviewId = ref(null)
 
-const currentUserId = Number(localStorage.getItem("user_id"));
+const userStore = useUserStore();
+const currentUserId = computed(() => userStore.user?.id_user ?? null);
 
 const releaseYear = computed(() => {
   const date = game.value?.release_date;
@@ -295,7 +297,7 @@ const submitReview = async (data) => {
 
 const toggleSpoiler = (review) => { review.showContent = !review.showContent; }
 const toggleReport = (review) => {
-    if (review.id_user === currentUserId) return; 
+    if (review.id_user === currentUserId.value) return;
     selectedReviewId.value = review.id_review
     showReportModal.value = true
 }
@@ -311,6 +313,7 @@ const submitReport = async (reason) => {
 
 onMounted(async () => {
   loadingGame.value = true;
+  await userStore.fetchUser();
   await fetchGameDetail();
   
   if (game.value.id_game) {

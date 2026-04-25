@@ -56,8 +56,11 @@
 <script setup>
 import { ref } from 'vue'
 import api from '@/api/axios'
+import { useUserStore } from '@/stores/userStore'
 
 defineEmits(['switch', 'close'])
+
+const userStore = useUserStore()
 
 const username = ref('')
 const email = ref('')
@@ -74,10 +77,11 @@ const register = () => {
     email: email.value,
     password: password.value
   })
-  .then(response => {
+  .then(async response => {
     console.log("Registro y Auto-Login exitoso", response.data);
     const storageKey = import.meta.env.VITE_KEY_STORAGE || 'isAuthenticated';
     localStorage.setItem(storageKey, 'true');
+    await userStore.fetchUser();
     window.location.href = '/tracker';
   })
   .catch(error => {

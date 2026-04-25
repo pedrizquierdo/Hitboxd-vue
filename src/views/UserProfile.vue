@@ -297,8 +297,10 @@ import Nav from "@/components/common/Nav.vue"
 import Footer from "@/components/common/PageFooter.vue"
 import CreateListModal from "@/components/lists/CreateListModal.vue"
 import api from "@/api/axios.js"
+import { useUserStore } from "@/stores/userStore"
 
 const router = useRouter()
+const userStore = useUserStore()
 const isLoading = ref(true)
 
 const username = ref("")
@@ -462,7 +464,8 @@ onMounted(async () => {
   try {
     isLoading.value = true;
 
-    const { data: userData } = await api.get("/users/me");
+    await userStore.fetchUser();
+    const userData = userStore.user;
 
     currentUserId.value = userData.id_user || userData.id;
     username.value = userData.username;

@@ -46,8 +46,11 @@
 import { ref } from 'vue'
 import api from '@/api/axios'
 import router from '@/router'
+import { useUserStore } from '@/stores/userStore'
 
 defineEmits(['switch', 'close'])
+
+const userStore = useUserStore()
 
 const username = ref('')
 const password = ref('')
@@ -65,7 +68,7 @@ const login = () => {
     username: username.value,
     password: password.value
   })
-  .then((response) => {
+  .then(async (response) => {
      console.log("Login exitoso", response.data);
      const storageKey = import.meta.env.VITE_KEY_STORAGE;
      if (rememberMe.value) {
@@ -73,6 +76,7 @@ const login = () => {
      } else {
        sessionStorage.setItem(storageKey, true);
      }
+     await userStore.fetchUser();
      router.push('/home');
   })
   .catch((error) => {

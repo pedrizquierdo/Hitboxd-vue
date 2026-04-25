@@ -11,6 +11,7 @@
 <script setup>
 import { useRouter } from 'vue-router';
 import api from '@/api/axios';
+import { useUserStore } from '@/stores/userStore';
 
 defineProps({
   minimal: {
@@ -20,26 +21,23 @@ defineProps({
 });
 
 const router = useRouter();
+const userStore = useUserStore();
 
 const handleLogout = async () => {
-  // 1. Try to notify backend
   try {
     await api.post('/auth/logout');
   } catch (error) {
     console.error("Warning: Server did not respond to logout, forcing local logout.", error);
   }
 
-  // 2. Local Cleanup
-  // Asegúrate que esta variable de entorno exista, si no, usa un string fijo como 'token'
   const storageKey = import.meta.env.VITE_KEY_STORAGE || 'token';
-  
   localStorage.removeItem(storageKey);
   sessionStorage.removeItem(storageKey);
-  localStorage.removeItem('user_data'); 
-  localStorage.removeItem('token'); // Por si acaso usas este nombre común también
+  localStorage.removeItem('user_data');
+  localStorage.removeItem('token');
 
-  // 3. Redirect to Landing Page
-  router.push('/login'); // O router.push('/') dependiendo de tu ruta pública
+  userStore.clearUser();
+  router.push('/login');
 };
 </script>
 

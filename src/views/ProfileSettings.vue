@@ -210,9 +210,11 @@ import { useRouter } from 'vue-router'
 import Nav from '@/components/common/Nav.vue'
 import Footer from '@/components/common/PageFooter.vue'
 import api from '@/api/axios.js'
-import LogoutButton from '@/components/auth/LogoutButton.vue';
+import LogoutButton from '@/components/auth/LogoutButton.vue'
+import { useUserStore } from '@/stores/userStore'
 
 const router = useRouter()
+const userStore = useUserStore()
 
 // --- ESTADO ---
 const isLoading = ref(true) 
@@ -243,20 +245,20 @@ const avatarForm = ref({ url: '' })
 // --- CARGAR DATOS ---
 onMounted(async () => {
   try {
-    const { data } = await api.get('/users/me')
-    
+    await userStore.fetchUser()
+    const data = userStore.user
+
     currentAvatarUrl.value = data.avatar_url
-    // Inicializamos el input con la URL actual para que el usuario la vea/edite
     avatarForm.value.url = data.avatar_url || ''
 
     formData.value = {
       username: data.username || '',
-      email: data.email || '', 
+      email: data.email || '',
       bio: data.bio || '',
-      pronoun: data.pronouns || '' 
+      pronoun: data.pronouns || ''
     }
-    
-    isLoading.value = false 
+
+    isLoading.value = false
 
   } catch (error) {
     console.error('Error cargando settings:', error)

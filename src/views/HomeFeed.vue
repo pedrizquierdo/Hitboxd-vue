@@ -122,6 +122,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import api from '@/api/axios';
+import { useUserStore } from '@/stores/userStore';
 import Nav from '@/components/common/Nav.vue';
 import Footer from '@/components/common/PageFooter.vue';
 import GameCard from '@/components/common/GameCard.vue';
@@ -132,6 +133,7 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/free-mode';
 
+const userStore = useUserStore();
 const loading = ref(true);
 const userName = ref('Player');
 const newGames = ref([]);
@@ -150,8 +152,8 @@ const fetchData = async () => {
   loading.value = true;
   try {
     try {
-        const userRes = await api.get('/users/me');
-        if (userRes.data?.username) userName.value = userRes.data.username;
+        await userStore.fetchUser();
+        if (userStore.user?.username) userName.value = userStore.user.username;
     } catch (error) { console.error("Error user", error); }
 
     const results = await Promise.allSettled([

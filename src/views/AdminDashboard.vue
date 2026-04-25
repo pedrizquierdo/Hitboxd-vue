@@ -79,8 +79,10 @@ import api from '@/api/axios';
 import { useRouter } from 'vue-router';
 import Nav from '@/components/common/Nav.vue';
 import Footer from '@/components/common/PageFooter.vue';
+import { useUserStore } from '@/stores/userStore';
 
 const router = useRouter();
+const userStore = useUserStore();
 
 // --- ESTADOS DE DATOS ---
 const adminInfo = ref({});
@@ -92,10 +94,10 @@ const reportedReviews = ref([]);
 
 const fetchAdminInfo = async () => {
   try {
-   const res = await api.get('/users/me');
-   adminInfo.value = res.data;
+    await userStore.fetchUser();
+    adminInfo.value = userStore.user;
   } catch (error) {
-   console.error("Error al obtener info del administrador (¿Está logueado?):", error);
+    console.error("Error al obtener info del administrador:", error);
   }
 };
 

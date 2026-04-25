@@ -183,10 +183,12 @@ import { ref, onMounted, watch, computed } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import Nav from "@/components/common/Nav.vue"
 import Footer from "@/components/common/PageFooter.vue"
-import api from "@/api/axios.js" 
+import api from "@/api/axios.js"
+import { useUserStore } from "@/stores/userStore"
 
 const route = useRoute()
 const router = useRouter()
+const userStore = useUserStore()
 const isLoading = ref(true)
 
 // Datos del Perfil Visitado (Target)
@@ -250,17 +252,17 @@ const loadPublicData = async () => {
   const routeUsername = route.params.username;
   
   try {
-    // 1. Identificarme a mí mismo (Visitante)
+    // 1. Identificarme a mi mismo (Visitante)
     try {
-        const myInfo = await api.get('/users/me');
-        myUserId.value = myInfo.data.id_user || myInfo.data.id;
-        
+        await userStore.fetchUser();
+        myUserId.value = userStore.user?.id_user || userStore.user?.id || null;
+
         // Si resulta que soy yo mismo, redirigir a la vista privada /profile
-        if (myInfo.data.username === routeUsername) {
+        if (userStore.user?.username === routeUsername) {
             router.replace('/profile');
             return;
         }
-    } catch (e) { 
+    } catch (e) {
         myUserId.value = null;
         console.error("Error fetching my user info", e);
     }
