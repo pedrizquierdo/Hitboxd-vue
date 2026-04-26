@@ -2,17 +2,11 @@
   <div class="page-wrapper">
     <div class="catalog-container">
       <div class="catalog-header-actions">
-        <button class="search-btn" @click="toggleSearch">
-          <svg v-if="!showSearchInput" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-          <svg v-else width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-        </button>
-        <input 
-          v-if="showSearchInput"
+        <input
           v-model="searchQuery"
-          type="text" 
-          placeholder="Search game in library..." 
-          class="catalog-search-input fade-in"
-          ref="searchInputRef"
+          type="text"
+          placeholder="Search all games..."
+          class="catalog-search-input"
         />
       </div>
       <div v-if="loading" class="loading-state">
@@ -75,7 +69,7 @@
 
 <script setup>
 import { logger } from '@/utils/logger'
-import { ref, onMounted, computed, nextTick } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import api from '@/api/axios';
 import GameCard from '@/components/common/GameCard.vue';
 
@@ -88,9 +82,7 @@ const topGames = ref([]);
 const newGames = ref([]);
 
 
-const showSearchInput = ref(false);
 const searchQuery = ref('');
-const searchInputRef = ref(null);
 
 const filteredGames = computed(() => {
   if (!searchQuery.value) return [];
@@ -99,16 +91,6 @@ const filteredGames = computed(() => {
     game.title.toLowerCase().includes(query)
   );
 });
-
-const toggleSearch = async () => {
-  showSearchInput.value = !showSearchInput.value;
-  if (!showSearchInput.value) {
-    searchQuery.value = ''; // Limpiar si cerramos
-  } else {
-    await nextTick();
-    if(searchInputRef.value) searchInputRef.value.focus();
-  }
-};
 
 const scrollRow = (id, direction) => {
   const container = document.getElementById(id);
@@ -175,36 +157,24 @@ onMounted(() => {
   overflow-x: hidden; 
 }
 .catalog-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  margin-bottom: 20px;
-  height: 40px;
-}
-.search-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #555;
-  display: flex;
-  align-items: center;
-  transition: color 0.2s;
-  padding: 0;
-}
-.search-btn:hover {
-  color: var(--brand-cyan, #00AEEF);
+  margin-bottom: 2rem;
 }
 .catalog-search-input {
-  flex: 1;
-  max-width: 400px;
-  padding: 8px 12px;
+  width: 100%;
+  max-width: 480px;
+  padding: 10px 16px;
   border: 1px solid #ccc;
   border-radius: 6px;
   font-size: 1rem;
+  font-family: 'Inter', sans-serif;
   outline: none;
+  background: white;
+  color: #2d2d2d;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 .catalog-search-input:focus {
   border-color: var(--brand-cyan, #00AEEF);
+  box-shadow: 0 0 0 3px rgba(0, 174, 239, 0.12);
 }
 .search-results-container {
   margin-top: 20px;
