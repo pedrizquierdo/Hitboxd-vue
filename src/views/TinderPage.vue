@@ -12,11 +12,11 @@
         </button>
           <button class="top-corner-btn" @click="handleBack">
           <span class="icon-btn">&#8592;</span></button>
-        <div class="game-poster-card" @click="goToDetail"> 
+        <div class="game-poster-card" @click="goToDetail">
           <div class="poster-wrapper">
-            <img 
-              :src="currentGame.cover_url || '/assets/placeholder.jpg'" 
-              :alt="currentGame.title" 
+            <img
+              :src="currentGame.cover_url || '/assets/placeholder.jpg'"
+              :alt="currentGame.title"
               class="poster-img"
             />
             <div class="poster-overlay">
@@ -30,9 +30,14 @@
             </p>
           </div>
         </div>
-        <button class="action-btn played" @click="handleAction('played')">
-          <span>PLAYED</span>
-        </button>
+        <div class="right-actions">
+          <button class="action-btn played" @click="handleAction('played')">
+            <span>PLAYED</span>
+          </button>
+          <button class="action-btn wishlist" @click="handleWishlist">
+            <span>WISHLIST</span>
+          </button>
+        </div>
       </div>
       <div v-else class="sinDatos fade-in">
         <h2>No more games found!</h2>
@@ -60,36 +65,31 @@ const releaseYear = computed(() => {
   return isNaN(year) ? "N/A" : year;
 });
 
-const fetchRandomGame = async (retryCount = 0) => {
-  if (retryCount === 0) {
-      loading.value = true;
-      currentGame.value = null;
-  }
-
-  if (retryCount > 10) {
-      loading.value = false;
-      logger.error("No se encontraron juegos válidos tras varios intentos.");
-      return;
-  }
-  let randomId = 0; 
-
+const fetchRandomGame = async () => {
+  loading.value = true;
+  currentGame.value = null;
   try {
-    randomId = Math.floor(Math.random() * 1000) + 1; 
-    
-    const res = await api.get(`/games/${randomId}`); 
+    const res = await api.get('/games/random');
     currentGame.value = res.data;
-    loading.value = false; 
   } catch (err) {
-    fetchRandomGame(retryCount + 1);
-    logger.error("Error fetching game, retrying...", err);
+    logger.error("Error fetching random game", err);
+  } finally {
+    loading.value = false;
   }
 };
 
 
-const handleAction = (type) => {  
+const handleAction = (type) => {
   api.post(`/activity/game/${currentGame.value.id_game}`, {
     action: type
-  })
+  });
+  fetchRandomGame();
+};
+
+const handleWishlist = () => {
+  api.post(`/activity/game/${currentGame.value.id_game}`, {
+    status: 'plan_to_play'
+  });
   fetchRandomGame();
 };
 const handleBack = () => {
@@ -224,13 +224,26 @@ onMounted(() => {
   background-color: var(--brand-red, #FF4444);
   color: white;
 }
+.right-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 .played {
   border: 3px solid var(--brand-green, #00CC66);
   color: var(--brand-green, #00CC66);
 }
 .played:hover {
-  background-color: var(--brand-green,
-  #00CC66); color: white;
+  background-color: var(--brand-green, #00CC66);
+  color: white;
+}
+.wishlist {
+  border: 3px solid var(--brand-blue, #2196f3);
+  color: var(--brand-blue, #2196f3);
+}
+.wishlist:hover {
+  background-color: var(--brand-blue, #2196f3);
+  color: white;
 }
 .icon {
   font-size: 2.2rem;
@@ -302,20 +315,31 @@ onMounted(() => {
   .game-poster-card{
     background: none;
   }
-  .action-btn {
+  .right-actions {
+    flex-direction: row;
     position: absolute;
     bottom: 16px;
-    z-index:10;
+    right: 5%;
+    z-index: 10;
+    gap: 6px;
+  }
+  .action-btn {
+    position: static;
     width: 70px;
     height: 70px;
-    font-size: 16px;
+    font-size: 14px;
   }
   .skip {
+    position: absolute;
+    bottom: 16px;
     left: 15%;
+    z-index: 10;
     background: white;
   }
   .played {
-    right: 15%;
+    background: white;
+  }
+  .wishlist {
     background: white;
   }
   .poster-info {
