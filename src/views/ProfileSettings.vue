@@ -202,6 +202,7 @@
 </template>
 
 <script setup>
+import { logger } from '@/utils/logger'
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/api/axios.js'
@@ -256,7 +257,7 @@ onMounted(async () => {
     isLoading.value = false
 
   } catch (error) {
-    console.error('Error cargando settings:', error)
+    logger.error('Error cargando settings:', error)
     if (error.response && error.response.status === 401) {
       router.push('/') 
     } else {
@@ -299,7 +300,7 @@ const saveProfile = async () => {
     showToast('Profile updated successfully!', 'success')
     
   } catch (error) {
-    console.error('Error guardando:', error)
+    logger.error('Error guardando:', error)
     if (error.response?.status === 401) router.push('/')
     else showToast('Error saving profile.', 'error')
   } finally {
@@ -347,7 +348,7 @@ const saveAvatar = async () => {
     setTimeout(() => window.location.reload(), 1000);
 
   } catch (error) {
-    console.error('Error guardando avatar:', error)
+    logger.error('Error guardando avatar:', error)
     showToast('Error updating avatar.', 'error')
   } finally {
     isSaving.value = false

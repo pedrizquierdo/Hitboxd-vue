@@ -43,6 +43,7 @@
 </template>
 
 <script setup>
+import { logger } from '@/utils/logger'
 import { ref } from 'vue'
 import api from '@/api/axios'
 import router from '@/router'
@@ -69,7 +70,7 @@ const login = () => {
     password: password.value
   })
   .then(async (response) => {
-     console.log("Login exitoso", response.data);
+     logger.log("Login exitoso", response.data);
      const storageKey = import.meta.env.VITE_KEY_STORAGE;
      if (rememberMe.value) {
        localStorage.setItem(storageKey, true);
@@ -80,7 +81,7 @@ const login = () => {
      router.push('/home');
   })
   .catch((error) => {
-    console.error("Error", error);
+    logger.error("Error", error);
     if (error.status === 400 || error.status === 404) {
         isUserValid.value = true
 

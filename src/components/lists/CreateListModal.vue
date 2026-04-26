@@ -59,6 +59,7 @@
 </template>
 
 <script setup>
+import { logger } from '@/utils/logger'
 import { ref } from "vue"
 import axios from "@/api/axios"
 
@@ -94,7 +95,7 @@ const fetchAllGames = async () => {
             allGamesCache.value = res.data;
         }
     } catch (error) {
-        console.error("Error cargando caché de juegos:", error);
+        logger.error("Error cargando caché de juegos:", error);
     }
 };
 
@@ -116,7 +117,7 @@ const searchGames = async () => {
     const { data } = await axios.get(`/games/search?q=${query}`);
     searchResults.value = data;
   } catch (error) {
-    console.error("Error looking for games:", error);
+    logger.error("Error looking for games:", error);
     searchResults.value = [];
   }
 }
@@ -137,13 +138,13 @@ const removeGame = (idToRemove) => {
 // --- CREAR LISTA ---
 const createList = async () => {
   if (!listName.value.trim()) {
-    console.log("The list needs a name")
+    logger.log("The list needs a name")
     return
   }
 
   try {
     // 1. Crear la lista (Cabecera)
-    console.log("Creating list...");
+    logger.log("Creating list...");
     const createPayload = {
       title: listName.value, 
       description: description.value,
@@ -153,23 +154,23 @@ const createList = async () => {
     
     // El backend puede devolver { id: ... } o { insertId: ... }
     const newListId = createData.id || createData.insertId; 
-    console.log("list created with id:", newListId);
+    logger.log("list created with id:", newListId);
 
     if (!newListId) throw new Error("No se recibió el ID de la nueva lista.");
     
     // 2. Agregar juegos
     if (selectedGames.value.length > 0) {
-      console.log(`Intentando agregar ${selectedGames.value.length} juegos...`);
+      logger.log(`Intentando agregar ${selectedGames.value.length} juegos...`);
       
       for (const game of selectedGames.value) {
         try {
             // ⭐ CORRECCIÓN CLAVE: Usar id_game para validar
             if (!game.id_game) {
-                console.warn("Juego sin id_game ignorado:", game);
+                logger.warn("Juego sin id_game ignorado:", game);
                 continue; 
             }
 
-            console.log(`Agregando juego ${game.id_game} a lista ${newListId}`);
+            logger.log(`Agregando juego ${game.id_game} a lista ${newListId}`);
             
             // ⭐ CORRECCIÓN: Enviamos gameId: game.id_game
             await axios.post(`/lists/${newListId}/games`, { 
@@ -178,7 +179,7 @@ const createList = async () => {
             });
 
         } catch (gameError) {
-            console.error(`Error al agregar el juego ${game.title}:`, gameError);
+            logger.error(`Error al agregar el juego ${game.title}:`, gameError);
         }
       }
     }
@@ -197,8 +198,8 @@ const createList = async () => {
     selectedGames.value = []
 
   } catch (error) {
-    console.error("Error FATAL creando lista:", error)
-    console.log("Hubo un error al crear la lista.")
+    logger.error("Error FATAL creando lista:", error)
+    logger.log("Hubo un error al crear la lista.")
   }
 }
 </script>

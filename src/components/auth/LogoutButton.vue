@@ -9,6 +9,7 @@
 </template>
 
 <script setup>
+import { logger } from '@/utils/logger'
 import { useRouter } from 'vue-router';
 import api from '@/api/axios';
 import { useUserStore } from '@/stores/userStore';
@@ -27,7 +28,7 @@ const handleLogout = async () => {
   try {
     await api.post('/auth/logout');
   } catch (error) {
-    console.error("Warning: Server did not respond to logout, forcing local logout.", error);
+    logger.error("Warning: Server did not respond to logout, forcing local logout.", error);
   }
 
   const storageKey = import.meta.env.VITE_KEY_STORAGE || 'token';

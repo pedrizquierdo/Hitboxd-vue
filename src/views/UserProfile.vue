@@ -288,6 +288,7 @@
 </template>
 
 <script setup>
+import { logger } from '@/utils/logger'
 import { ref, onMounted, computed, watch } from "vue"
 import { useRouter } from "vue-router"
 import CreateListModal from "@/components/lists/CreateListModal.vue"
@@ -354,7 +355,7 @@ const fetchNetworkData = async () => {
         followersList.value = resFollowers.data;
         
     } catch (err) {
-        console.error("Error cargando network:", err);
+        logger.error("Error cargando network:", err);
     } finally {
         loadingNetwork.value = false;
     }
@@ -448,7 +449,7 @@ const enrichDataWithGameInfo = async () => {
           const { data } = await api.get(`/games/${id}`);
           gamesCache.value[id] = data;
       } catch (error) {
-          console.error(`Error fetching game ${id}:`, error);
+          logger.error(`Error fetching game ${id}:`, error);
       }
   });
   await Promise.all(promises);
@@ -477,24 +478,24 @@ onMounted(async () => {
       try {
         const res = await api.get(`/reviews/user/${currentUserId.value}`);
         reviews.value = res.data.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
-      } catch (e) { console.error("Error reviews", e); }
+      } catch (e) { logger.error("Error reviews", e); }
 
       try {
         const res = await api.get('/activity/all');
         watchlist.value = res.data;
       } catch (e) { watchlistError.value = true;
-        console.error("Error watchlist", e);
+        logger.error("Error watchlist", e);
        }
 
       try {
         const res = await api.get('/activity/feed');
         activityFeed.value = res.data;
-      } catch (e) { console.error("Error feed", e); }
+      } catch (e) { logger.error("Error feed", e); }
 
       try {
         const res = await api.get(`/lists/user/${currentUserId.value}`);
         userLists.value = res.data;
-      } catch (e) { console.error("Error listas", e); }
+      } catch (e) { logger.error("Error listas", e); }
 
       await enrichDataWithGameInfo();
     }

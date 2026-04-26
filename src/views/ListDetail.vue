@@ -109,6 +109,7 @@
 </template>
 
 <script setup>
+import { logger } from '@/utils/logger'
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import api from "@/api/axios.js";
@@ -149,7 +150,7 @@ const fetchListDetails = async () => {
     editableTitle.value = listData.value.title;
     editableDescription.value = listData.value.description;
   } catch (error) {
-    console.error("Error cargando detalles:", error);
+    logger.error("Error cargando detalles:", error);
     listData.value = { games: [] }; 
     showToast("Error al cargar la lista", "error");
   } finally {
@@ -167,7 +168,7 @@ const saveListDetails = async () => {
         });
         showToast("Lista actualizada con éxito");
     } catch (error) {
-        console.error("Error guardando:", error);
+        logger.error("Error guardando:", error);
         showToast("Error al guardar cambios", "error");
     } finally {
         isSaving.value = false;
@@ -185,7 +186,7 @@ const executeDeleteList = async () => {
             router.push({ name: 'UserProfile' });
         }, 1000);
     } catch (error) {
-        console.error("Error eliminando lista:", error);
+        logger.error("Error eliminando lista:", error);
         showToast("Error al eliminar la lista", "error");
         isSaving.value = false;
     }
@@ -212,14 +213,14 @@ const executeRemoveGame = async () => {
         // AQUÍ VA TU LLAMADA REAL AL BACKEND
         // await api.delete(`/lists/${listId}/items/${gameToRemoveId.value}`); 
         
-        console.log(`Simulando eliminación del item: ${gameToRemoveId.value}`);
+        logger.log(`Simulando eliminación del item: ${gameToRemoveId.value}`);
         
         // Actualizamos UI localmente
         listData.value.games = listData.value.games.filter(game => game.id_item !== gameToRemoveId.value);
         
         showToast("Juego eliminado de la lista");
     } catch (error) {
-        console.error("Error eliminando juego:", error);
+        logger.error("Error eliminando juego:", error);
         showToast("No se pudo eliminar el juego", "error");
     } finally {
         gameToRemoveId.value = null;

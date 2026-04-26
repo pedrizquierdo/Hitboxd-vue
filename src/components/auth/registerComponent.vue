@@ -54,6 +54,7 @@
 </template>
 
 <script setup>
+import { logger } from '@/utils/logger'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/api/axios'
@@ -80,14 +81,14 @@ const register = () => {
     password: password.value
   })
   .then(async response => {
-    console.log("Registro y Auto-Login exitoso", response.data);
+    logger.log("Registro y Auto-Login exitoso", response.data);
     const storageKey = import.meta.env.VITE_KEY_STORAGE || 'isAuthenticated';
     localStorage.setItem(storageKey, 'true');
     await userStore.fetchUser();
     router.push('/tracker');
   })
   .catch(error => {
-    console.error(error);
+    logger.error(error);
     errorMessage.value = error.response?.data?.message || "Error al registrarse. Intenta con otro usuario/email.";
   })
   .finally(() => {

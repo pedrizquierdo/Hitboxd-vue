@@ -176,6 +176,7 @@
 </template>
 
 <script setup>
+import { logger } from '@/utils/logger'
 import { ref, onMounted, watch, computed } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import api from "@/api/axios.js"
@@ -236,7 +237,7 @@ const enrichDataWithGameInfo = async () => {
   const promises = Array.from(gameIdsToFetch).map(async (id) => {
       if (gamesCache.value[id]) return;
       try { const { data } = await api.get(`/games/${id}`); gamesCache.value[id] = data; } 
-      catch (error) { console.error(`Error fetching game ${id}:`, error); }
+      catch (error) { logger.error(`Error fetching game ${id}:`, error); }
   });
   await Promise.all(promises);
 }
@@ -259,7 +260,7 @@ const loadPublicData = async () => {
         }
     } catch (e) {
         myUserId.value = null;
-        console.error("Error fetching my user info", e);
+        logger.error("Error fetching my user info", e);
     }
 
     // 2. Buscar al usuario objetivo por username
@@ -281,7 +282,7 @@ const loadPublicData = async () => {
         try {
             const resFollow = await api.get(`/users/follow/${targetUserId.value}/check`);
             isFollowing.value = resFollow.data.isFollowing;
-        } catch (e) { console.error("Error check follow", e); }
+        } catch (e) { logger.error("Error check follow", e); }
     }
 
     // 4. Cargar su contenido público en paralelo
@@ -299,7 +300,7 @@ const loadPublicData = async () => {
     await enrichDataWithGameInfo();
     
   } catch (error) {
-     console.error("Error loading public profile:", error);
+     logger.error("Error loading public profile:", error);
      if (error.response?.status === 404) {
          alert("Usuario no encontrado");
          router.push('/home');
@@ -334,7 +335,7 @@ const handleFollowToggle = async () => {
         // Revertir si falla
         isFollowing.value = original;
         if(isFollowing.value) followers_count.value++; else followers_count.value--;
-        console.error("Error follow toggle", e);
+        logger.error("Error follow toggle", e);
         alert("Error al cambiar seguimiento");
     }
 }

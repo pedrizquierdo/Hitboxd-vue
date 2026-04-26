@@ -115,6 +115,7 @@
 </template>
 
 <script setup>
+import { logger } from '@/utils/logger'
 import { ref, computed, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import HitboxdLogo from "@/components/common/Logo.vue";
@@ -155,7 +156,7 @@ const fetchAllGames = async () => {
         const res = await api.get('/games/trending?limit=500');
         if (res.data && Array.isArray(res.data)) allGames.value = res.data;
     } catch (error) {
-        console.error("Error obteniendo juegos:", error);
+        logger.error("Error obteniendo juegos:", error);
     }
 };
 
@@ -203,7 +204,7 @@ const handleReviewSubmit = async (reviewData) => {
         has_spoilers: reviewData.has_spoilers || false
     };
 
-    console.log("Enviando Reseña:", payload);
+    logger.log("Enviando Reseña:", payload);
 
     try {
         await api.post('/reviews', payload);
@@ -211,7 +212,7 @@ const handleReviewSubmit = async (reviewData) => {
         showReviewModal.value = false;
         gameToReview.value = null;
     } catch (error) {
-        console.error("Error publicando reseña:", error);
+        logger.error("Error publicando reseña:", error);
         if (error.response && error.response.status === 400) {
             showToast("Error: Revisa los datos (Quizás ya reseñaste este juego)", "error");
         } else {

@@ -108,6 +108,7 @@
 </template>
 
 <script setup>
+import { logger } from '@/utils/logger'
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import Logo from '../components/common/Logo.vue';
@@ -132,7 +133,7 @@ const fetchTrendingGames = async () => {
     const response = await api.get('games/trending?limit=12');
     games.value = response.data;
   } catch (error) {
-    console.error("Error cargando juegos:", error);
+    logger.error("Error cargando juegos:", error);
   } finally {
     isLoading.value = false;
   }

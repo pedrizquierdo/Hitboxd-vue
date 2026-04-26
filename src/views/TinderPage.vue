@@ -43,6 +43,7 @@
 </template>
 
 <script setup>
+import { logger } from '@/utils/logger'
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '@/api/axios';
@@ -67,7 +68,7 @@ const fetchRandomGame = async (retryCount = 0) => {
 
   if (retryCount > 10) {
       loading.value = false;
-      console.error("No se encontraron juegos válidos tras varios intentos.");
+      logger.error("No se encontraron juegos válidos tras varios intentos.");
       return;
   }
   let randomId = 0; 
@@ -80,7 +81,7 @@ const fetchRandomGame = async (retryCount = 0) => {
     loading.value = false; 
   } catch (err) {
     fetchRandomGame(retryCount + 1);
-    console.error("Error fetching game, retrying...", err);
+    logger.error("Error fetching game, retrying...", err);
   }
 };
 

@@ -74,6 +74,7 @@
 </template>
 
 <script setup>
+import { logger } from '@/utils/logger'
 import { ref, onMounted, computed, nextTick } from 'vue';
 import api from '@/api/axios';
 import GameCard from '@/components/common/GameCard.vue';
@@ -144,7 +145,7 @@ const fetchGames = async () => {
     topGames.value = res.data.slice(200, 400);
     newGames.value = newRes.data.slice(0, 12);
   } catch (error) {
-    console.error("Error fetching games:", error);
+    logger.error("Error fetching games:", error);
   } finally {
     loading.value = false;
   }

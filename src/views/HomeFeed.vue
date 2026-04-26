@@ -117,6 +117,7 @@
 </template>
 
 <script setup>
+import { logger } from '@/utils/logger'
 import { ref, onMounted } from 'vue';
 import api from '@/api/axios';
 import { useUserStore } from '@/stores/userStore';
@@ -149,7 +150,7 @@ const fetchData = async () => {
     try {
         await userStore.fetchUser();
         if (userStore.user?.username) userName.value = userStore.user.username;
-    } catch (error) { console.error("Error user", error); }
+    } catch (error) { logger.error("Error user", error); }
 
     const results = await Promise.allSettled([
         api.get('/games/new?limit=20'),
@@ -162,7 +163,7 @@ const fetchData = async () => {
     if (results[2].status === 'fulfilled') friendsActivity.value = results[2].value.data;
 
   } catch (error) {
-    console.error("Error cargando feed:", error);
+    logger.error("Error cargando feed:", error);
   } finally {
     loading.value = false;
   }

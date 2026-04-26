@@ -115,6 +115,7 @@
 </template>
 
 <script setup>
+import { logger } from '@/utils/logger'
 import { ref, onMounted } from 'vue';
 import api from '@/api/axios';
 import { useRouter } from 'vue-router';
@@ -153,7 +154,7 @@ const fetchAdminInfo = async () => {
     await userStore.fetchUser();
     adminInfo.value = userStore.user;
   } catch (error) {
-    console.error("Error al obtener info del administrador:", error);
+    logger.error("Error al obtener info del administrador:", error);
   }
 };
 
@@ -163,7 +164,7 @@ const fetchGames = async () => {
    games.value = res.data || [];
    totalGamesCount.value = games.value.length.toString();
   } catch (error) {
-   console.error("Error al obtener juegos:", error);
+   logger.error("Error al obtener juegos:", error);
   }
 };
 
@@ -172,7 +173,7 @@ const fetchReportedReviews = async () => {
     const res = await api.get('/reviews/reported');
     reportedReviews.value = res.data || [];
   } catch (error) {
-    console.error("Error al obtener reseñas denunciadas:", error);
+    logger.error("Error al obtener reseñas denunciadas:", error);
   }
 };
 
@@ -211,7 +212,7 @@ const executeModeration = async () => {
     await fetchReportedReviews();
   } catch (error) {
     showToast(error.response?.data?.message || 'Network or server error', 'error');
-    console.error("Error in moderation action:", error);
+    logger.error("Error in moderation action:", error);
   }
 };
 

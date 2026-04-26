@@ -129,6 +129,7 @@
 </template>
 
 <script setup>
+import { logger } from '@/utils/logger'
 import { ref, onMounted, computed, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '@/api/axios.js'
@@ -183,9 +184,9 @@ const saveActivity = async (payload) => {
       gameId: game.value.id_game,
       ...payload 
     })
-    console.log("Actividad guardada:", payload);
+    logger.log("Actividad guardada:", payload);
   } catch (err) {
-    console.error("Error guardando actividad:", err);
+    logger.error("Error guardando actividad:", err);
   }
 }
 
@@ -211,7 +212,7 @@ const toggleGameLike = async () => {
     await saveActivity({ isLiked: isGameLiked.value })
   } catch (err) {
     isGameLiked.value = oldVal; 
-    console.error("Error toggling game like:", err);
+    logger.error("Error toggling game like:", err);
   }
 }
 
@@ -230,7 +231,7 @@ const toggleReviewLike = async (review) => {
         // Revertir
         review.is_liked = oldLiked;
         review.likes = oldLikes;
-        console.error("Error like review:", err);
+        logger.error("Error like review:", err);
     }
 }
 
@@ -241,7 +242,7 @@ const fetchGameDetail = async () => {
     const res = await api.get(`games/slug/${route.params.slug}`)
     game.value = res.data
   } catch (err) {
-    console.error("Error loading game:", err)
+    logger.error("Error loading game:", err)
     // router.push('/404') // Opcional
   }
 }
@@ -259,7 +260,7 @@ const fetchUserActivity = async (gameId) => {
       isGameLiked.value = Boolean(res.data.is_liked) // Asegurar booleano
     }
   } catch (err) {
-    console.error("Error activity:", err)
+    logger.error("Error activity:", err)
   } finally {
     // Esperamos un tick para que Vue actualice los valores sin disparar el watcher
     await nextTick();
@@ -275,7 +276,7 @@ const fetchReviews = async (gameId) => {
       showContent: !review.has_spoilers, 
       is_reported: review.is_reported || false
     }))
-  } catch (err) { console.error(err) }
+  } catch (err) { logger.error(err) }
 }
 
 // ... Resto de funciones (submitReview, toggleReport, etc) se quedan igual ...
@@ -288,7 +289,7 @@ const submitReview = async (data) => {
     await api.post('/reviews', payload)
     showReviewModal.value = false
     await fetchReviews(game.value.id_game) 
-  } catch (err) { console.error(err) }
+  } catch (err) { logger.error(err) }
 }
 
 const toggleSpoiler = (review) => { review.showContent = !review.showContent; }
@@ -304,7 +305,7 @@ const submitReport = async (reason) => {
       const review = reviews.value.find(r => r.id_review === selectedReviewId.value)
       if (review) review.is_reported = true
       closeReportModal()
-    } catch (err) { console.error(err) }
+    } catch (err) { logger.error(err) }
 }
 
 onMounted(async () => {
