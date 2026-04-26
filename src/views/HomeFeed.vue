@@ -1,7 +1,5 @@
 <template>
   <div class="page-wrapper">
-    <Nav />
-    
     <div class="home-container">
       <div class="bg-texture"></div>
 
@@ -115,7 +113,6 @@
 
       </div>
     </div>
-    <Footer />
   </div>
 </template>
 
@@ -123,8 +120,6 @@
 import { ref, onMounted } from 'vue';
 import api from '@/api/axios';
 import { useUserStore } from '@/stores/userStore';
-import Nav from '@/components/common/Nav.vue';
-import Footer from '@/components/common/PageFooter.vue';
 import GameCard from '@/components/common/GameCard.vue';
 import ActivityCard from '@/components/activity/ActivityCard.vue';
 import { Swiper, SwiperSlide } from 'swiper/vue';

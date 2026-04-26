@@ -1,6 +1,5 @@
 <template>
   <div class="page-wrapper">
-    <div><Nav /></div>
     <div class="catalog-container">
       <div class="catalog-header-actions">
         <button class="search-btn" @click="toggleSearch">
@@ -71,16 +70,13 @@
           </section>
         </div> </div>
     </div>
-    <Footer />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed, nextTick } from 'vue';
 import api from '@/api/axios';
-import Footer from '@/components/common/PageFooter.vue';
 import GameCard from '@/components/common/GameCard.vue';
-import Nav from '@/components/common/Nav.vue';
 
 const loading = ref(true);
 const allGames = ref([]);

@@ -1,6 +1,5 @@
 <template>
   <div class="page-wrapper">  
-    <div><Nav /> </div>
     <div class="body">
       <div class="bg-texture"></div>
       <div v-if="loading" class="loading-state fade-in">
@@ -40,7 +39,6 @@
         <button class="retry-btn" @click="fetchRandomGame">Refresh</button>
       </div>
     </div>
-    <Footer />
   </div>
 </template>
 
@@ -48,8 +46,6 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '@/api/axios';
-import Footer from '@/components/common/PageFooter.vue';
-import Nav from '@/components/common/Nav.vue';
 
 const router = useRouter();
 const loading = ref(true);

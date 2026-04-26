@@ -1,7 +1,5 @@
 <template>
   <div class="profile-page">
-    <Nav />
-
     <div v-if="isLoading" class="loading-container">
       <div class="spinner"></div>
       <p>Buscando usuario...</p>
@@ -174,15 +172,12 @@
 
     </div>
     
-    <Footer />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, watch, computed } from "vue"
 import { useRoute, useRouter } from "vue-router"
-import Nav from "@/components/common/Nav.vue"
-import Footer from "@/components/common/PageFooter.vue"
 import api from "@/api/axios.js"
 import { useUserStore } from "@/stores/userStore"
 

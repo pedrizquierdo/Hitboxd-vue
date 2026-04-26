@@ -98,9 +98,7 @@
     <div v-if="mobileMenuOpen" class="mobile-menu">
       <ul class="mobile-links">
         <li><router-link to="/profile" @click="toggleMobileMenu">PROFILE</router-link></li>
-        <li><router-link to="/games" @click="toggleMobileMenu">CATALOGO</router-link></li>
         <li><router-link to="/games" @click="toggleMobileMenu">CATALOG</router-link></li>
-        <li><router-link to="/profile" @click="toggleMobileMenu">PROFILE</router-link></li>
         <li class="mobile-logout-container">
            <LogoutButton :minimal="true" />
         </li>

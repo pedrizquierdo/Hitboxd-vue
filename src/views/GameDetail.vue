@@ -1,7 +1,5 @@
 <template>
   <div class="page-wrapper">
-    <Nav />
-    
     <!-- Mostrar loading si no hay juego -->
     <div v-if="loadingGame" class="loading-screen">
       <div class="spinner"></div>
@@ -126,7 +124,7 @@
       <ReviewModal v-if="showReviewModal" @close="showReviewModal = false" @submit="submitReview" />
       <ReportModal v-if="showReportModal" @close="closeReportModal" @submit="submitReport" />
 
-    </div> <Footer />
+    </div>
   </div>
 </template>
 
@@ -139,8 +137,6 @@ import { useUserStore } from '@/stores/userStore'
 import ReviewModal from '@/components/reviews/reviewModal.vue'
 import StarRating from '@/components/reviews/starRating.vue'
 import ReportModal from '@/components/reviews/reportModal.vue'
-import Footer from '@/components/common/PageFooter.vue'
-import Nav from '@/components/common/Nav.vue'
 
 const router = useRouter()
 const route = useRoute()

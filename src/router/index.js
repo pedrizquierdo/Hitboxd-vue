@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useUserStore } from '@/stores/userStore'
+import AuthLayout from '@/layouts/AuthLayout.vue'
+import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import LandingPage from '@/views/LandingPage.vue'
 import GameDetail from '@/views/GameDetail.vue'
 import HomeFeed from '@/views/HomeFeed.vue'
@@ -17,60 +19,25 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'Auth',
-      component: LandingPage,
+      component: AuthLayout,
+      children: [
+        { path: '', name: 'Auth', component: LandingPage },
+      ]
     },
     {
-      path: '/home',
-      name: 'HomeFeed',
-      component: HomeFeed,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/game/:slug',
-      name: 'GameDetail',
-      component: GameDetail,
-      props: true,
-    },
-    {
-      path: '/tracker',
-      name: 'TinderComponent',
-      component: TinderPage,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/games',
-      name: 'Catalogo',
-      component: Catalogo,
-    },
-    {
-      path: '/profile',
-      name: 'MyProfile',
-      component: UserProfile,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/u/:username',
-      name: 'PublicProfile',
-      component: PublicProfile,
-    },
-    {
-      path: '/admin',
-      name: 'AdminDashboard',
-      component: AdminDashboard,
-      meta: { requiresAuth: true, requiresAdmin: true }
-    },
-    {
-      path: '/lists/:listId',
-      name: 'ListDetail',
-      component: ListDetail,
-      props: true,
-    },
-    {
-      path: '/settings',
-      name: 'Settings',
-      component: ProfileSettings,
-      meta: { requiresAuth: true }
+      path: '/',
+      component: DefaultLayout,
+      children: [
+        { path: 'home', name: 'HomeFeed', component: HomeFeed, meta: { requiresAuth: true } },
+        { path: 'game/:slug', name: 'GameDetail', component: GameDetail, props: true },
+        { path: 'tracker', name: 'TinderComponent', component: TinderPage, meta: { requiresAuth: true } },
+        { path: 'games', name: 'Catalogo', component: Catalogo },
+        { path: 'profile', name: 'MyProfile', component: UserProfile, meta: { requiresAuth: true } },
+        { path: 'u/:username', name: 'PublicProfile', component: PublicProfile },
+        { path: 'admin', name: 'AdminDashboard', component: AdminDashboard, meta: { requiresAuth: true, requiresAdmin: true } },
+        { path: 'lists/:listId', name: 'ListDetail', component: ListDetail, props: true },
+        { path: 'settings', name: 'Settings', component: ProfileSettings, meta: { requiresAuth: true } },
+      ]
     },
     {
       path: '/:pathMatch(.*)*',

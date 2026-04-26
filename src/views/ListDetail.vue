@@ -1,7 +1,5 @@
 <template>
   <div class="list-detail-page">
-    <Nav />
-
     <transition name="fade">
       <div v-if="toast.show" class="toast-notification" :class="toast.type">
         <p>{{ toast.message }}</p>
@@ -107,15 +105,12 @@
       </section>
 
     </div>
-    <Footer />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import Nav from "@/components/common/Nav.vue";
-import Footer from "@/components/common/PageFooter.vue";
 import api from "@/api/axios.js";
 
 const route = useRoute();

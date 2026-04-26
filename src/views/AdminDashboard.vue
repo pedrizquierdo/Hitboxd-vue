@@ -1,5 +1,4 @@
 <template>
-<Nav />
    <div class="page-wrapper">
     <div class="bg-texture"></div> <div class="admin-dashboard-wrapper">
         <h1 class="main-title">Moderation Panel</h1>
@@ -70,15 +69,12 @@
         </section>
 
     </div>
-   <Footer />
   </div> </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
 import api from '@/api/axios';
 import { useRouter } from 'vue-router';
-import Nav from '@/components/common/Nav.vue';
-import Footer from '@/components/common/PageFooter.vue';
 import { useUserStore } from '@/stores/userStore';
 
 const router = useRouter();

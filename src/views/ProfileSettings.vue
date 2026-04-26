@@ -1,7 +1,5 @@
 <template>
   <div class="settings-page">
-    <Nav />
-
     <transition name="fade">
       <div v-if="toast.show" class="toast-notification" :class="toast.type">
         <p>{{ toast.message }}</p>
@@ -200,15 +198,12 @@
       </div>
 
     </div>
-    <Footer />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import Nav from '@/components/common/Nav.vue'
-import Footer from '@/components/common/PageFooter.vue'
 import api from '@/api/axios.js'
 import LogoutButton from '@/components/auth/LogoutButton.vue'
 import { useUserStore } from '@/stores/userStore'
