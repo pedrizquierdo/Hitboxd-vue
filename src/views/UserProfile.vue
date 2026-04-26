@@ -367,9 +367,8 @@ watch(activeTab, (newTab) => {
     }
 });
 
-fetchNetworkData();
 const goToUserProfile = (username) => {
-    router.push({ name: 'UserProfile', params: { username } });
+    router.push({ name: 'PublicProfile', params: { username } });
 };
 
 const openModal = () => { isModalOpen.value = true }
@@ -435,24 +434,30 @@ const handleListCreated = (newListData) => {
 }
 
 // --- LOGICA DE CARGA DE JUEGOS ---
-const enrichDataWithGameInfo = async () => {
-  // Solo buscamos JUEGOS, ya no usuarios porque no tienes la API
-  const gameIdsToFetch = new Set();
-
-  reviews.value.forEach(r => { if(r.id_game) gameIdsToFetch.add(r.id_game) });
-  activityFeed.value.forEach(a => { if(a.id_game) gameIdsToFetch.add(a.id_game) });
-  watchlist.value.forEach(g => { if(g.id_game) gameIdsToFetch.add(g.id_game) });
-
-  const promises = Array.from(gameIdsToFetch).map(async (id) => {
-      if (gamesCache.value[id]) return;
-      try {
-          const { data } = await api.get(`/games/${id}`);
-          gamesCache.value[id] = data;
-      } catch (error) {
-          logger.error(`Error fetching game ${id}:`, error);
-      }
+const enrichDataWithGameInfo = () => {
+  // Watchlist and activityFeed already include game fields (title, cover_url, etc.)
+  // from the JOIN in getAllUserGames / getFriendsFeed — seed the cache from those.
+  watchlist.value.forEach(g => {
+    if (g.id_game && !gamesCache.value[g.id_game]) gamesCache.value[g.id_game] = g;
   });
-  await Promise.all(promises);
+  activityFeed.value.forEach(a => {
+    if (a.id_game && !gamesCache.value[a.id_game]) gamesCache.value[a.id_game] = a;
+  });
+  // Reviews only carry id_game without game details — fetch those that are still missing.
+  const missing = reviews.value
+    .map(r => r.id_game)
+    .filter(id => id && !gamesCache.value[id]);
+  const uniqueMissing = [...new Set(missing)];
+  return Promise.all(
+    uniqueMissing.map(async (id) => {
+      try {
+        const { data } = await api.get(`/games/${id}`);
+        gamesCache.value[id] = data;
+      } catch (error) {
+        logger.error(`Error fetching game ${id}:`, error);
+      }
+    })
+  );
 }
 
 // --- Carga Inicial ---

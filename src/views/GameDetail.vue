@@ -243,7 +243,9 @@ const fetchGameDetail = async () => {
     game.value = res.data
   } catch (err) {
     logger.error("Error loading game:", err)
-    // router.push('/404') // Opcional
+    if (err.response?.status === 404) {
+      router.replace('/')
+    }
   }
 }
 

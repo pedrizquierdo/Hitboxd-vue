@@ -15,10 +15,11 @@ export const useUserStore = defineStore('user', {
         this.user = data
         this.isLoaded = true
       } catch (error) {
-        this.isLoaded = true
         if (error.response?.status === 401) {
+          this.isLoaded = true
           router.push('/login')
         }
+        // Non-401 errors (network, 5xx) leave isLoaded false so the next call retries
       }
     },
     clearUser() {

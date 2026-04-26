@@ -6,39 +6,49 @@ const api = axios.create({
   withCredentials: true,
 })
 
+let refreshPromise = null
+
+const logout = async () => {
+  localStorage.removeItem(import.meta.env.VITE_KEY_STORAGE)
+  await api.post('auth/logout').catch(() => {})
+  router.push('/')
+}
+
 api.interceptors.response.use(
   (res) => res,
   async (err) => {
     const originalRequest = err.config
 
     const authEndPoints = ['auth/login', 'auth/register']
-
     const isAuthEndPoint = authEndPoints.some((endPoint) => originalRequest.url.includes(endPoint))
 
     if (isAuthEndPoint) {
       return Promise.reject(err)
     }
 
-    if (err.response.status === 401 && originalRequest._retry) {
-        localStorage.removeItem(import.meta.env.VITE_KEY_STORAGE)
-        await api.post('auth/logout')
-        router.push('/')
-        return Promise.reject(err)
+    if (err.response?.status === 401 && originalRequest._retry) {
+      await logout()
+      return Promise.reject(err)
     }
-    
-    if (err.response.status === 401) {
+
+    if (err.response?.status === 401) {
       originalRequest._retry = true
+
+      if (!refreshPromise) {
+        refreshPromise = api.post('auth/refresh').finally(() => {
+          refreshPromise = null
+        })
+      }
+
       try {
-        await api.post('auth/refresh')
+        await refreshPromise
         return api(originalRequest)
       } catch (error) {
-        localStorage.removeItem(import.meta.env.VITE_KEY_STORAGE)
-        await api.post('auth/logout')
-        router.push('/')
+        await logout()
         return Promise.reject(error)
       }
     }
-    
+
     return Promise.reject(err)
   }
 )

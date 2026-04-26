@@ -48,11 +48,13 @@ const router = createRouter({
 
 
 router.beforeEach(async (to, from, next) => {
-
   const storageKey = import.meta.env.VITE_KEY_STORAGE || 'isAuthenticated';
   const isAuthenticated = localStorage.getItem(storageKey) || sessionStorage.getItem(storageKey);
 
   if (to.meta.requiresAdmin) {
+    if (!isAuthenticated) {
+      return next({ name: 'Auth' });
+    }
     const userStore = useUserStore();
     if (!userStore.isLoaded) {
       await userStore.fetchUser();
@@ -64,11 +66,9 @@ router.beforeEach(async (to, from, next) => {
 
   if (to.meta.requiresAuth && !isAuthenticated) {
     next({ name: 'Auth' });
-  }
-  else if (to.name === 'Auth' && isAuthenticated) {
+  } else if (to.name === 'Auth' && isAuthenticated) {
     next({ name: 'HomeFeed' });
-  }
-  else {
+  } else {
     next();
   }
 })
