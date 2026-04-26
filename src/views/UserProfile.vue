@@ -76,7 +76,7 @@
                 {{ getGameTitle(review.id_game) }}
               </span>
               <div class="review-meta">
-                <span class="stars">{{ review.rating }}/5</span>
+                <StarRating :model-value="review.rating" disabled />
                 <span class="date">{{ formatDate(review.created_at) }}</span>
               </div>
               <p class="review-content">"{{ review.content }}"</p>
@@ -292,6 +292,7 @@ import { logger } from '@/utils/logger'
 import { ref, onMounted, computed, watch } from "vue"
 import { useRouter } from "vue-router"
 import CreateListModal from "@/components/lists/CreateListModal.vue"
+import StarRating from "@/components/reviews/StarRating.vue"
 import api from "@/api/axios.js"
 import { useUserStore } from "@/stores/userStore"
 

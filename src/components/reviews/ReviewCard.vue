@@ -41,18 +41,19 @@ const props = defineProps({
 
 <style scoped>
 .review-card {
-  background: #bfbfbf; /* Color gris de placeholder del diseño */
+  background: var(--card-bg);
+  border-left: 3px solid var(--brand-cyan);
   padding: 1rem;
   border-radius: 4px;
   color: #303030;
   text-align: left;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: box-shadow 0.2s;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .review-card:hover {
-    background: #a8a8a8;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
 .review-content {
