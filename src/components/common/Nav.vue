@@ -44,14 +44,19 @@
 
     <div v-if="showSearchInput" class="search-dropdown">
         <div class="search-inner-container">
-            <input type="text" v-model="searchQuery" placeholder="Buscar en catálogo..." class="search-input" />
+            <input type="text" v-model="searchQuery" @input="onGlobalSearchInput" placeholder="Buscar en catalogo..." class="search-input" />
             <div class="search-results-list">
-                <h4 class="results-title">RESULTADOS GLOBAL ({{ filteredGames.length }})</h4>
-                <p v-if="!allGames.length && !searchQuery" class="no-results">Cargando...</p>
-                <div v-for="game in filteredGames" :key="game.id_game" class="game-result-item" @click="goToDetail(game.slug)">
-                    <img :src="game.cover_url" :alt="game.title" class="game-cover-mini"/>
-                    <span class="game-title-result">{{ game.title }}</span>
+                <div v-if="searchLoading" class="spinner-wrapper">
+                    <div class="spinner"></div>
                 </div>
+                <template v-else-if="searchQuery.trim()">
+                    <h4 class="results-title">RESULTADOS GLOBAL ({{ searchResults.length }})</h4>
+                    <p v-if="searchResults.length === 0" class="no-results">No se encontraron resultados</p>
+                    <div v-for="game in searchResults" :key="game.id_game" class="game-result-item" @click="goToDetail(game.slug)">
+                        <img :src="game.cover_url" :alt="game.title" class="game-cover-mini"/>
+                        <span class="game-title-result">{{ game.title }}</span>
+                    </div>
+                </template>
             </div>
         </div>
     </div>
@@ -68,6 +73,7 @@
           <input
             type="text"
             v-model="reviewSearchQuery"
+            @input="onReviewSearchInput"
             placeholder="Escribe el nombre del juego..."
             class="picker-input"
             ref="pickerInputRef"
@@ -75,22 +81,27 @@
         </div>
 
         <div class="picker-results">
-           <p v-if="!reviewSearchQuery" class="picker-hint">Empieza a escribir para buscar...</p>
-           <p v-else-if="reviewFilteredGames.length === 0" class="picker-hint">No encontramos ese juego :(</p>
-
-           <div
-             v-for="game in reviewFilteredGames"
-             :key="game.id_game"
-             class="picker-item"
-             @click="selectGameForReview(game)"
-           >
-             <img :src="game.cover_url" class="picker-cover" />
-             <div class="picker-info">
-               <span class="picker-title">{{ game.title }}</span>
-               <span class="picker-year">JUEGO</span>
-             </div>
-             <span class="picker-arrow">→</span>
+           <div v-if="reviewLoading" class="spinner-wrapper">
+               <div class="spinner"></div>
            </div>
+           <template v-else>
+               <p v-if="!reviewSearchQuery" class="picker-hint">Empieza a escribir para buscar...</p>
+               <p v-else-if="reviewSearchResults.length === 0" class="picker-hint">No encontramos ese juego</p>
+
+               <div
+                 v-for="game in reviewSearchResults"
+                 :key="game.id_game"
+                 class="picker-item"
+                 @click="selectGameForReview(game)"
+               >
+                 <img :src="game.cover_url" class="picker-cover" />
+                 <div class="picker-info">
+                   <span class="picker-title">{{ game.title }}</span>
+                   <span class="picker-year">JUEGO</span>
+                 </div>
+                 <span class="picker-arrow">→</span>
+               </div>
+           </template>
         </div>
       </div>
     </div>
@@ -116,7 +127,7 @@
 
 <script setup>
 import { logger } from '@/utils/logger'
-import { ref, computed, nextTick } from "vue";
+import { ref, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import HitboxdLogo from "@/components/common/Logo.vue";
 import api from '@/api/axios';
@@ -129,15 +140,20 @@ defineOptions({ name: "NavBar" });
 // Estados Generales
 const profileMenu = ref(false);
 const mobileMenuOpen = ref(false);
-const allGames = ref([]);
 
-// Estados Búsqueda Global
+// Estados Busqueda Global
 const showSearchInput = ref(false);
 const searchQuery = ref('');
+const searchResults = ref([]);
+const searchLoading = ref(false);
+let searchDebounceTimer = null;
 
-// Estados Búsqueda de Review
+// Estados Busqueda de Review
 const showGamePicker = ref(false);
 const reviewSearchQuery = ref('');
+const reviewSearchResults = ref([]);
+const reviewLoading = ref(false);
+let reviewDebounceTimer = null;
 const pickerInputRef = ref(null);
 const gameToReview = ref(null);
 const showReviewModal = ref(false);
@@ -149,35 +165,55 @@ const showToast = (msg, type = 'success') => {
   setTimeout(() => toast.value.show = false, 3000);
 }
 
-// --- CARGA DE JUEGOS ---
-const fetchAllGames = async () => {
-    if (allGames.value.length > 0) return;
+// --- BUSQUEDA GLOBAL ---
+const runGlobalSearch = async () => {
+    const q = searchQuery.value.trim();
+    if (!q) { searchResults.value = []; return; }
+    searchLoading.value = true;
     try {
-        const res = await api.get('/games/trending?limit=500');
-        if (res.data && Array.isArray(res.data)) allGames.value = res.data;
+        const { data } = await api.get(`/games/search?q=${encodeURIComponent(q)}`);
+        searchResults.value = Array.isArray(data) ? data : [];
     } catch (error) {
-        logger.error("Error obteniendo juegos:", error);
+        logger.error("Error en busqueda global:", error);
+        searchResults.value = [];
+    } finally {
+        searchLoading.value = false;
     }
 };
 
-// --- FILTROS ---
-const filteredGames = computed(() => {
-    if (!searchQuery.value) return allGames.value;
-    const query = searchQuery.value.toLowerCase();
-    return allGames.value.filter(game => game.title.toLowerCase().includes(query));
-});
+const onGlobalSearchInput = () => {
+    clearTimeout(searchDebounceTimer);
+    if (!searchQuery.value.trim()) { searchResults.value = []; return; }
+    searchDebounceTimer = setTimeout(runGlobalSearch, 300);
+};
 
-const reviewFilteredGames = computed(() => {
-    if (!reviewSearchQuery.value) return [];
-    const query = reviewSearchQuery.value.toLowerCase();
-    return allGames.value.filter(game => game.title.toLowerCase().includes(query)).slice(0, 10);
-});
+// --- BUSQUEDA DE REVIEW ---
+const runReviewSearch = async () => {
+    const q = reviewSearchQuery.value.trim();
+    if (!q) { reviewSearchResults.value = []; return; }
+    reviewLoading.value = true;
+    try {
+        const { data } = await api.get(`/games/search?q=${encodeURIComponent(q)}`);
+        reviewSearchResults.value = Array.isArray(data) ? data : [];
+    } catch (error) {
+        logger.error("Error en busqueda de review:", error);
+        reviewSearchResults.value = [];
+    } finally {
+        reviewLoading.value = false;
+    }
+};
+
+const onReviewSearchInput = () => {
+    clearTimeout(reviewDebounceTimer);
+    if (!reviewSearchQuery.value.trim()) { reviewSearchResults.value = []; return; }
+    reviewDebounceTimer = setTimeout(runReviewSearch, 300);
+};
 
 // --- ACCIONES ---
 
-const openGamePicker = async () => {
-    await fetchAllGames();
+const openGamePicker = () => {
     reviewSearchQuery.value = '';
+    reviewSearchResults.value = [];
     showGamePicker.value = true;
     nextTick(() => { if(pickerInputRef.value) pickerInputRef.value.focus(); });
 };
@@ -231,7 +267,7 @@ const goToDetail = (id) => {
 const toggleSearch = () => {
     showSearchInput.value = !showSearchInput.value;
     searchQuery.value = '';
-    if (showSearchInput.value) fetchAllGames();
+    searchResults.value = [];
 };
 </script>
 
@@ -265,6 +301,11 @@ const toggleSearch = () => {
 .game-cover-mini { width: 40px; height: 60px; object-fit: cover; margin-right: 15px; border-radius: 3px; flex-shrink: 0; }
 .game-title-result { font-weight: 600; color: #333; }
 .no-results { color: #777; padding: 10px; text-align: center; }
+
+/* SPINNER */
+.spinner-wrapper { display: flex; justify-content: center; padding: 24px; }
+.spinner { width: 24px; height: 24px; border: 3px solid #e5e7eb; border-top-color: var(--brand-cyan, #00AEEF); border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
 /* --- ESTILOS PICKER MEJORADOS (BUSCADOR PARA REVIEW) --- */
 .picker-overlay {
