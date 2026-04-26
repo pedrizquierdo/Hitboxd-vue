@@ -132,11 +132,14 @@ const scrollRow = (id, direction) => {
   }
 };
 
+// TODO: trendingGames and topGames should come from separate backend endpoints
+// (e.g. /games/trending and /games/top-rated) when the API exposes them.
+// For now both are sourced from /games/trending and split arbitrarily by index.
 const fetchGames = async () => {
   try {
     const res = await api.get('/games/trending?limit=400');
     const newRes = await api.get('/games/new?limit=12');
-    allGames.value = res.data; 
+    allGames.value = res.data;
     trendingGames.value = res.data.slice(0, 200);
     topGames.value = res.data.slice(200, 400);
     newGames.value = newRes.data.slice(0, 12);

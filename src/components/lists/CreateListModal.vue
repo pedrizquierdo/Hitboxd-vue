@@ -17,7 +17,7 @@
 
       <input 
         v-model="searchQuery"
-        @input="searchGames"
+        @input="debouncedSearch"
         @focus="searchGames"
         type="text"
         placeholder="Search..."
@@ -75,6 +75,13 @@ const searchQuery = ref("")
 const searchResults = ref([])
 const allGamesCache = ref([])
 const selectedGames = ref([])
+
+const debounceTimer = ref(null)
+
+const debouncedSearch = () => {
+  clearTimeout(debounceTimer.value)
+  debounceTimer.value = setTimeout(searchGames, 350)
+}
 
 const close = () => emits("close")
 
