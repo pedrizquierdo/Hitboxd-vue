@@ -57,9 +57,10 @@
           </div>
 
           <div class="activity-buttons">
+            <button class="btn status playing" :class="{ 'active-status': userStatus === 'playing' }" @click="updateStatus('playing')">Playing</button>
             <button class="btn status played" :class="{ 'active-status': userStatus === 'played' }" @click="updateStatus('played')">Played</button>
-            <button class="btn status pending" :class="{ 'active-status': userStatus === 'plan_to_play' }" @click="updateStatus('plan_to_play')">Pending</button>
-            <button class="btn status abandoned" :class="{ 'active-status': userStatus === 'dropped' }" @click="updateStatus('dropped')">Abandoned</button>
+            <button class="btn status backlog" :class="{ 'active-status': userStatus === 'plan_to_play' }" @click="updateStatus('plan_to_play')">Backlog</button>
+            <button class="btn status dropped" :class="{ 'active-status': userStatus === 'dropped' }" @click="updateStatus('dropped')">Dropped</button>
           </div>
 
           <div class="rating-section">
@@ -513,6 +514,15 @@ onMounted(async () => {
     transform: scale(1.05);
 }
 
+.playing.active-status {
+    background: var(--brand-blue, #2196f3);
+    color: white;
+}
+.playing:hover:not(.active-status) {
+    background: var(--brand-blue, #2196f3);
+    color: white;
+}
+
 .played.active-status {
     background: var(--brand-green, #10B981);
     color: white;
@@ -522,20 +532,20 @@ onMounted(async () => {
     color: white;
 }
 
-.pending.active-status {
+.backlog.active-status {
     background: var(--brand-yellow, #FBBF24);
     color: black;
 }
-.pending:hover:not(.active-status) {
+.backlog:hover:not(.active-status) {
     background: var(--brand-yellow, #FBBF24);
     color: black;
 }
 
-.abandoned.active-status {
+.dropped.active-status {
     background: var(--brand-red, #EF4444);
     color: white;
 }
-.abandoned:hover:not(.active-status) {
+.dropped:hover:not(.active-status) {
     background: var(--brand-red, #EF4444);
     color: white;
 }
