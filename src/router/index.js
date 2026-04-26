@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useUserStore } from '@/stores/userStore'
 import LandingPage from '@/views/LandingPage.vue'
 import GameDetail from '@/views/GameDetail.vue'
 import HomeFeed from '@/views/HomeFeed.vue'
@@ -57,7 +58,7 @@ const router = createRouter({
       path: '/admin',
       name: 'AdminDashboard',
       component: AdminDashboard,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, requiresAdmin: true }
     },
     {
       path: '/lists/:listId',
@@ -79,10 +80,20 @@ const router = createRouter({
 })
 
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
 
   const storageKey = import.meta.env.VITE_KEY_STORAGE || 'isAuthenticated';
   const isAuthenticated = localStorage.getItem(storageKey) || sessionStorage.getItem(storageKey);
+
+  if (to.meta.requiresAdmin) {
+    const userStore = useUserStore();
+    if (!userStore.isLoaded) {
+      await userStore.fetchUser();
+    }
+    if (userStore.user?.role !== 'admin') {
+      return next({ name: 'HomeFeed' });
+    }
+  }
 
   if (to.meta.requiresAuth && !isAuthenticated) {
     next({ name: 'Auth' });
@@ -90,7 +101,6 @@ router.beforeEach((to, from, next) => {
   else if (to.name === 'Auth' && isAuthenticated) {
     next({ name: 'HomeFeed' });
   }
-
   else {
     next();
   }
