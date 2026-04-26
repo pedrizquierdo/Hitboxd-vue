@@ -27,17 +27,17 @@
         </div>
 
         <div class="profile-stats">
-          <div class="stat-block">
+          <div class="stat-block" @click="activeTab = 'GAMES'">
             <span class="stat-number">{{ games_count || watchlist.length || 0 }}</span>
             <span class="stat-label">Games</span>
           </div>
           <div class="divider"></div>
-          <div class="stat-block">
+          <div class="stat-block" @click="activeTab = 'NETWORK'">
             <span class="stat-number">{{ followers_count || 0 }}</span>
             <span class="stat-label">Followers</span>
           </div>
           <div class="divider"></div>
-          <div class="stat-block">
+          <div class="stat-block" @click="activeTab = 'NETWORK'">
             <span class="stat-number">{{ following_count || 0 }}</span>
             <span class="stat-label">Following</span>
           </div>
@@ -532,9 +532,10 @@ onMounted(async () => {
 .pronouns-badge { display: inline-block; background-color: #e0e0e0; color: #666; font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 4px; margin-top: 4px; margin-bottom: 8px; width: fit-content; }
 .bio-text { color: #666; font-size: 14px; margin-top: 5px; max-width: 400px;}
 .profile-stats { display: flex; align-items: center; gap: 20px; }
-.stat-block { text-align: center; min-width: 60px; }
-.stat-number { font-size: 20px; font-weight: bold; display: block; color: #222; }
-.stat-label { font-size: 11px; text-transform: uppercase; color: #888; letter-spacing: 0.5px; }
+.stat-block { text-align: center; min-width: 60px; cursor: pointer; transition: opacity 0.15s; }
+.stat-block:hover { opacity: 0.7; }
+.stat-number { font-size: 2.2rem; font-weight: 700; display: block; color: #222; }
+.stat-label { font-size: 0.7rem; text-transform: uppercase; color: #888; letter-spacing: 1px; }
 .divider { width: 1px; height: 30px; background: #eee; }
 
 /* Botón Admin */
