@@ -135,9 +135,9 @@ import { useRoute, useRouter } from 'vue-router'
 import api from '@/api/axios.js'
 import { useUserStore } from '@/stores/userStore'
 
-import ReviewModal from '@/components/reviews/reviewModal.vue'
-import StarRating from '@/components/reviews/starRating.vue'
-import ReportModal from '@/components/reviews/reportModal.vue'
+import ReviewModal from '@/components/reviews/ReviewModal.vue'
+import StarRating from '@/components/reviews/StarRating.vue'
+import ReportModal from '@/components/reviews/ReportModal.vue'
 
 const router = useRouter()
 const route = useRoute()

@@ -10,15 +10,15 @@
     >
       <div class="modal-body">
         <Transition name="fade" mode="out-in">
-          <loginComponent 
-            v-if="currentView === 'login'" 
+          <LoginComponent
+            v-if="currentView === 'login'"
             @switch="currentView = 'register'"
-            @close="$emit('close')" 
+            @close="$emit('close')"
           />
-          <registerComponent 
-            v-else 
+          <RegisterComponent
+            v-else
             @switch="currentView = 'login'"
-            @close="$emit('close')" 
+            @close="$emit('close')"
           />
         </Transition>
 
@@ -29,8 +29,8 @@
 
 <script setup>
 import { ref } from 'vue'
-import loginComponent from './loginComponent.vue'
-import registerComponent from './registerComponent.vue'
+import LoginComponent from './LoginComponent.vue'
+import RegisterComponent from './RegisterComponent.vue'
 
 const props = defineProps({
   initialView: {

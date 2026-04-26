@@ -22,7 +22,7 @@
 
 <script setup>
 // Importa el componente StarRating que tienes en tu estructura
-import StarRating from "@/components/reviews/starRating.vue";
+import StarRating from "@/components/reviews/StarRating.vue";
 import { defineProps } from 'vue';
 
 const props = defineProps({

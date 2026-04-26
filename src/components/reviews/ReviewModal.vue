@@ -27,7 +27,7 @@
 
 <script setup>
 import { ref } from 'vue';
-import StarRating from './starRating.vue';
+import StarRating from './StarRating.vue';
 
 const emit = defineEmits(["close", "submit"]);
 

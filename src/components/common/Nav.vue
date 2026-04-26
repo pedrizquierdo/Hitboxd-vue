@@ -120,7 +120,7 @@ import { ref, computed, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import HitboxdLogo from "@/components/common/Logo.vue";
 import api from '@/api/axios';
-import ReviewModal from '@/components/reviews/reviewModal.vue';
+import ReviewModal from '@/components/reviews/ReviewModal.vue';
 import LogoutButton from '@/components/auth/LogoutButton.vue';
 
 const router = useRouter();
