@@ -13,16 +13,13 @@ import ListDetail from '@/views/ListDetail.vue'
 import ProfileSettings from '@/views/ProfileSettings.vue'
 import PublicProfile from '@/views/PublicProfile.vue'
 
-
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
       component: AuthLayout,
-      children: [
-        { path: '', name: 'Auth', component: LandingPage },
-      ]
+      children: [{ path: '', name: 'Auth', component: LandingPage }],
     },
     {
       path: '/',
@@ -30,46 +27,65 @@ const router = createRouter({
       children: [
         { path: 'home', name: 'HomeFeed', component: HomeFeed, meta: { requiresAuth: true } },
         { path: 'game/:slug', name: 'GameDetail', component: GameDetail, props: true },
-        { path: 'tracker', name: 'TinderComponent', component: TinderPage, meta: { requiresAuth: true } },
+        {
+          path: 'tracker',
+          name: 'TinderComponent',
+          component: TinderPage,
+          meta: { requiresAuth: true },
+        },
         { path: 'games', name: 'Catalogo', component: Catalogo },
-        { path: 'profile', name: 'MyProfile', component: UserProfile, meta: { requiresAuth: true } },
+        {
+          path: 'profile',
+          name: 'MyProfile',
+          component: UserProfile,
+          meta: { requiresAuth: true },
+        },
         { path: 'u/:username', name: 'PublicProfile', component: PublicProfile },
-        { path: 'admin', name: 'AdminDashboard', component: AdminDashboard, meta: { requiresAuth: true, requiresAdmin: true } },
+        {
+          path: 'admin',
+          name: 'AdminDashboard',
+          component: AdminDashboard,
+          meta: { requiresAuth: true, requiresAdmin: true },
+        },
         { path: 'lists/:listId', name: 'ListDetail', component: ListDetail, props: true },
-        { path: 'settings', name: 'Settings', component: ProfileSettings, meta: { requiresAuth: true } },
-      ]
+        {
+          path: 'settings',
+          name: 'Settings',
+          component: ProfileSettings,
+          meta: { requiresAuth: true },
+        },
+      ],
     },
     {
       path: '/:pathMatch(.*)*',
-      redirect: '/'
-    }
+      redirect: '/',
+    },
   ],
 })
 
-
 router.beforeEach(async (to, from, next) => {
-  const storageKey = import.meta.env.VITE_KEY_STORAGE || 'isAuthenticated';
-  const isAuthenticated = localStorage.getItem(storageKey) || sessionStorage.getItem(storageKey);
+  const storageKey = import.meta.env.VITE_KEY_STORAGE || 'isAuthenticated'
+  const isAuthenticated = localStorage.getItem(storageKey) || sessionStorage.getItem(storageKey)
 
   if (to.meta.requiresAdmin) {
     if (!isAuthenticated) {
-      return next({ name: 'Auth' });
+      return next({ name: 'Auth' })
     }
-    const userStore = useUserStore();
+    const userStore = useUserStore()
     if (!userStore.isLoaded) {
-      await userStore.fetchUser();
+      await userStore.fetchUser()
     }
     if (userStore.user?.role !== 'admin') {
-      return next({ name: 'HomeFeed' });
+      return next({ name: 'HomeFeed' })
     }
   }
 
   if (to.meta.requiresAuth && !isAuthenticated) {
-    next({ name: 'Auth' });
+    next({ name: 'Auth' })
   } else if (to.name === 'Auth' && isAuthenticated) {
-    next({ name: 'HomeFeed' });
+    next({ name: 'HomeFeed' })
   } else {
-    next();
+    next()
   }
 })
 
