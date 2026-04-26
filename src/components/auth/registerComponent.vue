@@ -55,11 +55,13 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import api from '@/api/axios'
 import { useUserStore } from '@/stores/userStore'
 
 defineEmits(['switch', 'close'])
 
+const router = useRouter()
 const userStore = useUserStore()
 
 const username = ref('')
@@ -82,7 +84,7 @@ const register = () => {
     const storageKey = import.meta.env.VITE_KEY_STORAGE || 'isAuthenticated';
     localStorage.setItem(storageKey, 'true');
     await userStore.fetchUser();
-    window.location.href = '/tracker';
+    router.push('/tracker');
   })
   .catch(error => {
     console.error(error);

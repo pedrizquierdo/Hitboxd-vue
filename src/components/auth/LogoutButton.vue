@@ -37,7 +37,7 @@ const handleLogout = async () => {
   localStorage.removeItem('token');
 
   userStore.clearUser();
-  router.push('/login');
+  router.push({ name: 'Auth' });
 };
 </script>
 

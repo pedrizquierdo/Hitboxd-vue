@@ -505,7 +505,7 @@ onMounted(async () => {
     }
 
   } catch (error) {
-    if (error.response && error.response.status === 401) router.push("/login");
+    if (error.response && error.response.status === 401) router.push({ name: 'Auth' });
   } finally {
     isLoading.value = false;
   }
