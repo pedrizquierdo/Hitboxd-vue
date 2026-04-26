@@ -54,12 +54,12 @@
             <h3>New Releases</h3>
             <span class="line"></span>
           </div>
-          
-          <div class="carousel-wrapper">
+
+          <div v-if="newGames.length > 0" class="carousel-wrapper">
             <button class="nav-btn prev prev-new">&lt;</button>
             <button class="nav-btn next next-new">&gt;</button>
             <div class="fade-left"></div>
-            
+
             <swiper
               :modules="modules"
               :loop="true"
@@ -75,8 +75,12 @@
                 <GameCard :game="game" />
               </swiper-slide>
             </swiper>
-            
+
             <div class="fade-right"></div>
+          </div>
+          <div v-else class="empty-state">
+            <p>Nothing here yet</p>
+            <button class="retry-btn" @click="fetchData">Retry</button>
           </div>
         </section>
 
@@ -85,12 +89,12 @@
             <h3>Popular on Hitboxd</h3>
             <span class="line"></span>
           </div>
-          
-          <div class="carousel-wrapper">
-             <button class="nav-btn prev prev-pop">&lt;</button>
+
+          <div v-if="popularGames.length > 0" class="carousel-wrapper">
+            <button class="nav-btn prev prev-pop">&lt;</button>
             <button class="nav-btn next next-pop">&gt;</button>
             <div class="fade-left"></div>
-            
+
             <swiper
               :modules="modules"
               :loop="true"
@@ -106,8 +110,12 @@
                 <GameCard :game="game" />
               </swiper-slide>
             </swiper>
-            
+
             <div class="fade-right"></div>
+          </div>
+          <div v-else class="empty-state">
+            <p>Nothing here yet</p>
+            <button class="retry-btn" @click="fetchData">Retry</button>
           </div>
         </section>
 
@@ -323,6 +331,36 @@ h3 {
 
 .loading-state { text-align: center; margin-top: 5rem; color: #666; font-family: monospace; position: relative; z-index: 1;}
 .spinner { margin-bottom: 10px; font-size: 2rem; }
+
+.empty-state {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #888;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  position: relative;
+  z-index: 1;
+}
+
+.empty-state p {
+  margin: 0 0 0.75rem 0;
+}
+
+.retry-btn {
+  background: none;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 5px 14px;
+  font-size: 0.85rem;
+  color: #666;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.retry-btn:hover {
+  border-color: #00AEEF;
+  color: #00AEEF;
+}
 
 .fade-in { animation: fadeIn 0.8s ease; }
 .fade-up { animation: fadeUp 0.8s ease; }
