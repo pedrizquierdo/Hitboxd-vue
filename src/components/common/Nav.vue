@@ -5,7 +5,7 @@
 
       <ul class="nav-links desktop-links">
         <li class="nav-item dropdown">
-          <span @click="toggleProfileMenu">
+          <span :class="{ 'nav-active': isProfileActive }" @click="toggleProfileMenu">
             PROFILE ▾
           </span>
           <ul v-if="profileMenu" class="dropdown-menu">
@@ -121,8 +121,8 @@
 
 <script setup>
 import { logger } from '@/utils/logger'
-import { ref, nextTick } from "vue";
-import { useRouter } from "vue-router";
+import { ref, nextTick, computed } from "vue";
+import { useRouter, useRoute } from "vue-router";
 import HitboxdLogo from "@/components/common/Logo.vue";
 import api from '@/api/axios';
 import ReviewModal from '@/components/reviews/ReviewModal.vue';
@@ -130,7 +130,12 @@ import LogoutButton from '@/components/auth/LogoutButton.vue';
 import { useToastStore } from '@/stores/toastStore';
 
 const router = useRouter();
+const route = useRoute();
 defineOptions({ name: "NavBar" });
+
+const isProfileActive = computed(() =>
+  route.path.startsWith('/profile') || route.path.startsWith('/settings')
+);
 
 // Estados Generales
 const profileMenu = ref(false);
@@ -269,6 +274,8 @@ const toggleSearch = () => {
 .nav-links { display: flex; align-items: center; gap: 30px; list-style: none; font-weight: 500; margin-left: auto ; margin-right: 30px ; }
 .nav-item { position: relative; }
 .nav-links a, .nav-links span { color: #2d2d2d; text-decoration: none; cursor: pointer; font-size: 0.85rem; letter-spacing: 0.5px; }
+.nav-links a.router-link-active { color: var(--brand-cyan); border-bottom: 2px solid var(--brand-cyan); padding-bottom: 2px; }
+.nav-links span.nav-active { color: var(--brand-cyan); border-bottom: 2px solid var(--brand-cyan); padding-bottom: 2px; }
 .dropdown-menu { position: absolute; top: 22px; left: 0; background: white; border: 1px solid #d1d5db; border-radius: 6px; padding: 0.5rem 0; min-width: 150px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); z-index: 10; list-style: none; }
 .dropdown-menu li { padding: 0.4rem 1rem; }
 .dropdown-menu li:hover { background: #f3f4f6; }
