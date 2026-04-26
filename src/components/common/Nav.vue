@@ -36,12 +36,6 @@
       </div>
     </div>
 
-    <transition name="fade">
-      <div v-if="toast.show" class="toast-notification" :class="toast.type">
-        <p>{{ toast.message }}</p>
-      </div>
-    </transition>
-
     <div v-if="showSearchInput" class="search-dropdown">
         <div class="search-inner-container">
             <input type="text" v-model="searchQuery" @input="onGlobalSearchInput" placeholder="Buscar en catalogo..." class="search-input" />
@@ -133,6 +127,7 @@ import HitboxdLogo from "@/components/common/Logo.vue";
 import api from '@/api/axios';
 import ReviewModal from '@/components/reviews/ReviewModal.vue';
 import LogoutButton from '@/components/auth/LogoutButton.vue';
+import { useToastStore } from '@/stores/toastStore';
 
 const router = useRouter();
 defineOptions({ name: "NavBar" });
@@ -158,12 +153,7 @@ const pickerInputRef = ref(null);
 const gameToReview = ref(null);
 const showReviewModal = ref(false);
 
-// Toast System
-const toast = ref({ show: false, message: '', type: 'success' });
-const showToast = (msg, type = 'success') => {
-  toast.value = { show: true, message: msg, type };
-  setTimeout(() => toast.value.show = false, 3000);
-}
+const { showToast } = useToastStore();
 
 // --- BUSQUEDA GLOBAL ---
 const runGlobalSearch = async () => {
@@ -354,12 +344,6 @@ const toggleSearch = () => {
 .picker-arrow { color: #d1d5db; font-weight: bold; font-size: 1.2rem; transition: all 0.2s; }
 .picker-item:hover .picker-arrow { color: #00AEEF; transform: translateX(5px); }
 
-/* --- TOAST --- */
-.toast-notification { position: fixed; top: 20px; right: 20px; z-index: 10000; padding: 15px 20px; border-radius: 6px; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); font-size: 14px; font-weight: 600; color: white; min-width: 280px; }
-.toast-notification.success { background-color: #00cc66; }
-.toast-notification.error { background-color: #ff4444; }
-.fade-enter-active, .fade-leave-active { transition: opacity 0.5s, transform 0.5s; }
-.fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(-20px); }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
 /* MÓVIL */

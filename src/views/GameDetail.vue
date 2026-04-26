@@ -139,6 +139,7 @@ import { useUserStore } from '@/stores/userStore'
 import ReviewModal from '@/components/reviews/ReviewModal.vue'
 import StarRating from '@/components/reviews/StarRating.vue'
 import ReportModal from '@/components/reviews/ReportModal.vue'
+import { useToastStore } from '@/stores/toastStore'
 
 const router = useRouter()
 const route = useRoute()
@@ -157,6 +158,7 @@ const selectedReviewId = ref(null)
 
 const userStore = useUserStore();
 const currentUserId = computed(() => userStore.user?.id_user ?? null);
+const { showToast } = useToastStore();
 
 const releaseYear = computed(() => {
   const date = game.value?.release_date;
@@ -177,63 +179,73 @@ const goToUserProfile = (username) => {
 
 // --- LÓGICA DE ACTIVIDAD (Like, Rate, Status) ---
 
-// Función genérica para guardar
 const saveActivity = async (payload) => {
   if (!game.value.id_game) return;
-  try {
-    await api.post('/activity', {
-      gameId: game.value.id_game,
-      ...payload 
-    })
-    logger.log("Actividad guardada:", payload);
-  } catch (err) {
-    logger.error("Error guardando actividad:", err);
-  }
+  await api.post('/activity', {
+    gameId: game.value.id_game,
+    ...payload
+  })
 }
 
 // WATCHER PROTEGIDO: Solo guarda si NO estamos cargando datos iniciales
-watch(userRating, (newRating) => {
+watch(userRating, async (newRating) => {
   if (!isFetchingActivity.value && game.value.id_game) {
-    saveActivity({ rating: newRating })
+    try {
+      await saveActivity({ rating: newRating })
+      showToast('Rating saved')
+    } catch (err) {
+      logger.error('Error saving rating:', err)
+      showToast('Error saving rating', 'error')
+    }
   }
 })
+
+const STATUS_LABELS = {
+  playing: 'Now playing',
+  played: 'Marked as played',
+  plan_to_play: 'Added to backlog',
+  dropped: 'Marked as dropped',
+}
 
 const updateStatus = async (status) => {
   const newStatus = userStatus.value === status ? null : status;
   userStatus.value = newStatus;
-  await saveActivity({ status: newStatus })
-}
-
-const toggleGameLike = async () => {
-  // Cambio optimista
-  const oldVal = isGameLiked.value;
-  isGameLiked.value = !isGameLiked.value;
-
   try {
-    await saveActivity({ isLiked: isGameLiked.value })
+    await saveActivity({ status: newStatus })
+    showToast(newStatus ? STATUS_LABELS[newStatus] : 'Status cleared')
   } catch (err) {
-    isGameLiked.value = oldVal; 
-    logger.error("Error toggling game like:", err);
+    logger.error('Error updating status:', err)
+    showToast('Error updating status', 'error')
   }
 }
 
-// LÓGICA DE RESEÑAS
+const toggleGameLike = async () => {
+  const oldVal = isGameLiked.value;
+  isGameLiked.value = !isGameLiked.value;
+  try {
+    await saveActivity({ isLiked: isGameLiked.value })
+    showToast(isGameLiked.value ? 'Added to favorites' : 'Removed from favorites')
+  } catch (err) {
+    isGameLiked.value = oldVal;
+    logger.error('Error toggling game like:', err)
+    showToast('Error saving like', 'error')
+  }
+}
+
 const toggleReviewLike = async (review) => {
-    const oldLiked = review.is_liked;
-    const oldLikes = review.likes || 0;
-
-    // Optimismo
-    review.is_liked = !review.is_liked;
-    review.likes = review.is_liked ? oldLikes + 1 : oldLikes - 1;
-
-    try {
-        await api.post(`/reviews/${review.id_review}/like`);
-    } catch (err) {
-        // Revertir
-        review.is_liked = oldLiked;
-        review.likes = oldLikes;
-        logger.error("Error like review:", err);
-    }
+  const oldLiked = review.is_liked;
+  const oldLikes = review.likes || 0;
+  review.is_liked = !review.is_liked;
+  review.likes = review.is_liked ? oldLikes + 1 : oldLikes - 1;
+  try {
+    await api.post(`/reviews/${review.id_review}/like`);
+    showToast(review.is_liked ? 'Review liked' : 'Like removed')
+  } catch (err) {
+    review.is_liked = oldLiked;
+    review.likes = oldLikes;
+    logger.error('Error liking review:', err)
+    showToast('Error liking review', 'error')
+  }
 }
 
 // --- FETCHING ---
