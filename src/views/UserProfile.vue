@@ -465,6 +465,7 @@ onMounted(async () => {
 
     currentUserId.value = userData.id_user || userData.id;
     username.value = userData.username;
+    document.title = username.value + ' — Hitboxd';
     avatar.value = userData.avatar_url;
     bio.value = userData.bio;
     pronouns.value = userData.pronouns;

@@ -312,7 +312,11 @@ onMounted(async () => {
   loadingGame.value = true;
   await userStore.fetchUser();
   await fetchGameDetail();
-  
+
+  document.title = game.value.title
+    ? game.value.title + ' — Hitboxd'
+    : 'Hitboxd';
+
   if (game.value.id_game) {
     const id = game.value.id_game;
     await Promise.all([

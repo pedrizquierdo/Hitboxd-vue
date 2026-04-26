@@ -79,6 +79,8 @@ import { ref, onMounted, computed, nextTick } from 'vue';
 import api from '@/api/axios';
 import GameCard from '@/components/common/GameCard.vue';
 
+document.title = 'Games Catalog — Hitboxd';
+
 const loading = ref(true);
 const allGames = ref([]);
 const trendingGames = ref([]);
