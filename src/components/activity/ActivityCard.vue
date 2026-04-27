@@ -15,7 +15,7 @@
       <img :src="activity.cover_url" class="game-img" />
       
       <div v-if="activity.rating" class="rating-badge">
-        {{ activity.rating }}/5
+        <StarRating :model-value="activity.rating" disabled />
       </div>
     </div>
 
@@ -25,6 +25,7 @@
 
 <script setup>
 import { useRouter } from 'vue-router';
+import StarRating from '@/components/reviews/StarRating.vue';
 
 const props = defineProps({
   activity: Object
@@ -98,13 +99,14 @@ const formatAction = (act) => {
 
 .rating-badge {
   position: absolute;
-  top: 5px; right: 5px;
-  background: rgba(0,0,0,0.8);
-  color: #FFD700;
-  font-size: 0.75rem;
-  font-weight: bold;
-  padding: 2px 6px;
+  bottom: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7);
   border-radius: 4px;
+  padding: 2px 4px;
+  font-size: 0.55rem;
+  line-height: 1;
 }
 
 .game-title {

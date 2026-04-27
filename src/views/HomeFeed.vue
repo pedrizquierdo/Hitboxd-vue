@@ -20,8 +20,8 @@
           </div>
 
           <div class="carousel-wrapper" v-if="friendsActivity.length > 0">
-            <button class="nav-btn prev prev-friends"><i class="fas fa-chevron-left">&lt;</i></button>
-            <button class="nav-btn next next-friends"><i class="fas fa-chevron-right">&gt;</i></button>
+            <button class="nav-btn prev prev-friends">&lt;</button>
+            <button class="nav-btn next next-friends">&gt;</button>
             
             <div class="fade-left"></div>
             
