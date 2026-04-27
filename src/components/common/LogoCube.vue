@@ -7,13 +7,13 @@
     :class="{ spinning: animated }"
     aria-hidden="true"
   >
-    <polygon points="50,10 93.3,35 50,60 6.7,35" fill="#38B6FF" />
+    <polygon points="50,10 93.3,35 50,60 6.7,35" fill="#33adff" />
 
-    <polygon points="6.7,35 50,60 50,110 6.7,85" fill="#FF3131" />
+    <polygon points="6.7,35 50,60 50,110 6.7,85" fill="#f5454d" />
 
-    <polygon points="50,60 93.3,35 93.3,85 50,110" fill="#00D26A" />
+    <polygon points="50,60 93.3,35 93.3,85 50,110" fill="#4bde7a" />
 
-    <polygon points="65,58.3 78.3,50.7 78.3,66.7 65,74.3" fill="#FFDE59" />
+    <polygon points="64.3,64.3 79,55.8 79,71.2 64.3,79.7" fill="#fce130" />
   </svg>
 </template>
 
