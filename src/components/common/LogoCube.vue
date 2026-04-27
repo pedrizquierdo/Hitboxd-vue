@@ -7,41 +7,42 @@
     :class="{ spinning: animated }"
     aria-hidden="true"
   >
-    <!-- top face -->
-    <polygon points="50,7 93,31 50,55 7,31"   fill="#4FC3F7" />
-    <!-- left face -->
-    <polygon points="7,31 50,55 50,107 7,83"  fill="#EF5350" />
-    <!-- right face -->
-    <polygon points="50,55 93,31 93,83 50,107" fill="#4CAF50" />
-    <!-- yellow diamond — geometric centre of right face (71.5, 69) -->
-    <polygon points="71.5,62 76,66 71.5,75 67,71" fill="#FDD835" />
+    <polygon points="50,10 93.3,35 50,60 6.7,35" fill="#38B6FF" />
+
+    <polygon points="6.7,35 50,60 50,110 6.7,85" fill="#FF3131" />
+
+    <polygon points="50,60 93.3,35 93.3,85 50,110" fill="#00D26A" />
+
+    <polygon points="65,58.3 78.3,50.7 78.3,66.7 65,74.3" fill="#FFDE59" />
   </svg>
 </template>
 
 <script setup>
 defineProps({
-  size:     { type: Number, default: 40 },
+  size: { type: Number, default: 100 },
   animated: { type: Boolean, default: false },
-});
+})
 </script>
 
 <style scoped>
 @keyframes cube-spin {
-  0%   { transform: scaleX(1);  filter: brightness(1); }
-  25%  { transform: scaleX(0);  filter: brightness(1); }
-  26%  { transform: scaleX(-1); filter: brightness(0.85); }
-  50%  { transform: scaleX(1);  filter: brightness(0.85); }
-  75%  { transform: scaleX(0);  filter: brightness(0.85); }
-  76%  { transform: scaleX(1);  filter: brightness(1); }
-  100% { transform: scaleX(1);  filter: brightness(1); }
+  0% {
+    transform: rotateY(0deg);
+  }
+  100% {
+    transform: rotateY(360deg);
+  }
 }
 
 .spinning {
-  animation: cube-spin 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  animation: cube-spin 3s linear infinite;
   transform-origin: center;
+  transform-style: preserve-3d;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .spinning { animation: none; }
+  .spinning {
+    animation: none;
+  }
 }
 </style>
