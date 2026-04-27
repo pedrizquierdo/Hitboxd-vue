@@ -3,11 +3,50 @@
     <div class="navbar-inner">
       <HitboxdLogo />
 
+      <div class="search-bar-wrapper" ref="searchBarRef">
+        <svg class="search-bar-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input
+          type="text"
+          v-model="searchQuery"
+          @input="onGlobalSearchInput"
+          @focus="searchFocused = true"
+          placeholder="Search all games..."
+          class="inline-search-input"
+        />
+        <div v-if="searchFocused && searchQuery.trim()" class="inline-search-results">
+          <div v-if="searchLoading" class="spinner-wrapper">
+            <div class="spinner"></div>
+          </div>
+          <template v-else>
+            <p v-if="searchResults.length === 0" class="no-results">No results found</p>
+            <div
+              v-for="game in searchResults"
+              :key="game.id_game"
+              class="game-result-item"
+              @mousedown.prevent="goToDetail(game.slug)"
+            >
+              <img :src="game.cover_url" :alt="game.title" class="game-cover-mini" />
+              <span class="game-title-result">{{ game.title }}</span>
+            </div>
+          </template>
+        </div>
+      </div>
+
       <ul class="nav-links desktop-links">
+        <li><router-link to="/games">CATALOG</router-link></li>
         <li class="nav-item dropdown">
-          <span :class="{ 'nav-active': isProfileActive }" @click="toggleProfileMenu">
-            PROFILE ▾
-          </span>
+          <button
+            class="avatar-btn"
+            :class="{ 'avatar-active': isProfileActive }"
+            @click="toggleProfileMenu"
+            aria-label="Profile menu"
+          >
+            <img
+              :src="userStore.user?.avatar_url || '/assets/default-avatar.png'"
+              alt=""
+              class="avatar-img"
+            />
+          </button>
           <ul v-if="profileMenu" class="dropdown-menu">
             <li><router-link to="/profile" @click="toggleProfileMenu">My Profile</router-link></li>
             <li><router-link to="/settings" @click="toggleProfileMenu">Settings</router-link></li>
@@ -17,14 +56,9 @@
             </li>
           </ul>
         </li>
-        <li><router-link to="/games">CATALOG</router-link></li>
       </ul>
 
       <div class="nav-right">
-        <button class="search-btn" @click="toggleSearch">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-        </button>
-
         <button @click="openGamePicker" class="review-btn">
           Review
         </button>
@@ -34,25 +68,6 @@
           <svg v-else width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
       </div>
-    </div>
-
-    <div v-if="showSearchInput" class="search-dropdown">
-        <div class="search-inner-container">
-            <input type="text" v-model="searchQuery" @input="onGlobalSearchInput" placeholder="Buscar en catalogo..." class="search-input" />
-            <div class="search-results-list">
-                <div v-if="searchLoading" class="spinner-wrapper">
-                    <div class="spinner"></div>
-                </div>
-                <template v-else-if="searchQuery.trim()">
-                    <h4 class="results-title">RESULTADOS GLOBAL ({{ searchResults.length }})</h4>
-                    <p v-if="searchResults.length === 0" class="no-results">No se encontraron resultados</p>
-                    <div v-for="game in searchResults" :key="game.id_game" class="game-result-item" @click="goToDetail(game.slug)">
-                        <img :src="game.cover_url" :alt="game.title" class="game-cover-mini"/>
-                        <span class="game-title-result">{{ game.title }}</span>
-                    </div>
-                </template>
-            </div>
-        </div>
     </div>
 
     <div v-if="showGamePicker" class="picker-overlay" @click.self="showGamePicker = false">
@@ -121,17 +136,20 @@
 
 <script setup>
 import { logger } from '@/utils/logger'
-import { ref, nextTick, computed } from "vue";
+import { ref, nextTick, computed, onMounted, onBeforeUnmount } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import HitboxdLogo from "@/components/common/Logo.vue";
 import api from '@/api/axios';
 import ReviewModal from '@/components/reviews/ReviewModal.vue';
 import LogoutButton from '@/components/auth/LogoutButton.vue';
 import { useToastStore } from '@/stores/toastStore';
+import { useUserStore } from '@/stores/userStore';
 
 const router = useRouter();
 const route = useRoute();
 defineOptions({ name: "NavBar" });
+
+const userStore = useUserStore();
 
 const isProfileActive = computed(() =>
   route.path.startsWith('/profile') || route.path.startsWith('/settings')
@@ -142,11 +160,21 @@ const profileMenu = ref(false);
 const mobileMenuOpen = ref(false);
 
 // Estados Busqueda Global
-const showSearchInput = ref(false);
 const searchQuery = ref('');
 const searchResults = ref([]);
 const searchLoading = ref(false);
+const searchFocused = ref(false);
+const searchBarRef = ref(null);
 let searchDebounceTimer = null;
+
+const handleClickOutside = (e) => {
+  if (searchBarRef.value && !searchBarRef.value.contains(e.target)) {
+    searchFocused.value = false;
+  }
+};
+
+onMounted(() => document.addEventListener('click', handleClickOutside));
+onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside));
 
 // Estados Busqueda de Review
 const showGamePicker = ref(false);
@@ -255,14 +283,11 @@ const handleReviewSubmit = async (reviewData) => {
 // Navegación
 const toggleProfileMenu = () => profileMenu.value = !profileMenu.value;
 const toggleMobileMenu = () => mobileMenuOpen.value = !mobileMenuOpen.value;
-const goToDetail = (id) => {
-    showSearchInput.value = false;
-    router.push(`/game/${id}`);
-};
-const toggleSearch = () => {
-    showSearchInput.value = !showSearchInput.value;
+const goToDetail = (slug) => {
     searchQuery.value = '';
     searchResults.value = [];
+    searchFocused.value = false;
+    router.push(`/game/${slug}`);
 };
 </script>
 
@@ -270,34 +295,36 @@ const toggleSearch = () => {
 /* NAVBAR BASE */
 .navbar { width: 100%; background-color: #e5e7eb; padding: 0.6rem 0; display: flex; flex-direction: column; align-items: center; position: sticky; top: 0; z-index: 100; }
 .navbar::before { content: ""; position: absolute; inset: 0; background-image: url('/assets/bg-texture.webp'), url('/assets/bg-texture.jpg'); background-size: 400px; opacity: 0.1; z-index: -1; pointer-events: none; }
-.navbar-inner { width: 100%; max-width: 1300px; display: flex; align-items: center; justify-content: flex-start; padding: 0 2rem; }
-.nav-links { display: flex; align-items: center; gap: 30px; list-style: none; font-weight: 500; margin-left: auto ; margin-right: 30px ; }
+.navbar-inner { width: 100%; max-width: 1300px; display: flex; align-items: center; gap: 16px; padding: 0 2rem; }
+.nav-links { display: flex; align-items: center; gap: 20px; list-style: none; font-weight: 500; margin-left: auto; }
 .nav-item { position: relative; }
-.nav-links a, .nav-links span { color: #2d2d2d; text-decoration: none; cursor: pointer; font-size: 0.85rem; letter-spacing: 0.5px; }
+.nav-links a { color: #2d2d2d; text-decoration: none; cursor: pointer; font-size: 0.85rem; letter-spacing: 0.5px; }
 .nav-links a.router-link-active { color: var(--brand-cyan); border-bottom: 2px solid var(--brand-cyan); padding-bottom: 2px; }
-.nav-links span.nav-active { color: var(--brand-cyan); border-bottom: 2px solid var(--brand-cyan); padding-bottom: 2px; }
-.dropdown-menu { position: absolute; top: 22px; left: 0; background: white; border: 1px solid #d1d5db; border-radius: 6px; padding: 0.5rem 0; min-width: 150px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); z-index: 10; list-style: none; }
+.dropdown-menu { position: absolute; top: 38px; right: 0; background: white; border: 1px solid #d1d5db; border-radius: 6px; padding: 0.5rem 0; min-width: 150px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); z-index: 10; list-style: none; }
 .dropdown-menu li { padding: 0.4rem 1rem; }
 .dropdown-menu li:hover { background: #f3f4f6; }
 .separator { border-top: 1px solid #eee; margin: 4px 0; padding: 0 !important; height: 0; }
-.nav-right { display: flex; align-items: center; gap: 15px; }
-.review-btn { font-weight: 600; border: none; padding: 6px 14px; border-radius: 10px; cursor: pointer; font-size: 0.85rem; transition: background 0.2s; color: white; background: var(--brand-cyan, #00AEEF); }
+.nav-right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.review-btn { font-weight: 600; border: none; padding: 6px 16px; border-radius: 9999px; cursor: pointer; font-size: 0.85rem; transition: background 0.2s; color: white; background: var(--brand-cyan, #00AEEF); white-space: nowrap; }
 .review-btn:hover { background: #0095CC; }
-.search-btn { background: none; border: none; cursor: pointer; padding: 6px; color: #555; transition: color 0.2s; display: flex; align-items: center; }
-.search-btn:hover { color: var(--brand-cyan, #00AEEF); }
 
-/* BÚSQUEDA GLOBAL */
-.search-dropdown { width: 100%; background-color: #f7f7f7; border-top: 1px solid #d1d5db; padding: 1rem 0; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
-.search-inner-container { max-width: 1000px; width: 90%; margin: 0 auto; position: relative; }
-.search-input { width: 100%; padding: 10px 15px; border: 2px solid #ccc; border-radius: 8px; font-size: 1rem; outline: none; transition: border-color 0.2s; background-color: white; }
-.search-input:focus { border-color: var(--brand-cyan, #00AEEF); }
-.search-results-list { max-height: 400px; overflow-y: auto; margin-top: 10px; padding: 10px; background: white; border-radius: 8px; border: 1px solid #e0e0e0; }
-.results-title { font-size: 0.8rem; color: #555; margin: 0 0 10px 0; text-transform: uppercase; }
-.game-result-item { display: flex; align-items: center; padding: 8px; cursor: pointer; transition: background-color 0.2s; border-radius: 4px; }
+/* AVATAR */
+.avatar-btn { background: none; border: 2px solid transparent; padding: 0; cursor: pointer; border-radius: 50%; transition: border-color 0.2s; display: flex; align-items: center; justify-content: center; }
+.avatar-btn:hover, .avatar-btn.avatar-active { border-color: var(--brand-cyan); }
+.avatar-img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; display: block; }
+
+/* PERSISTENT SEARCH BAR */
+.search-bar-wrapper { position: relative; flex: 1; max-width: 380px; display: flex; align-items: center; }
+.search-bar-icon { position: absolute; left: 10px; color: #888; pointer-events: none; flex-shrink: 0; }
+.inline-search-input { width: 100%; padding: 7px 12px 7px 32px; border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 0.85rem; background: white; color: #2d2d2d; outline: none; transition: border-color 0.2s; }
+.inline-search-input:focus { border-color: var(--brand-cyan, #00AEEF); }
+.inline-search-input::placeholder { color: #aaa; }
+.inline-search-results { position: absolute; top: calc(100% + 6px); left: 0; width: 100%; background: white; border: 1px solid #d1d5db; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 200; max-height: 360px; overflow-y: auto; }
+.game-result-item { display: flex; align-items: center; padding: 8px 12px; cursor: pointer; transition: background-color 0.15s; gap: 10px; }
 .game-result-item:hover { background-color: #f3f4f6; }
-.game-cover-mini { width: 40px; height: 60px; object-fit: cover; margin-right: 15px; border-radius: 3px; flex-shrink: 0; }
-.game-title-result { font-weight: 600; color: #333; }
-.no-results { color: #777; padding: 10px; text-align: center; }
+.game-cover-mini { width: 32px; height: 48px; object-fit: cover; border-radius: 3px; flex-shrink: 0; }
+.game-title-result { font-weight: 600; color: #333; font-size: 0.85rem; }
+.no-results { color: #999; padding: 16px 12px; text-align: center; font-size: 0.85rem; }
 
 /* SPINNER */
 .spinner-wrapper { display: flex; justify-content: center; padding: 24px; }
@@ -364,9 +391,9 @@ const toggleSearch = () => {
   .desktop-links { display: none; }
   .menu-toggle-btn { display: block; }
   .navbar-inner { padding: 0 1rem; }
-  .review-btn { padding: 6px 10px; font-size: 0.8rem; }
+  .review-btn { padding: 6px 12px; font-size: 0.8rem; }
   .nav-right { margin-left: auto; }
-  .search-inner-container { width: 95%; }
+  .search-bar-wrapper { display: none; }
   .picker-box { width: 95%; height: 80vh; max-height: none; }
 }
 </style>
