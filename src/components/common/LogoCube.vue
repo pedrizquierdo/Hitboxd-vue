@@ -13,7 +13,7 @@
 
     <polygon points="50,60 93.3,35 93.3,85 50,110" fill="#4bde7a" />
 
-    <polygon points="64.3,68.3 79,59.8 79,75.2 64.3,83.7" fill="#fce130" />
+    <polygon points="64,68.3 79,59.6 79,76.6 64,85.3" fill="#fce130" />
   </svg>
 </template>
 
