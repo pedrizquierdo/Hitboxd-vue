@@ -1,16 +1,20 @@
 <template>
   <svg
     :width="size"
-    :height="Math.round(size * 1.05)"
-    viewBox="0 0 100 105"
+    :height="Math.round(size * 1.16)"
+    viewBox="0 0 100 116"
     xmlns="http://www.w3.org/2000/svg"
     :class="{ spinning: animated }"
     aria-hidden="true"
   >
-    <polygon points="50,15 85,35 50,55 15,35" fill="#4FC3F7" />
-    <polygon points="15,35 50,55 50,90 15,70" fill="#EF5350" />
-    <polygon points="50,55 85,35 85,70 50,90" fill="#4CAF50" />
-    <polygon points="67,56 72,59 67,62 62,59"  fill="#FDD835" />
+    <!-- top face -->
+    <polygon points="50,7 93,31 50,55 7,31"   fill="#4FC3F7" />
+    <!-- left face -->
+    <polygon points="7,31 50,55 50,107 7,83"  fill="#EF5350" />
+    <!-- right face -->
+    <polygon points="50,55 93,31 93,83 50,107" fill="#4CAF50" />
+    <!-- yellow diamond — geometric centre of right face (71.5, 69) -->
+    <polygon points="71.5,62 76,66 71.5,75 67,71" fill="#FDD835" />
   </svg>
 </template>
 
@@ -38,8 +42,6 @@ defineProps({
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .spinning {
-    animation: none;
-  }
+  .spinning { animation: none; }
 }
 </style>
