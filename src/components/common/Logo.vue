@@ -1,9 +1,7 @@
 <template>
   <router-link :to="destination" class="logo-link">
     <div class="logo-container">
-      <span class="cube-icon">
-        <img src="/assets/logo.png" alt="Hitboxd Logo" class="logo-img"/>
-      </span>
+      <LogoCube :size="32" :animated="false" />
       <span class="brand-name">Hitboxd</span>
     </div>
   </router-link>
@@ -13,12 +11,12 @@
 defineOptions({ name: 'HitboxdLogo' });
 
 import { computed } from 'vue';
+import LogoCube from '@/components/common/LogoCube.vue';
 
 const destination = computed(() => {
   const storageKey = import.meta.env.VITE_KEY_STORAGE
   const token = localStorage.getItem(storageKey) || sessionStorage.getItem(storageKey);
-
-    return token ? '/home' : '/';
+  return token ? '/home' : '/';
 });
 </script>
 
@@ -38,12 +36,6 @@ const destination = computed(() => {
   color: #2D2D2D;
   font-family: 'Inter', sans-serif;
   letter-spacing: -0.5px;
-}
-
-.logo-img {
-  width: 32px;
-  height: auto;
-  display: block;
 }
 
 .brand-name {

@@ -1,7 +1,23 @@
-<script setup></script>
+<script setup>
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import PageLoader from '@/components/common/PageLoader.vue'
+
+const router = useRouter()
+const isLoading = ref(false)
+
+router.beforeEach(() => {
+  isLoading.value = true
+})
+
+router.afterEach(() => {
+  setTimeout(() => { isLoading.value = false }, 150)
+})
+</script>
 
 <template>
   <div id="app">
+    <PageLoader :visible="isLoading" />
     <router-view />
   </div>
 </template>
@@ -11,6 +27,7 @@
 
 :root {
   --bg-color: #E3E4E8;
+  --bg-main: #F2F3F5;
   --text-main: #2D2D2D;
   --card-bg: #757575;
   --brand-cyan: #00AEEF;

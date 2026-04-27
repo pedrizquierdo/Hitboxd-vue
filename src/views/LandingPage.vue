@@ -193,7 +193,6 @@ onMounted(() => {
       display: flex;
       align-items: center;
       gap: 8px;
-      .logo-img { width: 30px; height: 35px; }
     }
 
     .nav-links {
