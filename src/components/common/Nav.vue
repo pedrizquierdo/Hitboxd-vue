@@ -10,7 +10,7 @@
           stroke="currentColor" stroke-width="2"
           stroke-linecap="round" stroke-linejoin="round"
           style="pointer-events: auto; cursor: pointer;"
-          @click="showSearchInput && searchQuery ? navigateToSearch() : null"
+          @click="navigateToSearch"
         >
           <circle cx="11" cy="11" r="8"></circle>
           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -182,7 +182,6 @@ const searchQuery = ref('');
 const searchResults = ref([]);
 const searchLoading = ref(false);
 const searchFocused = ref(false);
-const showSearchInput = ref(true);
 const searchBarRef = ref(null);
 let searchDebounceTimer = null;
 
@@ -302,7 +301,6 @@ const handleReviewSubmit = async (reviewData) => {
 const navigateToSearch = () => {
   if (!searchQuery.value || searchQuery.value.trim().length < 2) return;
   router.push({ name: 'SearchResults', query: { q: searchQuery.value.trim() } });
-  showSearchInput.value = false;
   searchFocused.value = false;
   searchQuery.value = '';
 };
