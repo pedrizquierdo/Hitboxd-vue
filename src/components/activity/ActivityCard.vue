@@ -13,6 +13,7 @@
         :src="activity.avatar_url || '/assets/default-avatar.png'"
         class="avatar"
         alt=""
+        loading="lazy"
       />
       <div class="action-text">
         <span class="friend-name">{{ activity.username }}</span>
@@ -36,13 +37,13 @@
           width="10" height="10" viewBox="0 0 24 24" fill="currentColor"
         >
           <defs>
-            <clipPath id="half-act">
+            <clipPath :id="clipId">
               <rect x="0" y="0" width="12" height="24"/>
             </clipPath>
           </defs>
           <polygon
             points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"
-            clip-path="url(#half-act)"
+            :clip-path="`url(#${clipId})`"
           />
         </svg>
       </span>
@@ -54,6 +55,8 @@
 <script setup>
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
+
+const clipId = `half-act-${Math.random().toString(36).slice(2)}`;
 
 const props = defineProps({
   activity: Object
@@ -88,6 +91,7 @@ const hasHalfStar     = computed(() => (props.activity.rating || 0) % 1 >= 0.5);
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   border: 2px solid transparent;
+  will-change: transform;
 }
 
 .activity-card:hover {

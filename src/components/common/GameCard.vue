@@ -44,6 +44,7 @@ const goToDetail = () => {
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s;
   border: 2px solid transparent;
+  will-change: transform;
 }
 
 .game-card img {

@@ -9,7 +9,6 @@
           width="16" height="16" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2"
           stroke-linecap="round" stroke-linejoin="round"
-          style="pointer-events: auto; cursor: pointer;"
           @click="navigateToSearch"
         >
           <circle cx="11" cy="11" r="8"></circle>
@@ -341,7 +340,7 @@ const goToDetail = (slug) => {
 
 /* PERSISTENT SEARCH BAR */
 .search-bar-wrapper { position: absolute; left: 50%; transform: translateX(-50%); width: 100%; max-width: 360px; display: flex; align-items: center; }
-.search-bar-icon { position: absolute; right: 10px; color: #888; pointer-events: none; flex-shrink: 0; }
+.search-bar-icon { position: absolute; right: 10px; color: #888; cursor: pointer; flex-shrink: 0; }
 .inline-search-input { width: 100%; padding: 7px 32px 7px 12px; border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 0.85rem; background: white; color: #2d2d2d; outline: none; transition: border-color 0.2s; }
 .inline-search-input:focus { border-color: var(--brand-cyan, #00AEEF); }
 .inline-search-input::placeholder { color: #aaa; }
