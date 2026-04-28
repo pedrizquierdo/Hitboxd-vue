@@ -4,12 +4,23 @@
       <HitboxdLogo />
 
       <div class="search-bar-wrapper" ref="searchBarRef">
-        <svg class="search-bar-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <svg
+          class="search-bar-icon"
+          width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round"
+          style="pointer-events: auto; cursor: pointer;"
+          @click="showSearchInput && searchQuery ? navigateToSearch() : null"
+        >
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
         <input
           type="text"
           v-model="searchQuery"
           @input="onGlobalSearchInput"
           @focus="searchFocused = true"
+          @keyup.enter="navigateToSearch"
           placeholder="Search all games..."
           class="inline-search-input"
         />
@@ -28,6 +39,13 @@
               <img :src="game.cover_url" :alt="game.title" class="game-cover-mini" />
               <span class="game-title-result">{{ game.title }}</span>
             </div>
+            <button
+              v-if="searchResults.length > 0"
+              class="see-all-btn"
+              @mousedown.prevent="navigateToSearch"
+            >
+              Ver todos los resultados para "{{ searchQuery }}" →
+            </button>
           </template>
         </div>
       </div>
@@ -164,6 +182,7 @@ const searchQuery = ref('');
 const searchResults = ref([]);
 const searchLoading = ref(false);
 const searchFocused = ref(false);
+const showSearchInput = ref(true);
 const searchBarRef = ref(null);
 let searchDebounceTimer = null;
 
@@ -280,6 +299,14 @@ const handleReviewSubmit = async (reviewData) => {
     }
 };
 
+const navigateToSearch = () => {
+  if (!searchQuery.value || searchQuery.value.trim().length < 2) return;
+  router.push({ name: 'SearchResults', query: { q: searchQuery.value.trim() } });
+  showSearchInput.value = false;
+  searchFocused.value = false;
+  searchQuery.value = '';
+};
+
 // Navegación
 const toggleProfileMenu = () => profileMenu.value = !profileMenu.value;
 const toggleMobileMenu = () => mobileMenuOpen.value = !mobileMenuOpen.value;
@@ -326,6 +353,8 @@ const goToDetail = (slug) => {
 .game-cover-mini { width: 32px; height: 48px; object-fit: cover; border-radius: 3px; flex-shrink: 0; }
 .game-title-result { font-weight: 600; color: #333; font-size: 0.85rem; }
 .no-results { color: #999; padding: 16px 12px; text-align: center; font-size: 0.85rem; }
+.see-all-btn { width: 100%; padding: 10px; border: none; background: transparent; color: var(--brand-cyan, #00aeef); cursor: pointer; font-size: 0.85rem; border-top: 1px solid #e5e7eb; margin-top: 8px; text-align: center; display: block; transition: background-color 0.15s; }
+.see-all-btn:hover { background: #f3f4f6; }
 
 /* SPINNER */
 .spinner-wrapper { display: flex; justify-content: center; padding: 24px; }
