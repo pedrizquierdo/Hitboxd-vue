@@ -223,7 +223,7 @@ const toggleGameLike = async () => {
   const oldVal = isGameLiked.value;
   isGameLiked.value = !isGameLiked.value;
   try {
-    await saveActivity({ isLiked: isGameLiked.value })
+    await saveActivity({ isFavorite: isGameLiked.value })
     showToast(isGameLiked.value ? 'Added to favorites' : 'Removed from favorites')
   } catch (err) {
     isGameLiked.value = oldVal;
@@ -272,7 +272,7 @@ const fetchUserActivity = async (gameId) => {
     if (res.data) {
       userStatus.value = res.data.status
       userRating.value = res.data.rating || 0
-      isGameLiked.value = Boolean(res.data.is_liked) // Asegurar booleano
+      isGameLiked.value = Boolean(res.data.is_favorite)
     }
   } catch (err) {
     logger.error("Error activity:", err)
