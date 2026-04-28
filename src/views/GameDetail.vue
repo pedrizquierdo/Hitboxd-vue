@@ -605,13 +605,20 @@ onMounted(async () => {
     padding: 1rem;
     margin-bottom: 1rem;
     border-radius: 4px;
+    border-left: 3px solid var(--hover-color, var(--brand-cyan));
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    transition: transform .2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .review-card:hover {
     transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.3);
 }
+
+.reviews-list .review-card:nth-child(4n + 1) { --hover-color: var(--brand-red); }
+.reviews-list .review-card:nth-child(4n + 2) { --hover-color: var(--brand-cyan); }
+.reviews-list .review-card:nth-child(4n + 3) { --hover-color: var(--brand-green); }
+.reviews-list .review-card:nth-child(4n)     { --hover-color: var(--brand-yellow); }
 
 .review-meta {
     display: flex;

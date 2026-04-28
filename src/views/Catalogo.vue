@@ -188,6 +188,11 @@ onMounted(() => {
 .grid-item {
   width: 180px;
 }
+
+.grid-item:nth-child(4n + 1) { --hover-color: var(--brand-red); }
+.grid-item:nth-child(4n + 2) { --hover-color: var(--brand-cyan); }
+.grid-item:nth-child(4n + 3) { --hover-color: var(--brand-green); }
+.grid-item:nth-child(4n)     { --hover-color: var(--brand-yellow); }
 .no-results {
   text-align: center;
   margin-top: 40px;
@@ -231,12 +236,17 @@ onMounted(() => {
 .carousel-track::-webkit-scrollbar { display: none; }
 
 .carousel-item {
-  min-width: 180px; 
+  min-width: 180px;
   width: 180px;
   scroll-snap-align: start;
   flex-shrink: 0;
   transition: all 0.3s ease;
 }
+
+.carousel-item:nth-child(4n + 1) { --hover-color: var(--brand-red); }
+.carousel-item:nth-child(4n + 2) { --hover-color: var(--brand-cyan); }
+.carousel-item:nth-child(4n + 3) { --hover-color: var(--brand-green); }
+.carousel-item:nth-child(4n)     { --hover-color: var(--brand-yellow); }
 
 .nav-btn {
   background: white;

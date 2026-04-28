@@ -271,16 +271,21 @@ h3 {
 }
 
 .swiper-item {
-  width: 160px; 
+  width: 160px;
   height: auto;
   display: flex;
   justify-content: center;
-  flex-shrink: 0; 
+  flex-shrink: 0;
 }
 
 .swiper-item > * {
   width: 100%;
 }
+
+.swiper-item:nth-child(4n + 1) { --hover-color: var(--brand-red); }
+.swiper-item:nth-child(4n + 2) { --hover-color: var(--brand-cyan); }
+.swiper-item:nth-child(4n + 3) { --hover-color: var(--brand-green); }
+.swiper-item:nth-child(4n)     { --hover-color: var(--brand-yellow); }
 
 .nav-btn {
   position: absolute;

@@ -93,7 +93,7 @@ const hasHalfStar     = computed(() => (props.activity.rating || 0) % 1 >= 0.5);
 .activity-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 12px 20px rgba(0, 0, 0, 0.5);
-  border-color: var(--brand-cyan, #00AEEF);
+  border-color: var(--hover-color, var(--brand-cyan));
 }
 
 .cover-img {

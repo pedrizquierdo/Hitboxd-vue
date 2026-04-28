@@ -696,7 +696,18 @@ onMounted(loadPublicData)
   padding: 20px;
   border-radius: 8px;
   border: 1px solid #eee;
+  border-left: 3px solid var(--hover-color, var(--brand-cyan));
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
 }
+.review-card-full:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+}
+.reviews-list .review-card-full:nth-child(4n + 1) { --hover-color: var(--brand-red); }
+.reviews-list .review-card-full:nth-child(4n + 2) { --hover-color: var(--brand-cyan); }
+.reviews-list .review-card-full:nth-child(4n + 3) { --hover-color: var(--brand-green); }
+.reviews-list .review-card-full:nth-child(4n)     { --hover-color: var(--brand-yellow); }
 .review-header {
   display: flex;
   justify-content: space-between;
