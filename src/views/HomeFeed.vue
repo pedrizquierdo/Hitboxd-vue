@@ -162,7 +162,7 @@ const fetchData = async () => {
 
     const results = await Promise.allSettled([
         api.get('/games/new?limit=20'),
-        api.get('/games/trending?limit=20'),
+        api.get('/games/popular?limit=20'),
         api.get('/activity/feed') 
     ]);
 
