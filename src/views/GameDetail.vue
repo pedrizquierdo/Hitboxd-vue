@@ -542,6 +542,16 @@ const submitReport = async (reason) => {
   } catch (err) { logger.error(err) }
 }
 
+const saveRecentlyViewed = (g) => {
+  try {
+    const key = 'hitboxd_recently_viewed'
+    const recent = JSON.parse(localStorage.getItem(key) || '[]')
+    const filtered = recent.filter(r => r.slug !== g.slug)
+    filtered.unshift({ slug: g.slug, title: g.title, cover_url: g.cover_url })
+    localStorage.setItem(key, JSON.stringify(filtered.slice(0, 5)))
+  } catch { /* ignore storage errors */ }
+}
+
 onMounted(async () => {
   loadingGame.value = true
   document.addEventListener('click', handleOutsideClick)
@@ -549,6 +559,8 @@ onMounted(async () => {
   await fetchGameDetail()
 
   document.title = game.value.title ? game.value.title + ' — Hitboxd' : 'Hitboxd'
+
+  if (game.value.slug) saveRecentlyViewed(game.value)
 
   if (game.value.id_game) {
     const id = game.value.id_game
