@@ -9,7 +9,7 @@
 
       <div class="profile-header">
         <div class="profile-avatar">
-          <img :src="avatar || 'https://placehold.co/150'" class="avatar-img" />
+          <img :src="avatar || '/assets/default-avatar.svg'" class="avatar-img" />
         </div>
 
         <div class="profile-info">
@@ -22,7 +22,7 @@
             @click="goToAdminPanel"
             class="admin-profile-btn"
           >
-            Panel Admin
+            Admin Panel
           </button>
         </div>
 

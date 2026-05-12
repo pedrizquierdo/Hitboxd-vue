@@ -78,7 +78,7 @@
         </div>
 
         <div class="reviews-list">
-          <div v-for="review in reviews" :key="review.id_review" class="review-card card fade-in">
+          <div v-for="review in displayedReviews" :key="review.id_review" class="review-card card fade-in">
             <div class="review-meta">
               <span class="review-author">
                 Reviewed by 
@@ -120,6 +120,14 @@
             </div>
           </div>
         </div>
+
+        <button
+          v-if="reviews.length > 3"
+          class="show-all-btn"
+          @click="showAllReviews = !showAllReviews"
+        >
+          {{ showAllReviews ? 'Show less' : `Show all ${reviews.length} reviews` }}
+        </button>
       </div>
 
       <ReviewModal v-if="showReviewModal" @close="showReviewModal = false" @submit="submitReview" />
@@ -155,6 +163,11 @@ const isFetchingActivity = ref(false)
 const showReviewModal = ref(false)
 const showReportModal = ref(false)
 const selectedReviewId = ref(null)
+const showAllReviews = ref(false)
+
+const displayedReviews = computed(() =>
+  showAllReviews.value ? reviews.value : reviews.value.slice(0, 3)
+)
 
 const userStore = useUserStore();
 const currentUserId = computed(() => userStore.user?.id_user ?? null);
@@ -467,7 +480,8 @@ onMounted(async () => {
 
 .info-text-header {
     font-size: 1.1rem;
-    color: #2D2D2D;
+    color: rgba(255, 255, 255, 0.85);
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
     margin: 5px 0 0 0;
 }
 
@@ -570,9 +584,25 @@ onMounted(async () => {
 
 .reviews-list {
     margin-top: 1rem;
-    max-height: 350px;
-    overflow-y: auto;
-    padding-right: 10px;
+}
+
+.show-all-btn {
+    display: block;
+    margin: 1rem auto 0;
+    padding: 8px 24px;
+    background: transparent;
+    border: 1.5px solid var(--brand-cyan);
+    color: var(--brand-cyan);
+    border-radius: 9999px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: background 0.2s, color 0.2s;
+}
+
+.show-all-btn:hover {
+    background: var(--brand-cyan);
+    color: white;
 }
 
 .reviews-header {

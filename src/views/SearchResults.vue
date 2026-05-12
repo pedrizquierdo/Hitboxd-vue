@@ -80,7 +80,7 @@ const fetchResults = async (page = 1) => {
     currentPage.value = page
     hasSearched.value = true
   } catch {
-    error.value = 'Error al buscar juegos. Intenta de nuevo.'
+    error.value = 'Error searching for games. Please try again.'
   } finally {
     isLoading.value = false
   }

@@ -7,7 +7,7 @@
   <div class="nav-links">
         <button @click="openModal('login')" class="nav-btn">SIGN IN</button>
         <button @click="openModal('register')" class="nav-btn">CREATE ACCOUNT</button>
-        <a href="#" class="nav-link">GAMES</a>
+        <router-link to="/games" class="nav-link">GAMES</router-link>
       </div>
     </nav>
 
@@ -28,7 +28,7 @@
     </header>
 
     <section class="trending-section">
-      <div v-if="isLoading" class="loading-msg">Cargando juegos...</div>
+      <div v-if="isLoading" class="loading-msg">Loading games...</div>
 
       <div v-else class="games-grid">
          <GameCard 
@@ -45,7 +45,7 @@
       <div class="features-grid">
         <div class="feature-card">
           <span class="icon">
-            <img src="/assets/Eye.png" alt="">
+            <img src="/assets/Eye.png" alt="eye icon">
           </span>
           <p>Keep track of every game you've ever played (or just start from the day you join)</p>
         </div>
@@ -75,7 +75,7 @@
         </div>
         <div class="feature-card">
           <span class="icon">
-            <img src="/assets/Four Squares.png" alt="">
+            <img src="/assets/Four Squares.png" alt="lists icon">
           </span>
           <p>Compile and share lists on any topic and keep a backlog of games to play</p>
         </div>
@@ -85,15 +85,15 @@
     <footer class="footer">
       <p>© Hitboxd Limited. Made by <a href="#">fans</a> in Sonora Mexico. Game data from IGDB.</p>
       <div class="socials">
-        <span>
-            <img src="/assets/Twitter Bird.png" alt="twitter icon"/>
-        </span> 
-        <span>
-            <img src="/assets/Facebook Circled.png" alt="facebook icon">
-        </span> 
-        <span>
-            <img src="/assets/Instagram.png" alt="instagram icon">
-        </span>
+        <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="Twitter">
+          <img src="/assets/Twitter Bird.png" alt="Twitter" />
+        </a>
+        <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+          <img src="/assets/Facebook Circled.png" alt="Facebook" />
+        </a>
+        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+          <img src="/assets/Instagram.png" alt="Instagram" />
+        </a>
       </div>
     </footer>
 
@@ -354,9 +354,10 @@ onMounted(() => {
     a { color: #2D2D2D; text-decoration: underline; }
 
     .socials {
-      display: flex; gap: 15px;
+      display: flex; gap: 15px; align-items: center;
+      a { display: flex; }
       img { width: 50px; opacity: 0.7; transition: opacity 0.2s; }
-      img:hover { opacity: 1; }
+      a:hover img { opacity: 1; }
     }
   }
 }

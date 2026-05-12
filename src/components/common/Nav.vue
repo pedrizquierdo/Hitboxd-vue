@@ -43,7 +43,7 @@
               class="see-all-btn"
               @mousedown.prevent="navigateToSearch"
             >
-              Ver todos los resultados para "{{ searchQuery }}" →
+              See all results for "{{ searchQuery }}" →
             </button>
           </template>
         </div>
@@ -90,7 +90,7 @@
     <div v-if="showGamePicker" class="picker-overlay" @click.self="showGamePicker = false">
       <div class="picker-box">
         <div class="picker-header">
-          <h3>Elige un juego para reseñar</h3>
+          <h3>Choose a game to review</h3>
           <button class="close-picker" @click="showGamePicker = false">&times;</button>
         </div>
 
@@ -100,7 +100,7 @@
             type="text"
             v-model="reviewSearchQuery"
             @input="onReviewSearchInput"
-            placeholder="Escribe el nombre del juego..."
+            placeholder="Type the game name..."
             class="picker-input"
             ref="pickerInputRef"
           />
@@ -111,8 +111,8 @@
                <div class="spinner"></div>
            </div>
            <template v-else>
-               <p v-if="!reviewSearchQuery" class="picker-hint">Empieza a escribir para buscar...</p>
-               <p v-else-if="reviewSearchResults.length === 0" class="picker-hint">No encontramos ese juego</p>
+               <p v-if="!reviewSearchQuery" class="picker-hint">Start typing to search...</p>
+               <p v-else-if="reviewSearchResults.length === 0" class="picker-hint">No games found</p>
 
                <div
                  v-for="game in reviewSearchResults"
@@ -123,7 +123,7 @@
                  <img :src="game.cover_url" class="picker-cover" />
                  <div class="picker-info">
                    <span class="picker-title">{{ game.title }}</span>
-                   <span class="picker-year">JUEGO</span>
+                   <span class="picker-year">{{ game.release_date ? new Date(game.release_date).getFullYear() : 'Game' }}</span>
                  </div>
                  <span class="picker-arrow">→</span>
                </div>
@@ -133,6 +133,28 @@
     </div>
 
     <div v-if="mobileMenuOpen" class="mobile-menu">
+      <div class="mobile-search-wrapper" ref="mobileSearchBarRef">
+        <svg class="mobile-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" @click="navigateToSearchMobile"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input
+          type="text"
+          v-model="searchQuery"
+          @input="onGlobalSearchInput"
+          @keyup.enter="navigateToSearchMobile"
+          placeholder="Search all games..."
+          class="mobile-search-input"
+        />
+        <div v-if="searchQuery.trim() && searchResults.length > 0" class="mobile-search-results">
+          <div
+            v-for="game in searchResults"
+            :key="game.id_game"
+            class="game-result-item"
+            @click="goToDetailMobile(game.slug)"
+          >
+            <img :src="game.cover_url" :alt="game.title" class="game-cover-mini" />
+            <span class="game-title-result">{{ game.title }}</span>
+          </div>
+        </div>
+      </div>
       <ul class="mobile-links">
         <li><router-link to="/profile" @click="toggleMobileMenu">PROFILE</router-link></li>
         <li><router-link to="/games" @click="toggleMobileMenu">CATALOG</router-link></li>
@@ -268,7 +290,7 @@ const selectGameForReview = (game) => {
 const handleReviewSubmit = async (reviewData) => {
     // 1. Validación
     if (!gameToReview.value || !gameToReview.value.id_game) {
-        showToast("Error: No hay juego seleccionado", "error");
+        showToast("Error: No game selected", "error");
         return;
     }
 
@@ -284,13 +306,13 @@ const handleReviewSubmit = async (reviewData) => {
 
     try {
         await api.post('/reviews', payload);
-        showToast("¡Reseña publicada con éxito!", "success");
+        showToast("Review published!", "success");
         showReviewModal.value = false;
         gameToReview.value = null;
     } catch (error) {
         logger.error("Error publicando reseña:", error);
         if (error.response && error.response.status === 400) {
-            showToast("Error: Revisa los datos (Quizás ya reseñaste este juego)", "error");
+            showToast("Error: You may have already reviewed this game", "error");
         } else {
             showToast("Error al conectar con el servidor", "error");
         }
@@ -302,6 +324,21 @@ const navigateToSearch = () => {
   router.push({ name: 'SearchResults', query: { q: searchQuery.value.trim() } });
   searchFocused.value = false;
   searchQuery.value = '';
+};
+
+const navigateToSearchMobile = () => {
+  if (!searchQuery.value || searchQuery.value.trim().length < 2) return;
+  router.push({ name: 'SearchResults', query: { q: searchQuery.value.trim() } });
+  searchQuery.value = '';
+  searchResults.value = [];
+  mobileMenuOpen.value = false;
+};
+
+const goToDetailMobile = (slug) => {
+  searchQuery.value = '';
+  searchResults.value = [];
+  mobileMenuOpen.value = false;
+  router.push(`/game/${slug}`);
 };
 
 // Navegación
@@ -413,6 +450,13 @@ const goToDetail = (slug) => {
 .mobile-links { list-style: none; padding: 10px 0; }
 .mobile-links li a { display: block; padding: 10px 2rem; text-decoration: none; color: #2d2d2d; font-size: 1rem; font-weight: 500; border-bottom: 1px solid #e0e0e0; }
 .mobile-logout-container { padding: 10px 2rem; border-bottom: 1px solid #e0e0e0; }
+
+/* MOBILE SEARCH */
+.mobile-search-wrapper { position: relative; padding: 10px 1rem; border-bottom: 1px solid #d1d5db; }
+.mobile-search-icon { position: absolute; right: 24px; top: 50%; transform: translateY(-50%); color: #888; cursor: pointer; }
+.mobile-search-input { width: 100%; padding: 8px 36px 8px 12px; border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 0.9rem; background: white; color: #2d2d2d; outline: none; }
+.mobile-search-input:focus { border-color: var(--brand-cyan, #00AEEF); }
+.mobile-search-results { background: white; border: 1px solid #d1d5db; border-radius: 8px; margin-top: 6px; max-height: 220px; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
 
 @media (max-width: 850px) {
   .desktop-links { display: none; }

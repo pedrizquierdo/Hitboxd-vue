@@ -8,36 +8,36 @@
 
     <div v-if="showDeleteListModal" class="modal-overlay">
       <div class="modal-box">
-        <h3>¿Eliminar Lista?</h3>
-        <p>Estás a punto de eliminar la lista <strong>"{{ listData.title }}"</strong>. Esta acción es permanente.</p>
+        <h3>Delete list?</h3>
+        <p>You are about to permanently delete the list <strong>"{{ listData.title }}"</strong>.</p>
         <div class="modal-actions">
-          <button class="btn-cancel" @click="showDeleteListModal = false">Cancelar</button>
-          <button class="btn-confirm-delete" @click="executeDeleteList">Sí, eliminar lista</button>
+          <button class="btn-cancel" @click="showDeleteListModal = false">Cancel</button>
+          <button class="btn-confirm-delete" @click="executeDeleteList">Yes, delete list</button>
         </div>
       </div>
     </div>
 
     <div v-if="showRemoveGameModal" class="modal-overlay">
       <div class="modal-box">
-        <h3>¿Quitar juego?</h3>
-        <p>¿Seguro que deseas eliminar este juego de tu lista?</p>
+        <h3>Remove game?</h3>
+        <p>Are you sure you want to remove this game from your list?</p>
         <div class="modal-actions">
-          <button class="btn-cancel" @click="closeRemoveGameModal">Cancelar</button>
-          <button class="btn-confirm-delete" @click="executeRemoveGame">Sí, quitar juego</button>
+          <button class="btn-cancel" @click="closeRemoveGameModal">Cancel</button>
+          <button class="btn-confirm-delete" @click="executeRemoveGame">Yes, remove game</button>
         </div>
       </div>
     </div>
     
     <div v-if="isLoading" class="loading-container">
       <div class="spinner"></div>
-      <p>Cargando lista...</p>
+      <p>Loading list...</p>
     </div>
     
     <div v-else-if="!listData.id_list" class="error-container">
-      <h2 class="error-title">Lista no encontrada</h2>
-      <p>Parece que el ID de la lista no es válido o no tienes acceso.</p>
+      <h2 class="error-title">List not found</h2>
+      <p>The list ID is invalid or you don't have access to it.</p>
       <button @click="router.push({ name: 'UserProfile' })" class="btn-primary">
-        Volver a mi perfil
+        Back to my profile
       </button>
     </div>
 
@@ -45,38 +45,38 @@
       
       <header class="list-header">
         
-        <input 
-          v-model="editableTitle" 
-          class="list-title-input" 
-          placeholder="Título de la lista"
+        <input
+          v-model="editableTitle"
+          class="list-title-input"
+          placeholder="List title"
         />
-        
-        <textarea 
-          v-model="editableDescription" 
-          class="list-description-input" 
-          placeholder="Añade una descripción (opcional)"
+
+        <textarea
+          v-model="editableDescription"
+          class="list-description-input"
+          placeholder="Add a description (optional)"
         ></textarea>
 
         <div class="header-actions">
-          <p class="list-info-text">{{ listData.games.length }} JUEGOS | Creada por: {{ listData.username || 'Tú' }}</p>
-          
+          <p class="list-info-text">{{ listData.games.length }} GAMES | Created by: {{ listData.username || 'You' }}</p>
+
           <div class="btn-group">
             <button @click="saveListDetails" class="btn-primary" :disabled="isSaving">
-              {{ isSaving ? 'Guardando...' : 'Guardar Detalles' }}
+              {{ isSaving ? 'Saving...' : 'Save Details' }}
             </button>
-            
+
             <button @click="showDeleteListModal = true" class="btn-delete" :disabled="isSaving">
-              Eliminar Lista
+              Delete List
             </button>
           </div>
         </div>
       </header>
       
       <section class="game-management">
-        <h2 class="section-title">Juegos en la lista</h2>
-        
+        <h2 class="section-title">Games in this list</h2>
+
         <div v-if="listData.games.length === 0" class="empty-state">
-            <p>Aún no hay juegos en esta lista. ¡Añade el primero!</p>
+          <p>No games in this list yet. Add the first one!</p>
         </div>
 
         <div v-else class="list-games-grid">
@@ -97,7 +97,7 @@
                 <small class="game-position">#{{ game.position }}</small>
             </div>
             
-            <button @click="openRemoveGameModal(game.id_item)" class="btn-remove" title="Eliminar juego de la lista">
+            <button @click="openRemoveGameModal(game.id_item)" class="btn-remove" title="Remove from list">
                 &times;
             </button>
           </div>
@@ -152,7 +152,7 @@ const fetchListDetails = async () => {
   } catch (error) {
     logger.error("Error cargando detalles:", error);
     listData.value = { games: [] }; 
-    showToast("Error al cargar la lista", "error");
+    showToast("Error loading the list", "error");
   } finally {
     isLoading.value = false;
   }
@@ -166,10 +166,10 @@ const saveListDetails = async () => {
             title: editableTitle.value,
             description: editableDescription.value
         });
-        showToast("Lista actualizada con éxito");
+        showToast("List updated successfully");
     } catch (error) {
         logger.error("Error guardando:", error);
-        showToast("Error al guardar cambios", "error");
+        showToast("Error saving changes", "error");
     } finally {
         isSaving.value = false;
     }
@@ -181,13 +181,13 @@ const executeDeleteList = async () => {
     isSaving.value = true;
     try {
         await api.delete(`/lists/${listId}`);
-        showToast("Lista eliminada correctamente");
+        showToast("List deleted successfully");
         setTimeout(() => {
             router.push({ name: 'UserProfile' });
         }, 1000);
     } catch (error) {
         logger.error("Error eliminando lista:", error);
-        showToast("Error al eliminar la lista", "error");
+        showToast("Error deleting the list", "error");
         isSaving.value = false;
     }
 };
@@ -218,10 +218,10 @@ const executeRemoveGame = async () => {
         // Actualizamos UI localmente
         listData.value.games = listData.value.games.filter(game => game.id_item !== gameToRemoveId.value);
         
-        showToast("Juego eliminado de la lista");
+        showToast("Game removed from list");
     } catch (error) {
         logger.error("Error eliminando juego:", error);
-        showToast("No se pudo eliminar el juego", "error");
+        showToast("Could not remove the game", "error");
     } finally {
         gameToRemoveId.value = null;
     }

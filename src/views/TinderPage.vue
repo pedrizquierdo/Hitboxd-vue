@@ -39,6 +39,8 @@
           </button>
         </div>
       </div>
+      <p class="keyboard-hint" v-if="currentGame && !loading">← Skip &nbsp;·&nbsp; → Played &nbsp;·&nbsp; ↑ Wishlist &nbsp;·&nbsp; Enter to view</p>
+
       <div v-else class="sinDatos fade-in">
         <h2>No more games found!</h2>
         <button class="retry-btn" @click="fetchRandomGame">Refresh</button>
@@ -49,7 +51,7 @@
 
 <script setup>
 import { logger } from '@/utils/logger'
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '@/api/axios';
 
@@ -101,8 +103,21 @@ const goToDetail = () => {
   }
 };
 
+const handleKeydown = (e) => {
+  if (!currentGame.value || loading.value) return;
+  if (e.key === 'ArrowLeft')  handleAction('skip');
+  if (e.key === 'ArrowRight') handleAction('played');
+  if (e.key === 'ArrowUp')    handleWishlist();
+  if (e.key === 'Enter')      goToDetail();
+};
+
 onMounted(() => {
   fetchRandomGame();
+  window.addEventListener('keydown', handleKeydown);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleKeydown);
 });
 </script>
 
@@ -297,6 +312,18 @@ onMounted(() => {
 .icon-btn {
   font-size: 19px;
   line-height: 1;
+}
+
+.keyboard-hint {
+  margin-top: 1rem;
+  font-size: 0.75rem;
+  color: #aaa;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .keyboard-hint { display: none; }
 }
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
