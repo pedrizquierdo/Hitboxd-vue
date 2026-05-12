@@ -10,15 +10,18 @@
 
     <div class="top-overlay">
       <img
-        :src="activity.avatar_url || '/assets/default-avatar.png'"
+        :src="activity.avatar_url || '/assets/default-avatar.svg'"
         class="avatar"
         alt=""
         loading="lazy"
+        @click.stop="goToProfile"
+        :title="activity.username"
       />
-      <div class="action-text">
+      <div class="action-text" @click.stop="goToProfile">
         <span class="friend-name">{{ activity.username }}</span>
         <span class="action">{{ formatAction(activity) }}</span>
       </div>
+      <span v-if="activity.follows_you" class="follows-badge">follows you</span>
     </div>
 
     <div class="bottom-overlay">
@@ -66,6 +69,10 @@ const router = useRouter();
 
 const goToGame = () => {
   router.push(`/game/${props.activity.slug}`);
+};
+
+const goToProfile = () => {
+  router.push(`/u/${props.activity.username}`);
 };
 
 const formatAction = (act) => {
@@ -126,6 +133,12 @@ const hasHalfStar     = computed(() => (props.activity.rating || 0) % 1 >= 0.5);
   object-fit: cover;
   border: 1px solid rgba(255,255,255,0.4);
   flex-shrink: 0;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.avatar:hover {
+  border-color: var(--brand-cyan);
 }
 
 .action-text {
@@ -133,6 +146,7 @@ const hasHalfStar     = computed(() => (props.activity.rating || 0) % 1 >= 0.5);
   flex-direction: column;
   line-height: 1.2;
   min-width: 0;
+  cursor: pointer;
 }
 
 .friend-name {
@@ -150,6 +164,19 @@ const hasHalfStar     = computed(() => (props.activity.rating || 0) % 1 >= 0.5);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.follows-badge {
+  margin-left: auto;
+  font-size: 0.5rem;
+  font-weight: 700;
+  color: var(--brand-cyan, #00AEEF);
+  background: rgba(0, 174, 239, 0.15);
+  border: 1px solid rgba(0, 174, 239, 0.4);
+  border-radius: 3px;
+  padding: 1px 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .bottom-overlay {
