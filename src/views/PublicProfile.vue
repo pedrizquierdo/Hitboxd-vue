@@ -6,6 +6,25 @@
     </div>
 
     <div v-else class="profile-container">
+      <!-- STICKY HEADER -->
+      <div class="sticky-header" :class="{ visible: showStickyHeader }">
+        <div class="sticky-header-inner">
+          <div class="sticky-left">
+            <img :src="avatar || 'https://placehold.co/150'" class="sticky-avatar" alt="Avatar" />
+            <span class="sticky-username">{{ username }}</span>
+          </div>
+          <button
+            v-if="myUserId"
+            class="follow-btn"
+            :class="{ following: isFollowing }"
+            @click="handleFollowToggle"
+          >
+            {{ isFollowing ? 'FOLLOWING' : '+ FOLLOW' }}
+          </button>
+          <router-link v-else to="/" class="login-prompt-btn">Log in to follow</router-link>
+        </div>
+      </div>
+
       <!-- HEADER (PÚBLICO) -->
       <div class="profile-header">
         <div class="profile-avatar">
@@ -16,6 +35,12 @@
           <h1 class="username">{{ username }}</h1>
           <span v-if="pronouns" class="pronouns-badge">{{ pronouns }}</span>
           <p v-if="bio" class="bio-text">{{ bio }}</p>
+          <span
+            v-if="myUserId && compatibility && compatibility.count > 0"
+            class="compatibility-badge"
+          >
+            You both played {{ compatibility.count }} games · {{ compatibility.percent }}% match
+          </span>
 
           <div class="header-actions">
             <!-- BOTÓN FOLLOW / UNFOLLOW -->
@@ -107,15 +132,29 @@
       <!-- 2. GAMES TAB (Librería Pública) -->
       <section v-show="activeTab === 'GAMES'" class="section">
         <h2 class="section-title">GAMELIST</h2>
-        <div v-if="watchlist.length > 0" class="games-grid-layout">
-          <div
-            v-for="game in watchlist"
-            :key="game.id_game"
-            class="game-poster-card"
-            @click="goToGame(game)"
-          >
-            <img :src="getCoverUrl(game.cover_url)" alt="Game Cover" />
-            <span class="game-title-hover">{{ game.title }}</span>
+        <div v-if="watchlist.length > 0">
+          <div class="status-filters">
+            <button
+              v-for="f in statusButtons"
+              :key="f.value"
+              class="status-filter-btn"
+              :class="{ active: statusFilter === f.value }"
+              :style="statusFilter === f.value ? { background: f.color, color: 'white', borderColor: f.color } : {}"
+              @click="statusFilter = f.value"
+            >
+              {{ f.label }} ({{ f.count }})
+            </button>
+          </div>
+          <div class="games-grid-layout">
+            <div
+              v-for="game in filteredWatchlist"
+              :key="game.id_game"
+              class="game-poster-card"
+              @click="goToGame(game)"
+            >
+              <img :src="getCoverUrl(game.cover_url)" alt="Game Cover" />
+              <span class="game-title-hover">{{ game.title }}</span>
+            </div>
           </div>
         </div>
         <p v-else class="section-text">User has no games listed.</p>
@@ -125,15 +164,30 @@
       <section v-show="activeTab === 'REVIEWS'" class="section">
         <h2 class="section-title">REVIEWS</h2>
         <div v-if="reviews.length > 0" class="reviews-list">
-          <div v-for="review in reviews" :key="review.id_review" class="review-card-full">
-            <div class="review-header">
-              <span class="game-name">{{ getGameTitle(review.id_game) }}</span>
-              <span v-if="review.rating" class="rating-badge">{{ review.rating }}/5</span>
-            </div>
-            <p class="review-body">{{ review.content }}</p>
-            <div class="review-footer">
-              <small>{{ formatDate(review.created_at) }}</small>
-              <span v-if="review.has_spoilers" class="spoiler-tag">SPOILER</span>
+          <div
+            v-for="review in reviews"
+            :key="review.id_review"
+            class="review-card-full"
+            @click="navigateToGameFromReview(review)"
+          >
+            <img
+              class="review-cover"
+              :src="gamesCache[review.id_game]?.cover_url ? getCoverUrl(gamesCache[review.id_game]?.cover_url) : 'https://placehold.co/40x60?text=?'"
+              alt="Game Cover"
+            />
+            <div class="review-card-body">
+              <div class="review-header">
+                <span
+                  class="game-name"
+                  @click.stop="router.push(`/game/${gamesCache[review.id_game]?.slug || review.id_game}`)"
+                >{{ getGameTitle(review.id_game) }}</span>
+                <span v-if="review.rating" class="rating-badge">{{ review.rating }}/5</span>
+              </div>
+              <p class="review-body">{{ review.content }}</p>
+              <div class="review-footer">
+                <small>{{ formatDate(review.created_at) }}</small>
+                <span v-if="review.has_spoilers" class="spoiler-tag">SPOILER</span>
+              </div>
             </div>
           </div>
         </div>
@@ -151,6 +205,14 @@
             class="list-card"
             @click="viewList(list)"
           >
+            <div class="list-cover-collage">
+              <template v-for="n in 4" :key="n">
+                <div v-if="list.games && list.games[n - 1]" class="collage-slot">
+                  <img :src="getCoverUrl(list.games[n - 1].cover_url)" alt="Game Cover" />
+                </div>
+                <div v-else class="collage-slot collage-empty"></div>
+              </template>
+            </div>
             <div class="list-card-content">
               <h3>{{ list.title || list.name }}</h3>
               <p class="list-desc">{{ list.description || 'Sin descripción' }}</p>
@@ -187,7 +249,7 @@
 
 <script setup>
 import { logger } from '@/utils/logger'
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '@/api/axios.js'
 import { useUserStore } from '@/stores/userStore'
@@ -237,6 +299,66 @@ const viewList = (list) => {
   // Solo ver, no editar
   const listId = list.id_list || list.id
   if (listId) router.push({ name: 'ListDetail', params: { listId: listId } })
+}
+
+// --- GAMES FILTER ---
+const statusFilter = ref('all')
+
+const filteredWatchlist = computed(() => {
+  if (statusFilter.value === 'all') return watchlist.value
+  return watchlist.value.filter((g) => g.status === statusFilter.value)
+})
+
+const statusButtons = computed(() => [
+  { value: 'all', label: 'All', color: '#555', count: watchlist.value.length },
+  {
+    value: 'playing',
+    label: 'Playing',
+    color: '#2196f3',
+    count: watchlist.value.filter((g) => g.status === 'playing').length,
+  },
+  {
+    value: 'played',
+    label: 'Played',
+    color: '#10B981',
+    count: watchlist.value.filter((g) => g.status === 'played').length,
+  },
+  {
+    value: 'plan_to_play',
+    label: 'Backlog',
+    color: '#FBBF24',
+    count: watchlist.value.filter((g) => g.status === 'plan_to_play').length,
+  },
+  {
+    value: 'dropped',
+    label: 'Dropped',
+    color: '#EF4444',
+    count: watchlist.value.filter((g) => g.status === 'dropped').length,
+  },
+])
+
+// --- COMPATIBILITY ---
+const compatibility = computed(() => {
+  if (!myUserId.value) return null
+  const myGames = new Set(userStore.user?.games?.map((g) => g.id_game))
+  if (watchlist.value.length === 0 || myGames.size === 0) return null
+  const shared = watchlist.value.filter((g) => myGames.has(g.id_game))
+  const percent = Math.round((shared.length / Math.max(watchlist.value.length, 1)) * 100)
+  return { count: shared.length, percent }
+})
+
+// --- REVIEW NAVIGATION ---
+const navigateToGameFromReview = (review) => {
+  const game = gamesCache.value[review.id_game]
+  if (game?.slug) router.push(`/game/${game.slug}`)
+  else if (review.id_game) router.push(`/game/${review.id_game}`)
+}
+
+// --- STICKY HEADER ---
+const showStickyHeader = ref(false)
+
+const handleScroll = () => {
+  showStickyHeader.value = window.scrollY > 200
 }
 
 // Cargar nombres de juegos para el cache (Optimizado)
@@ -372,7 +494,14 @@ const handleFollowToggle = async () => {
 // Recargar si cambio de un perfil público a otro (/u/juan -> /u/maria)
 watch(() => route.params.username, loadPublicData)
 
-onMounted(loadPublicData)
+onMounted(() => {
+  loadPublicData()
+  window.addEventListener('scroll', handleScroll)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('scroll', handleScroll)
+})
 </script>
 
 <style scoped>
@@ -415,6 +544,48 @@ onMounted(loadPublicData)
   100% {
     transform: rotate(360deg);
   }
+}
+
+/* STICKY HEADER */
+.sticky-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transform: translateY(-100%);
+  opacity: 0;
+  transition: transform 0.2s, opacity 0.2s;
+}
+.sticky-header.visible {
+  transform: translateY(0);
+  opacity: 1;
+}
+.sticky-header-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 10px 5%;
+}
+.sticky-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sticky-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.sticky-username {
+  font-weight: 700;
+  font-size: 15px;
+  color: #333;
 }
 
 /* HEADER */
@@ -470,6 +641,17 @@ onMounted(loadPublicData)
   color: #666;
   font-size: 14px;
   margin-top: 5px;
+}
+.compatibility-badge {
+  display: inline-block;
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+  border-radius: 20px;
+  font-size: 12px;
+  padding: 4px 10px;
+  margin-top: 8px;
+  width: fit-content;
 }
 
 /* ACTIONS */
@@ -642,7 +824,30 @@ onMounted(loadPublicData)
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-/* LISTS & REVIEWS (Mismos estilos) */
+/* STATUS FILTERS */
+.status-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.status-filter-btn {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.status-filter-btn:hover {
+  border-color: #aaa;
+  color: #333;
+}
+
+/* LISTS */
 .lists-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -652,18 +857,45 @@ onMounted(loadPublicData)
   background: #fff;
   border: 1px solid #eee;
   border-radius: 8px;
-  padding: 20px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   min-height: 140px;
   cursor: pointer;
   transition: all 0.2s;
+  overflow: hidden;
 }
 .list-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
   border-color: #00cc66;
+}
+
+/* LIST COVER COLLAGE */
+.list-cover-collage {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  height: 80px;
+  width: 100%;
+  border-radius: 6px 6px 0 0;
+  overflow: hidden;
+}
+.collage-slot {
+  overflow: hidden;
+}
+.collage-slot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.collage-empty {
+  background: #e0e0e0;
+}
+
+.list-card-content {
+  padding: 15px 20px 0;
 }
 .list-card-content h3 {
   margin: 0 0 10px 0;
@@ -686,9 +918,10 @@ onMounted(loadPublicData)
   color: #aaa;
   font-size: 12px;
   border-top: 1px solid #f9f9f9;
-  padding-top: 10px;
+  padding: 10px 20px 15px;
 }
 
+/* REVIEWS */
 .reviews-list {
   display: flex;
   flex-direction: column;
@@ -702,6 +935,9 @@ onMounted(loadPublicData)
   border-left: 3px solid var(--hover-color, var(--brand-cyan));
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   cursor: pointer;
+  display: flex;
+  gap: 15px;
+  align-items: flex-start;
 }
 .review-card-full:hover {
   transform: translateY(-3px);
@@ -711,6 +947,17 @@ onMounted(loadPublicData)
 .reviews-list .review-card-full:nth-child(4n + 2) { --hover-color: var(--brand-cyan); }
 .reviews-list .review-card-full:nth-child(4n + 3) { --hover-color: var(--brand-green); }
 .reviews-list .review-card-full:nth-child(4n)     { --hover-color: var(--brand-yellow); }
+
+.review-cover {
+  width: 40px;
+  height: 60px;
+  border-radius: 4px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.review-card-body {
+  flex: 1;
+}
 .review-header {
   display: flex;
   justify-content: space-between;
@@ -719,6 +966,10 @@ onMounted(loadPublicData)
 .game-name {
   font-weight: bold;
   color: #333;
+  cursor: pointer;
+}
+.game-name:hover {
+  text-decoration: underline;
 }
 .rating-badge {
   background: #00cc66;
