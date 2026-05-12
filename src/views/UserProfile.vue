@@ -44,16 +44,17 @@
         </div>
       </div>
 
-      <nav class="profile-tabs">
-        <a
+      <nav class="profile-tabs" role="tablist">
+        <button
           v-for="tab in tabs"
           :key="tab"
-          href="#"
+          role="tab"
+          :aria-selected="activeTab === tab"
           :class="{ active: activeTab === tab }"
-          @click.prevent="activeTab = tab"
+          @click="activeTab = tab"
         >
           {{ tab }}
-        </a>
+        </button>
       </nav>
 
       <section v-show="activeTab === 'PROFILE'" class="section">
@@ -161,7 +162,7 @@
           >
             <div class="list-card-content">
               <h3>{{ list.title || list.name }}</h3>
-              <p class="list-desc">{{ list.description || 'Sin descripción' }}</p>
+              <p class="list-desc">{{ list.description || 'No description' }}</p>
             </div>
             <div class="list-card-footer">
               <small>{{ list.games ? list.games.length : 0 }} GAMES</small>
@@ -216,7 +217,7 @@
         @click="goToUserProfile(user.username)"
       >
         <div class="user-card-header">
-           <img :src="user.avatar_url || 'https://placehold.co/100'" class="user-avatar" />
+           <img :src="user.avatar_url || '/assets/default-avatar.svg'" class="user-avatar" />
         </div>
         
         <div class="user-card-body">
@@ -544,9 +545,9 @@ onMounted(async () => {
 
 /* TABS */
 .profile-tabs { display: flex; align-items: center; gap: 25px; border-bottom: 1px solid #e0e0e0; margin-top: 20px; padding-bottom: 0; overflow-x: auto; }
-.profile-tabs a { text-decoration: none; font-size: 13px; color: #666; font-weight: 600; padding-bottom: 15px; border-bottom: 3px solid transparent; transition: all 0.2s; white-space: nowrap; }
-.profile-tabs a:hover { color: #333; }
-.profile-tabs a.active { color: #00cc66; border-bottom-color: #00cc66; }
+.profile-tabs button { background: none; border: none; cursor: pointer; text-decoration: none; font-size: 13px; color: #666; font-weight: 600; padding-bottom: 15px; border-bottom: 3px solid transparent; transition: all 0.2s; white-space: nowrap; }
+.profile-tabs button:hover { color: #333; }
+.profile-tabs button.active { color: #00cc66; border-bottom-color: #00cc66; }
 
 /* SECTIONS */
 .section { margin-top: 40px; }

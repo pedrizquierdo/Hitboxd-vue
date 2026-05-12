@@ -1,13 +1,9 @@
 <template>
-  <div 
-    class="modal-overlay" 
-    :class="{ 'is-dark': currentView === 'register' }"
+  <div
+    class="modal-overlay"
     @click.self="$emit('close')"
   >
-    <div 
-      class="modal-content" 
-      :class="{ 'is-centered': currentView === 'register' }"
-    >
+    <div class="modal-content">
       <div class="modal-body">
         <Transition name="fade" mode="out-in">
           <LoginComponent
@@ -48,32 +44,25 @@ const currentView = ref(props.initialView)
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
   z-index: 1000;
-  background: transparent;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(3px);
   display: flex;
-  align-items: center; 
+  align-items: center;
   justify-content: center;
   transition: background-color 0.3s ease;
 }
 
-
-.modal-overlay.is-dark {
-  background-color: rgba(0, 0, 0, 0.6); 
-  backdrop-filter: blur(3px);
-}
-
 .modal-content {
-  position: absolute;
-  top: 1rem;
-  right: 2rem;
-  left: auto;  
-  bottom: auto; 
+  position: relative;
   background-color: #E3E4E8;
-  border-radius: 4px;
-  padding: 10px 15px;
-  position: absolute;
+  border-radius: 6px;
+  padding: 2.5rem;
+  min-width: 420px;
+  max-width: 90vw;
   overflow: hidden;
-  z-index: 1; 
-  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  z-index: 1;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 .modal-content::before {
@@ -83,21 +72,9 @@ const currentView = ref(props.initialView)
   background-image: url('/assets/bg-texture.webp'), url('/assets/bg-texture.jpg');
   background-repeat: repeat;
   background-size: 400px;
-  opacity: 0.1; 
+  opacity: 0.1;
   z-index: -1;
   pointer-events: none;
-}
-
-.modal-content.is-centered {
-  position: relative;
-  top: auto; 
-  right: auto;
-  left: auto;
-  margin: 0;
-  min-width: 420px;
-  max-width: 90vw;
-  padding: 2.5rem;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.3);
 }
 
 .fade-enter-active,
@@ -111,14 +88,9 @@ const currentView = ref(props.initialView)
 
 @media (max-width: 768px) {
   .modal-content {
-    top: 80px;
-    right: 1rem; 
-    left: 1rem;
-    width: auto;
-  }
-  
-  .modal-content.is-centered {
-    margin-top: 20px;
+    min-width: unset;
+    width: calc(100% - 2rem);
+    padding: 1.5rem;
   }
 }
 </style>

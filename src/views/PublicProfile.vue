@@ -52,16 +52,17 @@
         </div>
       </div>
 
-      <nav class="profile-tabs">
-        <a
+      <nav class="profile-tabs" role="tablist">
+        <button
           v-for="tab in tabs"
           :key="tab"
-          href="#"
+          role="tab"
+          :aria-selected="activeTab === tab"
           :class="{ active: activeTab === tab }"
-          @click.prevent="activeTab = tab"
+          @click="activeTab = tab"
         >
           {{ tab }}
-        </a>
+        </button>
       </nav>
 
       <!-- SECCIONES DE CONTENIDO PÚBLICO -->
@@ -553,8 +554,10 @@ onMounted(loadPublicData)
   padding-bottom: 0;
   overflow-x: auto;
 }
-.profile-tabs a {
-  text-decoration: none;
+.profile-tabs button {
+  background: none;
+  border: none;
+  cursor: pointer;
   font-size: 13px;
   color: #666;
   font-weight: 600;
@@ -563,10 +566,10 @@ onMounted(loadPublicData)
   transition: all 0.2s;
   white-space: nowrap;
 }
-.profile-tabs a:hover {
+.profile-tabs button:hover {
   color: #333;
 }
-.profile-tabs a.active {
+.profile-tabs button.active {
   color: #00cc66;
   border-bottom-color: #00cc66;
 }

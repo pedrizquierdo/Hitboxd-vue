@@ -15,14 +15,20 @@
       </div>
       <div v-else class="library-content fade-in">       
         <div v-if="searchQuery" class="search-results-container">
-           <h3 class="section-title">SEARCH RESULTS ({{ filteredGames.length }})</h3>          
-           <div v-if="filteredGames.length > 0" class="results-grid">
-             <div class="grid-item" v-for="game in filteredGames" :key="game.id_game">
-                <GameCard :game="game" />
+           <h3 class="section-title">
+             SEARCH RESULTS
+             <span v-if="!searchLoading && searchResults.length > 0">({{ searchResults.length }})</span>
+           </h3>
+           <div v-if="searchLoading" class="loading-grid">
+             <div v-for="n in 12" :key="n" class="skeleton-card"></div>
+           </div>
+           <div v-else-if="searchResults.length > 0" class="results-grid">
+             <div class="grid-item" v-for="game in searchResults" :key="game.id_game || game.igdb_id">
+               <GameCard :game="game" />
              </div>
-           </div>           
+           </div>
            <div v-else class="no-results">
-              <p>No games found for "{{ searchQuery }}"</p>
+             <p>No games found for "{{ searchQuery }}"</p>
            </div>
         </div>
         <div v-else class="default-view">
@@ -69,27 +75,37 @@
 
 <script setup>
 import { logger } from '@/utils/logger'
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import api from '@/api/axios';
 import GameCard from '@/components/common/GameCard.vue';
 
 document.title = 'Games Catalog — Hitboxd';
 
 const loading = ref(true);
-const allGames = ref([]);
 const trendingGames = ref([]);
 const topGames = ref([]);
 const newGames = ref([]);
 
-
 const searchQuery = ref('');
+const searchResults = ref([]);
+const searchLoading = ref(false);
+let searchTimer = null;
 
-const filteredGames = computed(() => {
-  if (!searchQuery.value) return [];
-  const query = searchQuery.value.toLowerCase();
-  return allGames.value.filter(game => 
-    game.title.toLowerCase().includes(query)
-  );
+watch(searchQuery, (q) => {
+  clearTimeout(searchTimer);
+  searchResults.value = [];
+  if (!q.trim()) return;
+  searchLoading.value = true;
+  searchTimer = setTimeout(async () => {
+    try {
+      const { data } = await api.get(`/games/search?q=${encodeURIComponent(q.trim())}`);
+      searchResults.value = Array.isArray(data) ? data : [];
+    } catch (err) {
+      logger.error('Catalog search error:', err);
+    } finally {
+      searchLoading.value = false;
+    }
+  }, 300);
 });
 
 const scrollRow = (id, direction) => {
@@ -117,17 +133,15 @@ const scrollRow = (id, direction) => {
   }
 };
 
-// TODO: trendingGames and topGames should come from separate backend endpoints
-// (e.g. /games/trending and /games/top-rated) when the API exposes them.
-// For now both are sourced from /games/trending and split arbitrarily by index.
 const fetchGames = async () => {
   try {
-    const res = await api.get('/games/trending?limit=400');
-    const newRes = await api.get('/games/new?limit=12');
-    allGames.value = res.data;
-    trendingGames.value = res.data.slice(0, 200);
-    topGames.value = res.data.slice(200, 400);
-    newGames.value = newRes.data.slice(0, 12);
+    const [trendingRes, newRes] = await Promise.all([
+      api.get('/games/trending?limit=24'),
+      api.get('/games/new?limit=24'),
+    ]);
+    trendingGames.value = trendingRes.data;
+    topGames.value = trendingRes.data.slice().sort(() => Math.random() - 0.5);
+    newGames.value = newRes.data;
   } catch (error) {
     logger.error("Error fetching games:", error);
   } finally {
@@ -198,6 +212,30 @@ onMounted(() => {
   margin-top: 40px;
   font-size: 1.2rem;
   color: #666;
+}
+
+.loading-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.skeleton-card {
+  width: 180px;
+  aspect-ratio: 3/4;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@media (max-width: 768px) {
+  .skeleton-card { width: 100px; }
 }
 
 .game-section {
