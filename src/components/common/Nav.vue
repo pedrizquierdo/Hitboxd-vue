@@ -51,6 +51,41 @@
 
       <ul class="nav-links desktop-links">
         <li><router-link to="/games">CATALOG</router-link></li>
+        <li class="nav-item notif-item" ref="notifRef">
+          <button class="notif-btn" @click="toggleNotifDropdown" aria-label="Notifications">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+            <span v-if="unreadCount > 0" class="notif-badge">{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
+          </button>
+          <div v-if="showNotifDropdown" class="notif-dropdown">
+            <div class="notif-header">
+              <span class="notif-title">Notifications</span>
+              <button v-if="notifications.length > 0" class="mark-read-btn" @click="markAllRead">Mark all read</button>
+            </div>
+            <div class="notif-list">
+              <div v-if="notifLoading" class="notif-spinner-wrap"><div class="spinner"></div></div>
+              <p v-else-if="notifications.length === 0" class="notif-empty">No notifications yet</p>
+              <div
+                v-else
+                v-for="n in notifications"
+                :key="n.id"
+                class="notif-item-row"
+                :class="{ unread: !n.is_read }"
+                @click="handleNotifClick(n)"
+              >
+                <img :src="n.actor_avatar || '/assets/default-avatar.png'" class="notif-avatar" />
+                <div class="notif-content">
+                  <span class="notif-actor">{{ n.actor_username }}</span>
+                  <span class="notif-msg">{{ n.type === 'follow' ? ' started following you' : ' liked your review' }}</span>
+                  <span class="notif-time">{{ timeAgo(n.created_at) }}</span>
+                </div>
+                <span v-if="!n.is_read" class="notif-dot"></span>
+              </div>
+            </div>
+          </div>
+        </li>
         <li class="nav-item dropdown">
           <button
             class="avatar-btn"
@@ -210,10 +245,74 @@ const handleClickOutside = (e) => {
   if (searchBarRef.value && !searchBarRef.value.contains(e.target)) {
     searchFocused.value = false;
   }
+  if (notifRef.value && !notifRef.value.contains(e.target)) {
+    showNotifDropdown.value = false;
+  }
 };
 
-onMounted(() => document.addEventListener('click', handleClickOutside));
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside);
+  if (userStore.user) fetchNotifications();
+});
 onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside));
+
+// --- NOTIFICACIONES ---
+const notifRef = ref(null);
+const showNotifDropdown = ref(false);
+const notifications = ref([]);
+const unreadCount = ref(0);
+const notifLoading = ref(false);
+
+const fetchNotifications = async () => {
+    if (!userStore.user) return;
+    try {
+        const { data } = await api.get('/notifications');
+        notifications.value = data.notifications || [];
+        unreadCount.value = data.unread_count || 0;
+    } catch (e) {
+        logger.error('Error fetching notifications:', e);
+    }
+};
+
+const toggleNotifDropdown = async () => {
+    showNotifDropdown.value = !showNotifDropdown.value;
+    profileMenu.value = false;
+    if (showNotifDropdown.value) {
+        notifLoading.value = true;
+        await fetchNotifications();
+        notifLoading.value = false;
+        if (unreadCount.value > 0) {
+            api.put('/notifications/read-all').catch(() => {});
+            unreadCount.value = 0;
+            notifications.value = notifications.value.map(n => ({ ...n, is_read: true }));
+        }
+    }
+};
+
+const markAllRead = () => {
+    api.put('/notifications/read-all').catch(() => {});
+    unreadCount.value = 0;
+    notifications.value = notifications.value.map(n => ({ ...n, is_read: true }));
+};
+
+const handleNotifClick = (n) => {
+    showNotifDropdown.value = false;
+    if (n.type === 'follow' && n.actor_username) {
+        router.push(`/user/${n.actor_username}`);
+    }
+};
+
+const timeAgo = (dateStr) => {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const m = Math.floor(diff / 60000);
+    if (m < 1) return 'just now';
+    if (m < 60) return `${m}m ago`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}h ago`;
+    const d = Math.floor(h / 24);
+    if (d < 7) return `${d}d ago`;
+    return new Date(dateStr).toLocaleDateString();
+};
 
 // Estados Busqueda de Review
 const showGamePicker = ref(false);
@@ -457,6 +556,29 @@ const goToDetail = (slug) => {
 .mobile-search-input { width: 100%; padding: 8px 36px 8px 12px; border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 0.9rem; background: white; color: #2d2d2d; outline: none; }
 .mobile-search-input:focus { border-color: var(--brand-cyan, #00AEEF); }
 .mobile-search-results { background: white; border: 1px solid #d1d5db; border-radius: 8px; margin-top: 6px; max-height: 220px; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+/* NOTIFICATIONS */
+.notif-item { position: relative; display: flex; align-items: center; }
+.notif-btn { background: none; border: none; cursor: pointer; padding: 4px 6px; color: #4b5563; border-radius: 6px; display: flex; align-items: center; position: relative; transition: color 0.2s; }
+.notif-btn:hover { color: var(--brand-cyan); }
+.notif-badge { position: absolute; top: -2px; right: -2px; background: #ef4444; color: white; font-size: 0.6rem; font-weight: 700; border-radius: 9999px; min-width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; padding: 0 3px; line-height: 1; }
+.notif-dropdown { position: absolute; top: 42px; right: -10px; width: 320px; background: white; border: 1px solid #e5e7eb; border-radius: 10px; box-shadow: 0 8px 30px rgba(0,0,0,0.15); z-index: 300; overflow: hidden; }
+.notif-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid #f3f4f6; }
+.notif-title { font-weight: 700; font-size: 0.9rem; color: #111; }
+.mark-read-btn { background: none; border: none; cursor: pointer; font-size: 0.75rem; color: var(--brand-cyan); font-weight: 600; padding: 0; }
+.mark-read-btn:hover { text-decoration: underline; }
+.notif-list { max-height: 360px; overflow-y: auto; }
+.notif-spinner-wrap { display: flex; justify-content: center; padding: 24px; }
+.notif-empty { color: #9ca3af; text-align: center; padding: 28px 16px; font-size: 0.88rem; }
+.notif-item-row { display: flex; align-items: center; gap: 10px; padding: 10px 14px; cursor: pointer; transition: background 0.15s; border-bottom: 1px solid #f9fafb; }
+.notif-item-row:hover { background: #f0f9ff; }
+.notif-item-row.unread { background: #f0f9ff; }
+.notif-avatar { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.notif-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.notif-actor { font-weight: 700; color: #1f2937; font-size: 0.82rem; }
+.notif-msg { color: #4b5563; font-size: 0.82rem; }
+.notif-time { color: #9ca3af; font-size: 0.72rem; }
+.notif-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--brand-cyan); flex-shrink: 0; }
 
 @media (max-width: 850px) {
   .desktop-links { display: none; }
