@@ -28,6 +28,7 @@
               <strong>Developer:</strong> {{ currentGame.developer || 'Unknown' }} •
               <strong>Release year:</strong> {{ releaseYear }}
             </p>
+            <p v-if="shortDescription" class="game-description">{{ shortDescription }}</p>
           </div>
         </div>
         <div class="right-actions">
@@ -58,6 +59,12 @@ import api from '@/api/axios';
 const router = useRouter();
 const loading = ref(true);
 const currentGame = ref(null);
+
+const shortDescription = computed(() => {
+  const desc = currentGame.value?.description;
+  if (!desc) return '';
+  return desc.length > 120 ? desc.slice(0, 120) + '...' : desc;
+});
 
 const releaseYear = computed(() => {
   const date = currentGame.value?.release_date;
@@ -210,6 +217,15 @@ onBeforeUnmount(() => {
 }
 .game-info strong {
   color: white;
+}
+.game-description {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.8rem;
+  font-family: 'Inter', sans-serif;
+  line-height: 1.4;
+  margin-top: 6px;
+  padding: 0 16px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 .action-btn {
   width: 90px;
@@ -371,6 +387,9 @@ onBeforeUnmount(() => {
   }
   .poster-info {
     padding: 55px 0px;
+  }
+  .game-description {
+    font-size: 0.75rem;
   }
     .poster-img {
     object-fit: contain;
