@@ -23,16 +23,16 @@
     </div>
 
     <div class="settings-container">
-      
+
       <div class="header-section">
         <h1>Account Settings</h1>
-        
+
         <div class="tabs-row">
           <div class="tabs-left">
-            <a 
-              v-for="tab in tabs" 
+            <a
+              v-for="tab in tabs"
               :key="tab"
-              href="#" 
+              href="#"
               :class="{ active: activeTab === tab }"
               @click.prevent="activeTab = tab"
             >
@@ -40,9 +40,9 @@
             </a>
           </div>
           <div class="tabs-right">
-            <a 
-              href="#" 
-              class="deactivate-link" 
+            <a
+              href="#"
+              class="deactivate-link"
               :class="{ active: activeTab === 'DEACTIVATE' }"
               @click.prevent="activeTab = 'DEACTIVATE'"
             >
@@ -58,7 +58,10 @@
           <h3>Profile</h3>
           <div class="form-group">
             <label>Username</label>
-            <input v-model="formData.username" type="text" disabled class="disabled-input" />
+            <input v-model="formData.username" type="text" autocomplete="username" @input="checkUsernameAvailability" />
+            <span v-if="usernameStatus === 'checking'" class="username-status checking">Checking...</span>
+            <span v-else-if="usernameStatus === 'available'" class="username-status available">Username available</span>
+            <span v-else-if="usernameStatus === 'taken'" class="username-status taken">Username not available</span>
           </div>
           <div class="form-group">
             <label>Email Address</label>
@@ -84,7 +87,38 @@
                </button>
             </div>
           </div>
-          
+
+          <hr class="divider" style="margin-top: 30px;" />
+          <div class="privacy-section">
+            <h4 class="privacy-title">Privacy</h4>
+            <p class="section-desc">Control what visitors can see on your public profile.</p>
+            <label class="toggle-row">
+              <div class="toggle-info">
+                <span class="toggle-title">Hide game library</span>
+                <span class="toggle-desc">Visitors cannot see your Games tab.</span>
+              </div>
+              <div class="toggle-switch">
+                <input type="checkbox" v-model="privacySettings.hideLibrary">
+                <span class="slider"></span>
+              </div>
+            </label>
+            <label class="toggle-row">
+              <div class="toggle-info">
+                <span class="toggle-title">Hide reviews</span>
+                <span class="toggle-desc">Visitors cannot see your Reviews tab.</span>
+              </div>
+              <div class="toggle-switch">
+                <input type="checkbox" v-model="privacySettings.hideReviews">
+                <span class="slider"></span>
+              </div>
+            </label>
+            <div class="actions-right" style="margin-top: 12px;">
+              <button class="save-btn" @click="savePrivacy" :disabled="isSavingPrivacy">
+                {{ isSavingPrivacy ? 'SAVING...' : 'SAVE PRIVACY' }}
+              </button>
+            </div>
+          </div>
+
           <div class="session-section">
             <hr class="divider" />
             <div class="session-row">
@@ -98,43 +132,45 @@
         </div>
       </div>
 
-      <!-- TAB AVATAR (CORREGIDO: URL & PIXEL ART) -->
+      <!-- TAB AVATAR -->
       <div v-else-if="activeTab === 'AVATAR'" class="content-wrapper">
         <div class="avatar-column">
           <h3>Change Avatar</h3>
           <p class="avatar-desc">Choose a pixel art style or paste an image URL.</p>
 
-          <!-- Previsualización -->
           <div class="avatar-preview-container">
-            <!-- Mostramos lo que hay en el input (preview) o lo que ya tiene guardado -->
-            <img 
-              :src="avatarForm.url || currentAvatarUrl || '/assets/default-avatar.png'" 
-              alt="Avatar Preview" 
+            <img
+              :src="filePreviewUrl || avatarForm.url || currentAvatarUrl || '/assets/default-avatar.png'"
+              alt="Avatar Preview"
               class="avatar-img"
-              @error="handleImageError" 
+              @error="handleImageError"
             />
           </div>
 
           <div class="avatar-actions">
-            <!-- Botón Mágico: Randomize -->
             <button class="random-btn" @click="generateRandomAvatar">
               RANDOM PIXEL ART
             </button>
 
+            <div class="file-upload-area" @click="triggerFileInput" @dragover.prevent @drop.prevent="onFileDrop">
+              <input type="file" ref="fileInputRef" accept="image/*" style="display:none" @change="onFileSelected" />
+              <span class="upload-icon">+</span>
+              <span class="upload-label">Upload image</span>
+              <span class="upload-hint">PNG, JPG, GIF up to 5MB</span>
+            </div>
+
             <div class="divider-text">or paste URL</div>
 
-            <!-- Input de URL Manual -->
-            <input 
-              type="text" 
-              v-model="avatarForm.url" 
-              placeholder="https://imgur.com/..." 
+            <input
+              type="text"
+              v-model="avatarForm.url"
+              placeholder="https://imgur.com/..."
               class="url-input"
             />
 
-            <!-- Guardar -->
-            <button 
-              class="save-btn avatar-save" 
-              @click="saveAvatar" 
+            <button
+              class="save-btn avatar-save"
+              @click="saveAvatar"
               :disabled="isSaving"
             >
               {{ isSaving ? 'SAVING...' : 'SAVE NEW AVATAR' }}
@@ -143,11 +179,12 @@
         </div>
       </div>
 
+      <!-- TAB NOTIFICATIONS -->
       <div v-else-if="activeTab === 'NOTIFICATIONS'" class="content-wrapper">
         <div class="form-column">
           <h3>Notification Preferences</h3>
           <p class="section-desc">Choose how you want us to communicate with you.</p>
-          
+
           <div class="notif-section">
             <h4 class="sub-header">Email</h4>
             <label class="toggle-row">
@@ -172,18 +209,49 @@
             </label>
           </div>
           <div class="actions-right" style="margin-top: 20px;">
-             <button class="save-btn" @click="fakeSaveNotifs">UPDATE PREFERENCES</button>
+             <button class="save-btn" @click="saveNotifications" :disabled="isSaving">
+               {{ isSaving ? 'SAVING...' : 'UPDATE PREFERENCES' }}
+             </button>
           </div>
         </div>
       </div>
 
+      <!-- TAB SECURITY -->
+      <div v-else-if="activeTab === 'SECURITY'" class="content-wrapper">
+        <div class="form-column">
+          <h3>Security</h3>
+          <p class="section-desc">Change your password. You will remain logged in on this device.</p>
+          <div class="form-group">
+            <label>Current Password</label>
+            <input type="password" v-model="passwordForm.current" placeholder="Current password" autocomplete="current-password" />
+            <span v-if="passwordErrors.current" class="field-error">{{ passwordErrors.current }}</span>
+          </div>
+          <div class="form-group">
+            <label>New Password</label>
+            <input type="password" v-model="passwordForm.newPass" placeholder="At least 8 characters" autocomplete="new-password" />
+            <span v-if="passwordErrors.newPass" class="field-error">{{ passwordErrors.newPass }}</span>
+          </div>
+          <div class="form-group">
+            <label>Confirm New Password</label>
+            <input type="password" v-model="passwordForm.confirm" placeholder="Repeat new password" autocomplete="new-password" />
+            <span v-if="passwordErrors.confirm" class="field-error">{{ passwordErrors.confirm }}</span>
+          </div>
+          <div class="actions-right" style="margin-top: 8px;">
+            <button class="save-btn" @click="changePassword" :disabled="isChangingPassword">
+              {{ isChangingPassword ? 'SAVING...' : 'UPDATE PASSWORD' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB DEACTIVATE -->
       <div v-else-if="activeTab === 'DEACTIVATE'" class="content-wrapper">
         <div class="form-column danger-zone">
           <h3 class="danger-title">Deactivate Account</h3>
           <div class="danger-box">
             <p><strong>Are you sure you want to delete your account?</strong></p>
             <p>This action is permanent and cannot be undone. All your data, progress, and settings will be lost immediately.</p>
-            
+
             <ul class="danger-list">
               <li>Your profile will be removed.</li>
               <li>Your game history will be deleted.</li>
@@ -213,9 +281,9 @@ const router = useRouter()
 const userStore = useUserStore()
 
 // --- ESTADO ---
-const isLoading = ref(true) 
+const isLoading = ref(true)
 const activeTab = ref('PROFILE')
-const tabs = ['PROFILE', 'AVATAR', 'NOTIFICATIONS'] 
+const tabs = ['PROFILE', 'AVATAR', 'NOTIFICATIONS', 'SECURITY']
 const isSaving = ref(false)
 
 // --- SISTEMA DE TOAST ---
@@ -234,9 +302,26 @@ const showDeleteModal = ref(false)
 const formData = ref({ username: '', email: '', bio: '', pronoun: '' })
 const notifSettings = ref({ weeklyDigest: true, productUpdates: false, mentions: true, security: true })
 
-// --- ESTADO AVATAR (Simplificado para URL) ---
-const currentAvatarUrl = ref(null) 
-const avatarForm = ref({ url: '' }) 
+// --- ESTADO AVATAR ---
+const currentAvatarUrl = ref(null)
+const avatarForm = ref({ url: '' })
+const fileInputRef = ref(null)
+const selectedFile = ref(null)
+const filePreviewUrl = ref(null)
+
+// --- ESTADO SECURITY ---
+const passwordForm = ref({ current: '', newPass: '', confirm: '' })
+const passwordErrors = ref({ current: '', newPass: '', confirm: '' })
+const isChangingPassword = ref(false)
+
+// --- ESTADO PRIVACIDAD ---
+const privacySettings = ref({ hideLibrary: false, hideReviews: false })
+const isSavingPrivacy = ref(false)
+
+// --- ESTADO USERNAME ---
+const usernameStatus = ref('')
+let usernameDebounceTimer = null
+const originalUsername = ref('')
 
 // --- CARGAR DATOS ---
 onMounted(async () => {
@@ -254,12 +339,26 @@ onMounted(async () => {
       pronoun: data.pronouns || ''
     }
 
+    originalUsername.value = data.username || ''
+
+    privacySettings.value = {
+      hideLibrary: data.hide_library ?? false,
+      hideReviews: data.hide_reviews ?? false,
+    }
+
+    notifSettings.value = {
+      weeklyDigest: data.notif_weekly_digest ?? true,
+      productUpdates: data.notif_product_updates ?? false,
+      mentions: data.notif_mentions ?? true,
+      security: true,
+    }
+
     isLoading.value = false
 
   } catch (error) {
     logger.error('Error cargando settings:', error)
     if (error.response && error.response.status === 401) {
-      router.push('/') 
+      router.push('/')
     } else {
       isLoading.value = false
     }
@@ -268,16 +367,15 @@ onMounted(async () => {
 
 // --- ACTIONS ---
 
-// 1. DELETE ACCOUNT
+// DELETE ACCOUNT
 const confirmDeleteAccount = async () => {
   showDeleteModal.value = false;
   isSaving.value = true;
-  
+
   try {
-      // Llamada real para desactivar/borrar cuenta si tienes el endpoint
-      await api.put('/users/softdelete'); 
-      
-      localStorage.removeItem('token'); 
+      await api.put('/users/softdelete');
+
+      localStorage.removeItem('token');
       localStorage.removeItem(import.meta.env.VITE_KEY_STORAGE || 'isAuthenticated');
       router.push('/');
   } catch (error) {
@@ -287,18 +385,29 @@ const confirmDeleteAccount = async () => {
   }
 }
 
-// 2. GUARDAR PERFIL (Texto)
+// GUARDAR PERFIL
 const saveProfile = async () => {
   isSaving.value = true
   try {
     const payload = {
-      bio: formData.value.bio || "", 
-      pronouns: formData.value.pronoun || "",
+      bio: formData.value.bio || '',
+      pronouns: formData.value.pronoun || '',
+    }
+
+    const trimmedUsername = formData.value.username.trim()
+    if (trimmedUsername && trimmedUsername !== originalUsername.value) {
+      if (usernameStatus.value !== 'available') {
+        showToast('Choose an available username first.', 'error')
+        isSaving.value = false
+        return
+      }
+      payload.username = trimmedUsername
     }
 
     await api.put('/users/profile', payload)
+    if (payload.username) originalUsername.value = payload.username
     showToast('Profile updated successfully!', 'success')
-    
+
   } catch (error) {
     logger.error('Error guardando:', error)
     if (error.response?.status === 401) router.push('/')
@@ -308,45 +417,136 @@ const saveProfile = async () => {
   }
 }
 
-// 3. NOTIFICACIONES FAKE
-const fakeSaveNotifs = () => {
-  isSaving.value = true;
-  setTimeout(() => {
-    isSaving.value = false;
-    showToast('Preferences updated successfully', 'success')
-  }, 800);
+// CAMBIO DE CONTRASEÑA
+const changePassword = async () => {
+  passwordErrors.value = { current: '', newPass: '', confirm: '' }
+  let valid = true
+  if (!passwordForm.value.current) { passwordErrors.value.current = 'Required'; valid = false }
+  if (passwordForm.value.newPass.length < 8) { passwordErrors.value.newPass = 'Minimum 8 characters'; valid = false }
+  if (passwordForm.value.newPass !== passwordForm.value.confirm) { passwordErrors.value.confirm = 'Passwords do not match'; valid = false }
+  if (!valid) return
+  isChangingPassword.value = true
+  try {
+    await api.put('/users/password', {
+      currentPassword: passwordForm.value.current,
+      newPassword: passwordForm.value.newPass
+    })
+    passwordForm.value = { current: '', newPass: '', confirm: '' }
+    showToast('Password updated successfully!', 'success')
+  } catch (err) {
+    const msg = err.response?.data?.message || 'Error updating password'
+    if (err.response?.status === 401 || err.response?.status === 403) {
+      passwordErrors.value.current = 'Incorrect password'
+    } else {
+      showToast(msg, 'error')
+    }
+  } finally {
+    isChangingPassword.value = false
+  }
 }
 
-// 4. LÓGICA DE AVATAR (URL / DiceBear)
+// NOTIFICACIONES
+const saveNotifications = async () => {
+  isSaving.value = true
+  try {
+    await api.put('/users/notifications', {
+      weeklyDigest: notifSettings.value.weeklyDigest,
+      productUpdates: notifSettings.value.productUpdates,
+      mentions: notifSettings.value.mentions,
+      security: notifSettings.value.security,
+    })
+    showToast('Preferences updated successfully', 'success')
+  } catch (err) {
+    const msg = err.response?.data?.message || 'Error saving preferences'
+    showToast(msg, 'error')
+  } finally {
+    isSaving.value = false
+  }
+}
+
+// PRIVACIDAD
+const savePrivacy = async () => {
+  isSavingPrivacy.value = true
+  try {
+    await api.put('/users/profile', {
+      hide_library: privacySettings.value.hideLibrary,
+      hide_reviews: privacySettings.value.hideReviews,
+    })
+    showToast('Privacy settings updated!', 'success')
+  } catch (err) {
+    showToast('Error saving privacy settings.', 'error')
+  } finally {
+    isSavingPrivacy.value = false
+  }
+}
+
+// USERNAME AVAILABILITY
+const checkUsernameAvailability = () => {
+  clearTimeout(usernameDebounceTimer)
+  const val = formData.value.username.trim()
+  if (!val || val === originalUsername.value) { usernameStatus.value = 'same'; return }
+  if (val.length < 3) { usernameStatus.value = 'taken'; return }
+  usernameStatus.value = 'checking'
+  usernameDebounceTimer = setTimeout(async () => {
+    try {
+      const res = await api.get(`/users/check-username?username=${encodeURIComponent(val)}`)
+      usernameStatus.value = res.data.available ? 'available' : 'taken'
+    } catch {
+      usernameStatus.value = ''
+    }
+  }, 500)
+}
+
+// AVATAR — pixel art
 const generateRandomAvatar = () => {
-  // Generamos una semilla aleatoria
   const randomSeed = Math.random().toString(36).substring(7);
-  // Asignamos la nueva URL al input y a la vista previa
   avatarForm.value.url = `https://api.dicebear.com/7.x/pixel-art/svg?seed=${randomSeed}`;
 }
 
 const handleImageError = (e) => {
-  // Fallback si la URL no es válida
   e.target.src = "https://placehold.co/150x150?text=Invalid+URL"
 }
 
-const saveAvatar = async () => {
-  if (!avatarForm.value.url) return;
+// AVATAR — upload por archivo
+const triggerFileInput = () => fileInputRef.value?.click()
 
+const onFileSelected = (e) => {
+  const file = e.target.files?.[0]
+  if (!file) return
+  if (file.size > 5 * 1024 * 1024) { showToast('File too large. Maximum 5MB.', 'error'); return }
+  selectedFile.value = file
+  filePreviewUrl.value = URL.createObjectURL(file)
+  avatarForm.value.url = ''
+}
+
+const onFileDrop = (e) => {
+  const file = e.dataTransfer.files?.[0]
+  if (file) {
+    const fakeEvent = { target: { files: [file] } }
+    onFileSelected(fakeEvent)
+  }
+}
+
+// AVATAR — guardar
+const saveAvatar = async () => {
+  if (!avatarForm.value.url && !selectedFile.value) return
   isSaving.value = true
   try {
-    // Usamos el endpoint PUT /users/profile que ya soporta 'avatar_url'
-    await api.put('/users/profile', {
-      avatar_url: avatarForm.value.url
-    })
-
-    // Actualizamos la variable de estado principal
-    currentAvatarUrl.value = avatarForm.value.url
+    if (selectedFile.value) {
+      const formData = new FormData()
+      formData.append('avatar', selectedFile.value)
+      const res = await api.post('/users/avatar/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
+      currentAvatarUrl.value = res.data.avatar_url || res.data.url || filePreviewUrl.value
+    } else {
+      await api.put('/users/profile', { avatar_url: avatarForm.value.url })
+      currentAvatarUrl.value = avatarForm.value.url
+    }
+    selectedFile.value = null
+    filePreviewUrl.value = null
     showToast('Avatar updated!', 'success')
-    
-    // Opcional: Recargar para actualizar el Navbar
-    setTimeout(() => window.location.reload(), 1000);
-
+    setTimeout(() => window.location.reload(), 1000)
   } catch (error) {
     logger.error('Error guardando avatar:', error)
     showToast('Error updating avatar.', 'error')
@@ -417,12 +617,21 @@ h1 { font-weight: 300; color: #333; margin-bottom: 20px; }
 .form-group label { display: block; font-size: 13px; color: #555; margin-bottom: 5px; }
 .form-group input, .form-group textarea, .form-group select { width: 100%; background-color: #444; border: none; border-radius: 4px; padding: 10px; color: #fff; font-size: 14px; box-sizing: border-box; }
 .form-group input:focus, .form-group textarea:focus { outline: 2px solid #666; }
-.disabled-input { background-color: #333; color: #888; cursor: not-allowed; }
+.disabled-input { background-color: #333 !important; color: #888 !important; cursor: not-allowed; }
 .row-group { display: flex; gap: 20px; } .half { flex: 1; } .bottom-row { align-items: flex-end; } .actions-right { flex: 1; display: flex; justify-content: flex-end; }
 .save-btn { background-color: #00cc66; color: white; border: none; padding: 10px 20px; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: pointer; text-transform: uppercase; transition: 0.2s;}
 .save-btn:hover { background-color: #00b359; } .save-btn:disabled { background-color: #888; cursor: not-allowed; }
 
-/* Avatar Styles (CORREGIDO) */
+/* Field errors */
+.field-error { display: block; color: #ff4444; font-size: 11px; margin-top: 4px; }
+
+/* Username status */
+.username-status { display: block; font-size: 11px; margin-top: 4px; }
+.username-status.checking { color: #aaa; }
+.username-status.available { color: #00cc66; }
+.username-status.taken { color: #ff4444; }
+
+/* Avatar Styles */
 .avatar-column { width: 100%; max-width: 400px; display: flex; flex-direction: column; align-items: center; text-align: center; }
 .avatar-desc { color: #666; font-size: 0.9rem; margin-bottom: 20px; }
 .avatar-preview-container { width: 150px; height: 150px; border-radius: 50%; overflow: hidden; border: 4px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; background-color: #ccc; display: flex; justify-content: center; align-items: center; }
@@ -431,6 +640,17 @@ h1 { font-weight: 300; color: #333; margin-bottom: 20px; }
 
 .random-btn { background-color: #6A0DAD; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600; transition: background 0.2s; }
 .random-btn:hover { background-color: #550a8c; }
+
+/* File upload area */
+.file-upload-area {
+  border: 2px dashed #ccc; border-radius: 8px; padding: 20px; text-align: center;
+  cursor: pointer; transition: border-color 0.2s, background 0.2s; width: 100%;
+  box-sizing: border-box;
+}
+.file-upload-area:hover { border-color: #00cc66; background: #f0fff7; }
+.upload-icon { display: block; font-size: 24px; color: #aaa; line-height: 1; margin-bottom: 6px; }
+.upload-label { display: block; font-size: 13px; font-weight: 600; color: #555; }
+.upload-hint { display: block; font-size: 11px; color: #999; margin-top: 4px; }
 
 .divider-text { font-size: 0.8rem; color: #888; margin: 5px 0; }
 .url-input { background-color: #fff; border: 1px solid #ccc; padding: 10px; border-radius: 4px; width: 100%; color: #333; font-size: 0.9rem; }
@@ -450,6 +670,10 @@ h1 { font-weight: 300; color: #333; margin-bottom: 20px; }
 .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
 input:checked + .slider { background-color: #00cc66; } input:checked + .slider:before { transform: translateX(20px); }
 .disabled-slider { opacity: 0.6; cursor: not-allowed; }
+
+/* Privacy */
+.privacy-section { margin-top: 10px; }
+.privacy-title { font-size: 13px; color: #444; margin: 0 0 6px 0; text-transform: uppercase; font-weight: 600; }
 
 /* Danger Zone */
 .danger-zone .danger-title { color: #ff4444; font-weight: bold; border-bottom: 2px solid #ff4444; padding-bottom: 10px; display: inline-block; }
