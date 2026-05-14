@@ -31,6 +31,10 @@
               <span class="rating-sep">·</span>
               <span class="rating-total">{{ gameStats.total_ratings }} rating{{ gameStats.total_ratings !== 1 ? 's' : '' }}</span>
             </div>
+            <span v-if="viewersCount > 1" class="viewers-indicator" :title="`${viewersCount} people viewing right now`">
+              <span class="viewer-dot"></span>
+              {{ viewersCount }} viewing now
+            </span>
           </div>
         </div>
       </div>
@@ -287,6 +291,8 @@ const showAllReviews = ref(false)
 // New state
 const genres = ref([])
 const similarGames = ref([])
+// viewersCount includes the current user — the backend counts all sockets in the room.
+const viewersCount = ref(0)
 const gameStats = ref(null)
 const userLists = ref([])
 const showAddToList = ref(false)
@@ -396,6 +402,7 @@ watch(() => route.params.slug, async (newSlug, oldSlug) => {
   userStatus.value = null
   userRating.value = 0
   isGameLiked.value = false
+  viewersCount.value = 0
 
   await fetchGameDetail()
   document.title = game.value.title ? game.value.title + ' — Hitboxd' : 'Hitboxd'
@@ -607,6 +614,11 @@ const onReviewDeleted = ({ id_review }) => {
   reviews.value = reviews.value.filter(r => r.id_review !== id_review)
 }
 
+const onGamePresence = ({ gameId, count }) => {
+  // Guard against stale events from a previous game room arriving after game:leave
+  if (gameId === game.value?.id_game) viewersCount.value = count
+}
+
 // Called on socket reconnect — server drops all rooms on disconnect so we must
 // re-join. Reads game.value at call time so it works after route changes.
 const rejoinGameRoom = () => {
@@ -646,6 +658,7 @@ onMounted(async () => {
     socket.on('review:like_changed', onReviewLikeChanged)
     socket.on('review:created', onReviewCreated)
     socket.on('review:deleted', onReviewDeleted)
+    socket.on('game:presence', onGamePresence)
     socket.on('connect', rejoinGameRoom)
   }
   loadingGame.value = false
@@ -657,6 +670,7 @@ onUnmounted(() => {
   socket.off('review:like_changed', onReviewLikeChanged)
   socket.off('review:created', onReviewCreated)
   socket.off('review:deleted', onReviewDeleted)
+  socket.off('game:presence', onGamePresence)
   socket.off('connect', rejoinGameRoom)
 })
 </script>
@@ -1397,5 +1411,30 @@ onUnmounted(() => {
 @keyframes slideUp {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* PRESENCE */
+.viewers-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.viewer-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--brand-green, #00CC66);
+  animation: presence-pulse 2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes presence-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
 }
 </style>
