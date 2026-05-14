@@ -259,6 +259,7 @@ import ReviewModal from '@/components/reviews/ReviewModal.vue'
 import StarRating from '@/components/reviews/StarRating.vue'
 import ReportModal from '@/components/reviews/ReportModal.vue'
 import { useToastStore } from '@/stores/toastStore'
+import { socket } from '@/realtime/socket.js'
 
 const router = useRouter()
 const route = useRoute()
@@ -375,6 +376,43 @@ watch(userRating, async (newRating) => {
       showToast('Error saving rating', 'error')
     }
   }
+})
+
+watch(() => route.params.slug, async (newSlug, oldSlug) => {
+  if (!newSlug || newSlug === oldSlug) return
+
+  // Capture old id before overwriting game state
+  const oldId = game.value?.id_game
+  if (oldId) socket.emit('game:leave', { gameId: oldId })
+
+  // Guard userRating watcher from firing on the reset below
+  isFetchingActivity.value = true
+  loadingGame.value = true
+  game.value = {}
+  reviews.value = []
+  genres.value = []
+  similarGames.value = []
+  gameStats.value = null
+  userStatus.value = null
+  userRating.value = 0
+  isGameLiked.value = false
+
+  await fetchGameDetail()
+  document.title = game.value.title ? game.value.title + ' — Hitboxd' : 'Hitboxd'
+  if (game.value.slug) saveRecentlyViewed(game.value)
+
+  if (game.value.id_game) {
+    const id = game.value.id_game
+    await Promise.all([
+      fetchReviews(id),
+      fetchUserActivity(id),
+      fetchGameExtras(id),
+      fetchGameStats(id),
+      fetchUserLists(),
+    ])
+    socket.emit('game:join', { gameId: id })
+  }
+  loadingGame.value = false
 })
 
 const STATUS_LABELS = {
@@ -542,6 +580,39 @@ const submitReport = async (reason) => {
   } catch (err) { logger.error(err) }
 }
 
+// --- REALTIME ---
+
+// The backend emits review:like_changed to all clients in the room including the actor.
+// The actor_id guard discards the event for the actor because they already applied an
+// optimistic update in toggleReviewLike and we do not want to overwrite their local state.
+const onReviewLikeChanged = ({ id_review, count, actor_id }) => {
+  if (actor_id === currentUserId.value) return
+  const r = reviews.value.find(x => x.id_review === id_review)
+  if (r) r.likes = count
+}
+
+// Guard against receiving our own review:created while submitReview's fetchReviews is
+// in flight — both paths would add the same review to the list.
+const onReviewCreated = (review) => {
+  if (review.id_user === currentUserId.value) return
+  reviews.value.unshift({
+    ...review,
+    likes: review.likes || 0,
+    showContent: !review.has_spoilers,
+    is_reported: false,
+  })
+}
+
+const onReviewDeleted = ({ id_review }) => {
+  reviews.value = reviews.value.filter(r => r.id_review !== id_review)
+}
+
+// Called on socket reconnect — server drops all rooms on disconnect so we must
+// re-join. Reads game.value at call time so it works after route changes.
+const rejoinGameRoom = () => {
+  if (game.value?.id_game) socket.emit('game:join', { gameId: game.value.id_game })
+}
+
 const saveRecentlyViewed = (g) => {
   try {
     const key = 'hitboxd_recently_viewed'
@@ -571,12 +642,22 @@ onMounted(async () => {
       fetchGameStats(id),
       fetchUserLists(),
     ])
+    socket.emit('game:join', { gameId: id })
+    socket.on('review:like_changed', onReviewLikeChanged)
+    socket.on('review:created', onReviewCreated)
+    socket.on('review:deleted', onReviewDeleted)
+    socket.on('connect', rejoinGameRoom)
   }
   loadingGame.value = false
 })
 
 onUnmounted(() => {
   document.removeEventListener('click', handleOutsideClick)
+  if (game.value?.id_game) socket.emit('game:leave', { gameId: game.value.id_game })
+  socket.off('review:like_changed', onReviewLikeChanged)
+  socket.off('review:created', onReviewCreated)
+  socket.off('review:deleted', onReviewDeleted)
+  socket.off('connect', rejoinGameRoom)
 })
 </script>
 
