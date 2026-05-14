@@ -9,7 +9,9 @@
             <h1>Welcome back, <span class="username">{{ userName }}</span>.</h1>
           </div>
           <div v-if="streak > 0" class="streak-widget" title="Days in a row you've logged games">
-            <span class="streak-fire">🔥</span>
+            <svg class="streak-fire" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 2C9.5 7 11 9.5 9 12c-1 1.5-2.5 2-2.5 2s.5-2-1-3.5C4 12.5 3 15 3 17a9 9 0 0 0 18 0c0-5-4-9-9-15Zm0 18a5 5 0 0 1-5-5c0-2 1-3.5 2.5-4.5.5 1.5 1.5 2.5 1.5 2.5s-.5-2 1-3.5C13.5 11 15 13 15 15a3 3 0 0 1-3 3Z"/>
+            </svg>
             <div class="streak-text">
               <span class="streak-count">{{ streak }}</span>
               <span class="streak-label">day streak</span>
@@ -420,8 +422,10 @@ h1 { font-family: 'Courier Prime', monospace; font-size: 2.5rem; color: #2D2D2D;
 }
 
 .streak-fire {
-  font-size: 1.5rem;
-  line-height: 1;
+  width: 1.5rem;
+  height: 1.5rem;
+  color: #f97316;
+  flex-shrink: 0;
 }
 
 .streak-text {
