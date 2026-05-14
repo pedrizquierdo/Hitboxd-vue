@@ -224,10 +224,11 @@ import { Chart, LineElement, PointElement, LinearScale, CategoryScale, Filler, T
 Chart.register(LineElement, PointElement, LinearScale, CategoryScale, Filler, Tooltip, Legend)
 
 import { logger } from '@/utils/logger'
-import { ref, onMounted, nextTick } from 'vue';
+import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import api from '@/api/axios';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/userStore';
+import { socket } from '@/realtime/socket.js';
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -264,6 +265,30 @@ const moderationLog = ref([])
 const modLogPage = ref(1)
 const modLogTotalPages = ref(1)
 const isLoadingLog = ref(false)
+
+// --- REALTIME ---
+// Tracks last toast timestamp to avoid spamming when reports arrive in bursts.
+const lastReportToastAt = ref(0)
+
+const onReportNew = (review) => {
+  const existing = reportedReviews.value.find(r => r.id_review === review.id_review)
+  if (existing) {
+    existing.report_count = review.report_count
+    existing.all_reasons = review.all_reasons
+  } else {
+    reportedReviews.value.unshift(review)
+  }
+  const now = Date.now()
+  if (now - lastReportToastAt.value > 5000) {
+    showToast('New reported review received', 'info')
+    lastReportToastAt.value = now
+  }
+}
+
+// Fires when another admin resolves a report while this session is open.
+const onReportResolved = ({ id_review }) => {
+  reportedReviews.value = reportedReviews.value.filter(r => r.id_review !== id_review)
+}
 
 // --- TOAST ---
 const toast = ref({ show: false, message: '', type: 'success' });
@@ -478,6 +503,13 @@ onMounted(() => {
   fetchGlobalStats();
   fetchUsers();
   fetchModerationLog();
+  socket.on('moderation:report_new', onReportNew);
+  socket.on('moderation:resolved', onReportResolved);
+});
+
+onBeforeUnmount(() => {
+  socket.off('moderation:report_new', onReportNew);
+  socket.off('moderation:resolved', onReportResolved);
 });
 </script>
 
@@ -520,6 +552,7 @@ onMounted(() => {
 }
 .toast-notification.success { background-color: #00cc66; }
 .toast-notification.error { background-color: #ff4444; }
+.toast-notification.info { background-color: #00AEEF; }
 .fade-enter-active, .fade-leave-active { transition: opacity 0.5s, transform 0.5s; }
 .fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(-20px); }
 
