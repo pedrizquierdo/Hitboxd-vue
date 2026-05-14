@@ -199,21 +199,18 @@
                 ></div>
                 <span class="list-rank-badge" :class="index < 3 ? `rank-top-${index + 1}` : 'rank-default'">#{{ index + 1 }}</span>
               </div>
-              <div class="list-info">
-                <div class="list-title-row">
+              <div class="list-bottom">
+                <div class="list-bottom-header">
                   <span class="list-title">{{ list.title }}</span>
                   <span class="list-type-pill" :class="`type-${list.list_type}`">{{ list.list_type }}</span>
                 </div>
-                <span v-if="list.description" class="list-desc">{{ list.description }}</span>
                 <div class="list-meta">
-                  <span class="list-author">
-                    <img
-                      :src="list.avatar_url || '/assets/default-avatar.svg'"
-                      :alt="list.username"
-                      class="list-author-avatar"
-                    />
-                    {{ list.username }}
-                  </span>
+                  <img
+                    :src="list.avatar_url || '/assets/default-avatar.svg'"
+                    :alt="list.username"
+                    class="list-author-avatar"
+                  />
+                  <span class="list-author-name">{{ list.username }}</span>
                   <span class="list-meta-dot">·</span>
                   <span class="list-likes">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="list-heart-icon" aria-hidden="true">
@@ -222,7 +219,7 @@
                     {{ list.like_count }}
                   </span>
                   <span class="list-meta-dot">·</span>
-                  <span class="list-game-count">{{ list.game_count }} game{{ list.game_count !== 1 ? 's' : '' }}</span>
+                  <span class="list-game-count">{{ list.game_count }}g</span>
                 </div>
               </div>
             </RouterLink>
@@ -760,8 +757,8 @@ h3 {
 /* Popular Lists */
 .lists-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 20px;
   position: relative;
   z-index: 1;
 }
@@ -769,20 +766,20 @@ h3 {
 .list-card {
   display: flex;
   flex-direction: column;
-  background: #fff;
-  border-radius: 12px;
+  border-radius: 4px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
   text-decoration: none;
   color: inherit;
-  transition: box-shadow 0.2s, transform 0.2s;
-  border: 1.5px solid transparent;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s;
+  border: 2px solid transparent;
+  will-change: transform;
 }
 
 .list-card:hover {
-  box-shadow: 0 8px 24px rgba(0,0,0,0.14);
-  transform: translateY(-3px);
-  border-color: #00AEEF33;
+  transform: translateY(-5px);
+  box-shadow: 0 12px 20px rgba(0,0,0,0.5);
+  border-color: #00AEEF;
 }
 
 /* Cover collage */
@@ -790,9 +787,9 @@ h3 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
-  height: 148px;
+  aspect-ratio: 1 / 1;
   gap: 2px;
-  background: #e5e7eb;
+  background: #333;
   position: relative;
   overflow: hidden;
 }
@@ -806,7 +803,7 @@ h3 {
   height: 100%;
   object-fit: cover;
   display: block;
-  transition: transform 0.3s ease;
+  transition: transform 0.2s ease;
 }
 
 .list-card:hover .list-cover-thumb {
@@ -814,139 +811,129 @@ h3 {
 }
 
 .list-cover-empty {
-  background: linear-gradient(135deg, #d1d5db 0%, #c4c8d0 100%);
+  background: #555;
 }
 
 /* Rank badge */
 .list-rank-badge {
   position: absolute;
-  top: 8px;
-  left: 8px;
+  top: 6px;
+  left: 6px;
   font-family: 'Courier Prime', monospace;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 700;
-  padding: 2px 7px;
+  padding: 1px 6px;
   border-radius: 20px;
   letter-spacing: 0.03em;
   line-height: 1.6;
   pointer-events: none;
 }
 
-.rank-top-1 { background: #f59e0b; color: #fff; box-shadow: 0 1px 4px rgba(245,158,11,0.4); }
-.rank-top-2 { background: #94a3b8; color: #fff; box-shadow: 0 1px 4px rgba(148,163,184,0.4); }
-.rank-top-3 { background: #b07850; color: #fff; box-shadow: 0 1px 4px rgba(176,120,80,0.4); }
-.rank-default { background: rgba(0,0,0,0.45); color: #fff; backdrop-filter: blur(4px); }
+.rank-top-1 { background: #f59e0b; color: #fff; }
+.rank-top-2 { background: #94a3b8; color: #fff; }
+.rank-top-3 { background: #b07850; color: #fff; }
+.rank-default { background: rgba(0,0,0,0.55); color: #fff; }
 
-/* Info area */
-.list-info {
-  padding: 13px 14px 12px;
+/* Solid bottom panel */
+.list-bottom {
+  background: #1e1e1e;
+  padding: 9px 10px 8px;
   display: flex;
   flex-direction: column;
   gap: 5px;
-  flex: 1;
 }
 
-.list-title-row {
+.list-bottom-header {
   display: flex;
-  align-items: baseline;
-  gap: 8px;
+  align-items: flex-start;
+  gap: 6px;
 }
 
 .list-title {
   font-family: 'Inter', sans-serif;
-  font-weight: 800;
-  font-size: 0.95rem;
-  color: #1a1a1a;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  flex: 1;
-  min-width: 0;
-}
-
-/* List type pill */
-.list-type-pill {
-  flex-shrink: 0;
-  font-family: 'Inter', sans-serif;
-  font-size: 0.62rem;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding: 2px 7px;
-  border-radius: 20px;
-}
-
-.type-collection { background: #e0f2fe; color: #0284c7; }
-.type-ranking    { background: #fef3c7; color: #b45309; }
-.type-wishlist   { background: #f0fdf4; color: #16a34a; }
-
-.list-desc {
-  font-family: 'Inter', sans-serif;
-  font-size: 0.78rem;
-  color: #888;
-  line-height: 1.4;
+  font-size: 0.82rem;
+  color: #fff;
+  line-height: 1.25;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  flex: 1;
+  min-width: 0;
 }
+
+.list-type-pill {
+  flex-shrink: 0;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.55rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 5px;
+  border-radius: 3px;
+  margin-top: 2px;
+}
+
+.type-collection { background: #0ea5e9; color: #fff; }
+.type-ranking    { background: #f59e0b; color: #fff; }
+.type-wishlist   { background: #22c55e; color: #fff; }
 
 .list-meta {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 2px;
-}
-
-.list-author {
-  display: flex;
-  align-items: center;
   gap: 5px;
-  font-family: 'Inter', sans-serif;
-  font-size: 0.74rem;
-  color: #555;
-  font-weight: 600;
-  min-width: 0;
+  flex-wrap: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .list-author-avatar {
-  width: 18px;
-  height: 18px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   object-fit: cover;
-  border: 1.5px solid #e5e7eb;
   flex-shrink: 0;
+  opacity: 0.8;
+}
+
+.list-author-name {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.68rem;
+  color: #aaa;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 1;
 }
 
 .list-meta-dot {
-  color: #ccc;
-  font-size: 0.8rem;
+  color: #555;
+  font-size: 0.7rem;
   flex-shrink: 0;
 }
 
 .list-likes {
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 2px;
   font-family: 'Inter', sans-serif;
-  font-size: 0.74rem;
+  font-size: 0.68rem;
   font-weight: 700;
   color: #e74c3c;
   flex-shrink: 0;
 }
 
 .list-heart-icon {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
 }
 
 .list-game-count {
   font-family: 'Inter', sans-serif;
-  font-size: 0.72rem;
-  color: #aaa;
+  font-size: 0.68rem;
+  color: #666;
   flex-shrink: 0;
 }
 
