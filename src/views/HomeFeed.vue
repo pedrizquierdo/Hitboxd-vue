@@ -395,7 +395,7 @@ const fetchData = async () => {
       api.get('/games/recommended?limit=20'),
       api.get('/users/suggestions?limit=6'),
       api.get('/activity/streak'),
-      api.get('/lists/popular?limit=9'),
+      api.get('/lists/popular?limit=6'),
     ]);
 
     if (results[0].status === 'fulfilled') newGames.value = results[0].value.data;
