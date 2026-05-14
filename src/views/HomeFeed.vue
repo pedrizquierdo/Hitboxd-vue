@@ -179,27 +179,31 @@
           </div>
           <div class="lists-grid">
             <RouterLink
-              v-for="list in popularLists"
+              v-for="(list, index) in popularLists"
               :key="list.id_list"
               :to="`/lists/${list.id_list}`"
               class="list-card"
             >
               <div class="list-covers">
-                <img
+                <div
                   v-for="(cover, i) in list.covers.slice(0, 4)"
                   :key="i"
-                  :src="cover"
-                  :alt="''"
-                  class="list-cover-thumb"
-                />
+                  class="list-cover-cell"
+                >
+                  <img :src="cover" alt="" class="list-cover-thumb" />
+                </div>
                 <div
                   v-for="i in Math.max(0, 4 - list.covers.length)"
                   :key="'empty-' + i"
-                  class="list-cover-empty"
+                  class="list-cover-cell list-cover-empty"
                 ></div>
+                <span class="list-rank-badge" :class="index < 3 ? `rank-top-${index + 1}` : 'rank-default'">#{{ index + 1 }}</span>
               </div>
               <div class="list-info">
-                <span class="list-title">{{ list.title }}</span>
+                <div class="list-title-row">
+                  <span class="list-title">{{ list.title }}</span>
+                  <span class="list-type-pill" :class="`type-${list.list_type}`">{{ list.list_type }}</span>
+                </div>
                 <span v-if="list.description" class="list-desc">{{ list.description }}</span>
                 <div class="list-meta">
                   <span class="list-author">
@@ -210,12 +214,14 @@
                     />
                     {{ list.username }}
                   </span>
+                  <span class="list-meta-dot">·</span>
                   <span class="list-likes">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="list-heart-icon" aria-hidden="true">
                       <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
                     </svg>
                     {{ list.like_count }}
                   </span>
+                  <span class="list-meta-dot">·</span>
                   <span class="list-game-count">{{ list.game_count }} game{{ list.game_count !== 1 ? 's' : '' }}</span>
                 </div>
               </div>
@@ -754,7 +760,7 @@ h3 {
 /* Popular Lists */
 .lists-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 16px;
   position: relative;
   z-index: 1;
@@ -764,26 +770,35 @@ h3 {
   display: flex;
   flex-direction: column;
   background: #fff;
-  border-radius: 10px;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
   text-decoration: none;
   color: inherit;
-  transition: box-shadow 0.15s, transform 0.15s;
+  transition: box-shadow 0.2s, transform 0.2s;
+  border: 1.5px solid transparent;
 }
 
 .list-card:hover {
-  box-shadow: 0 6px 18px rgba(0,0,0,0.13);
-  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.14);
+  transform: translateY(-3px);
+  border-color: #00AEEF33;
 }
 
+/* Cover collage */
 .list-covers {
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
-  height: 140px;
+  height: 148px;
   gap: 2px;
   background: #e5e7eb;
+  position: relative;
+  overflow: hidden;
+}
+
+.list-cover-cell {
+  overflow: hidden;
 }
 
 .list-cover-thumb {
@@ -791,33 +806,85 @@ h3 {
   height: 100%;
   object-fit: cover;
   display: block;
+  transition: transform 0.3s ease;
+}
+
+.list-card:hover .list-cover-thumb {
+  transform: scale(1.06);
 }
 
 .list-cover-empty {
-  background: #d1d5db;
+  background: linear-gradient(135deg, #d1d5db 0%, #c4c8d0 100%);
 }
 
+/* Rank badge */
+.list-rank-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 20px;
+  letter-spacing: 0.03em;
+  line-height: 1.6;
+  pointer-events: none;
+}
+
+.rank-top-1 { background: #f59e0b; color: #fff; box-shadow: 0 1px 4px rgba(245,158,11,0.4); }
+.rank-top-2 { background: #94a3b8; color: #fff; box-shadow: 0 1px 4px rgba(148,163,184,0.4); }
+.rank-top-3 { background: #b07850; color: #fff; box-shadow: 0 1px 4px rgba(176,120,80,0.4); }
+.rank-default { background: rgba(0,0,0,0.45); color: #fff; backdrop-filter: blur(4px); }
+
+/* Info area */
 .list-info {
-  padding: 12px 14px;
+  padding: 13px 14px 12px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
+  flex: 1;
+}
+
+.list-title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
 }
 
 .list-title {
   font-family: 'Inter', sans-serif;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 0.95rem;
-  color: #2D2D2D;
+  color: #1a1a1a;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
 }
+
+/* List type pill */
+.list-type-pill {
+  flex-shrink: 0;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 7px;
+  border-radius: 20px;
+}
+
+.type-collection { background: #e0f2fe; color: #0284c7; }
+.type-ranking    { background: #fef3c7; color: #b45309; }
+.type-wishlist   { background: #f0fdf4; color: #16a34a; }
 
 .list-desc {
   font-family: 'Inter', sans-serif;
   font-size: 0.78rem;
-  color: #777;
+  color: #888;
+  line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -827,9 +894,8 @@ h3 {
 .list-meta {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-top: 4px;
-  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
 }
 
 .list-author {
@@ -837,10 +903,9 @@ h3 {
   align-items: center;
   gap: 5px;
   font-family: 'Inter', sans-serif;
-  font-size: 0.75rem;
+  font-size: 0.74rem;
   color: #555;
   font-weight: 600;
-  flex: 1;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -852,6 +917,13 @@ h3 {
   height: 18px;
   border-radius: 50%;
   object-fit: cover;
+  border: 1.5px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.list-meta-dot {
+  color: #ccc;
+  font-size: 0.8rem;
   flex-shrink: 0;
 }
 
@@ -860,22 +932,21 @@ h3 {
   align-items: center;
   gap: 3px;
   font-family: 'Inter', sans-serif;
-  font-size: 0.75rem;
+  font-size: 0.74rem;
   font-weight: 700;
   color: #e74c3c;
   flex-shrink: 0;
 }
 
 .list-heart-icon {
-  width: 13px;
-  height: 13px;
-  color: #e74c3c;
+  width: 12px;
+  height: 12px;
 }
 
 .list-game-count {
   font-family: 'Inter', sans-serif;
   font-size: 0.72rem;
-  color: #999;
+  color: #aaa;
   flex-shrink: 0;
 }
 
