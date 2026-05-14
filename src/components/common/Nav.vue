@@ -57,7 +57,7 @@
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
               <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
             </svg>
-            <span v-if="unreadCount > 0" class="notif-badge">{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
+            <span v-if="unreadCount > 0" class="notif-badge" :class="{ pulse: badgePulse }">{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
           </button>
           <div v-if="showNotifDropdown" class="notif-dropdown">
             <div class="notif-header">
@@ -70,7 +70,7 @@
               <div
                 v-else
                 v-for="n in notifications"
-                :key="n.id"
+                :key="n.id_notification"
                 class="notif-item-row"
                 :class="{ unread: !n.is_read }"
                 @click="handleNotifClick(n)"
@@ -218,6 +218,7 @@ import ReviewModal from '@/components/reviews/ReviewModal.vue';
 import LogoutButton from '@/components/auth/LogoutButton.vue';
 import { useToastStore } from '@/stores/toastStore';
 import { useUserStore } from '@/stores/userStore';
+import { socket } from '@/realtime/socket.js';
 
 const router = useRouter();
 const route = useRoute();
@@ -252,9 +253,19 @@ const handleClickOutside = (e) => {
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
-  if (userStore.user) fetchNotifications();
+  if (userStore.user) {
+    fetchNotifications();
+    socket.on('notification:new', onNotificationNew);
+    socket.on('notification:unread_count', onUnreadCount);
+    socket.on('notification:read', onNotificationRead);
+  }
 });
-onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside));
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleClickOutside);
+  socket.off('notification:new', onNotificationNew);
+  socket.off('notification:unread_count', onUnreadCount);
+  socket.off('notification:read', onNotificationRead);
+});
 
 // --- NOTIFICACIONES ---
 const notifRef = ref(null);
@@ -262,6 +273,31 @@ const showNotifDropdown = ref(false);
 const notifications = ref([]);
 const unreadCount = ref(0);
 const notifLoading = ref(false);
+const badgePulse = ref(false);
+
+const onNotificationNew = (notif) => {
+  notifications.value.unshift(notif);
+  if (notifications.value.length > 30) {
+    notifications.value = notifications.value.slice(0, 30);
+  }
+  if (!showNotifDropdown.value) {
+    badgePulse.value = true;
+    setTimeout(() => { badgePulse.value = false; }, 300);
+  }
+};
+
+const onUnreadCount = ({ count }) => {
+  unreadCount.value = count;
+};
+
+const onNotificationRead = (payload) => {
+  if (payload.all) {
+    notifications.value = notifications.value.map(n => ({ ...n, is_read: true }));
+  } else if (payload.id) {
+    const n = notifications.value.find(x => x.id_notification === payload.id || x.id === payload.id);
+    if (n) n.is_read = true;
+  }
+};
 
 const fetchNotifications = async () => {
     if (!userStore.user) return;
@@ -282,17 +318,15 @@ const toggleNotifDropdown = async () => {
         await fetchNotifications();
         notifLoading.value = false;
         if (unreadCount.value > 0) {
-            api.put('/notifications/read-all').catch(() => {});
             unreadCount.value = 0;
-            notifications.value = notifications.value.map(n => ({ ...n, is_read: true }));
+            api.put('/notifications/read-all').catch(() => {});
         }
     }
 };
 
 const markAllRead = () => {
-    api.put('/notifications/read-all').catch(() => {});
     unreadCount.value = 0;
-    notifications.value = notifications.value.map(n => ({ ...n, is_read: true }));
+    api.put('/notifications/read-all').catch(() => {});
 };
 
 const handleNotifClick = (n) => {
@@ -561,7 +595,9 @@ const goToDetail = (slug) => {
 .notif-item { position: relative; display: flex; align-items: center; }
 .notif-btn { background: none; border: none; cursor: pointer; padding: 4px 6px; color: #4b5563; border-radius: 6px; display: flex; align-items: center; position: relative; transition: color 0.2s; }
 .notif-btn:hover { color: var(--brand-cyan); }
-.notif-badge { position: absolute; top: -2px; right: -2px; background: #ef4444; color: white; font-size: 0.6rem; font-weight: 700; border-radius: 9999px; min-width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; padding: 0 3px; line-height: 1; }
+.notif-badge { position: absolute; top: -2px; right: -2px; background: #ef4444; color: white; font-size: 0.6rem; font-weight: 700; border-radius: 9999px; min-width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; padding: 0 3px; line-height: 1; transition: transform 0.15s ease; }
+.notif-badge.pulse { animation: badge-pulse 0.3s ease-out; }
+@keyframes badge-pulse { 0% { transform: scale(1); } 50% { transform: scale(1.45); } 100% { transform: scale(1); } }
 .notif-dropdown { position: absolute; top: 42px; right: -10px; width: 320px; background: white; border: 1px solid #e5e7eb; border-radius: 10px; box-shadow: 0 8px 30px rgba(0,0,0,0.15); z-index: 300; overflow: hidden; }
 .notif-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid #f3f4f6; }
 .notif-title { font-weight: 700; font-size: 0.9rem; color: #111; }
