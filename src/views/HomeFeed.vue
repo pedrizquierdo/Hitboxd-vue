@@ -45,6 +45,7 @@
               :mousewheel="{ forceToAxis: true }"
               :free-mode="{ enabled: true, sticky: false, momentumRatio: 0.5 }"
               class="my-swiper"
+              @swiper="onSwiperInit"
             >
               <swiper-slide v-for="(act, index) in friendsActivity" :key="index" class="swiper-item">
                 <ActivityCard :activity="act" />
@@ -208,10 +209,11 @@
 
 <script setup>
 import { logger } from '@/utils/logger';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '@/api/axios';
 import { useUserStore } from '@/stores/userStore';
+import { socket } from '@/realtime/socket.js';
 import GameCard from '@/components/common/GameCard.vue';
 import ActivityCard from '@/components/activity/ActivityCard.vue';
 import { Swiper, SwiperSlide } from 'swiper/vue';
@@ -234,6 +236,40 @@ const streak = ref(0);
 const activeGenre = ref(null);
 const popularLoading = ref(false);
 const modules = [Navigation, FreeMode, Mousewheel];
+
+const friendsSwiperInstance = ref(null);
+const onSwiperInit = (swiper) => { friendsSwiperInstance.value = swiper; };
+
+// feed:review payload shape: { id_review, id_user, username, avatar_url, id_game, title, cover_url, content, rating, created_at }
+// slug may be absent from review events — goToGame in ActivityCard guards for null slug.
+const reviewToActivity = (review) => ({
+  username: review.username,
+  avatar_url: review.avatar_url,
+  title: review.title,
+  cover_url: review.cover_url,
+  rating: review.rating,
+  status: 'review',
+  slug: review.slug ?? null,
+  created_at: review.created_at,
+});
+
+// fanoutToFollowers sends events only to the actor's followers, never to the actor
+// themselves, so no self-filter guard is needed on the client side.
+const onFeedActivity = (item) => {
+  friendsActivity.value.unshift(item);
+  if (friendsActivity.value.length > 30) {
+    friendsActivity.value = friendsActivity.value.slice(0, 30);
+  }
+  nextTick(() => { friendsSwiperInstance.value?.update(); });
+};
+
+const onFeedReview = (review) => {
+  friendsActivity.value.unshift(reviewToActivity(review));
+  if (friendsActivity.value.length > 30) {
+    friendsActivity.value = friendsActivity.value.slice(0, 30);
+  }
+  nextTick(() => { friendsSwiperInstance.value?.update(); });
+};
 
 const genreTabs = [
   { label: 'All',       value: null },
@@ -323,6 +359,13 @@ const fetchData = async () => {
 
 onMounted(() => {
   fetchData();
+  socket.on('feed:activity', onFeedActivity);
+  socket.on('feed:review', onFeedReview);
+});
+
+onBeforeUnmount(() => {
+  socket.off('feed:activity', onFeedActivity);
+  socket.off('feed:review', onFeedReview);
 });
 </script>
 

@@ -68,7 +68,7 @@ const props = defineProps({
 const router = useRouter();
 
 const goToGame = () => {
-  router.push(`/game/${props.activity.slug}`);
+  if (props.activity.slug) router.push(`/game/${props.activity.slug}`);
 };
 
 const goToProfile = () => {
@@ -80,6 +80,7 @@ const formatAction = (act) => {
   if (act.status === 'plan_to_play') return 'wants to play';
   if (act.status === 'playing')      return 'is playing';
   if (act.status === 'dropped')      return 'dropped';
+  if (act.status === 'review')       return 'reviewed';
   return 'updated';
 };
 
