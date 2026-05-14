@@ -171,6 +171,58 @@
           </div>
         </section>
 
+        <!-- Popular Lists -->
+        <section v-if="popularLists.length > 0" class="game-section">
+          <div class="section-header">
+            <h3>Popular Lists</h3>
+            <span class="line"></span>
+          </div>
+          <div class="lists-grid">
+            <RouterLink
+              v-for="list in popularLists"
+              :key="list.id_list"
+              :to="`/lists/${list.id_list}`"
+              class="list-card"
+            >
+              <div class="list-covers">
+                <img
+                  v-for="(cover, i) in list.covers.slice(0, 4)"
+                  :key="i"
+                  :src="cover"
+                  :alt="''"
+                  class="list-cover-thumb"
+                />
+                <div
+                  v-for="i in Math.max(0, 4 - list.covers.length)"
+                  :key="'empty-' + i"
+                  class="list-cover-empty"
+                ></div>
+              </div>
+              <div class="list-info">
+                <span class="list-title">{{ list.title }}</span>
+                <span v-if="list.description" class="list-desc">{{ list.description }}</span>
+                <div class="list-meta">
+                  <span class="list-author">
+                    <img
+                      :src="list.avatar_url || '/assets/default-avatar.svg'"
+                      :alt="list.username"
+                      class="list-author-avatar"
+                    />
+                    {{ list.username }}
+                  </span>
+                  <span class="list-likes">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="list-heart-icon" aria-hidden="true">
+                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                    </svg>
+                    {{ list.like_count }}
+                  </span>
+                  <span class="list-game-count">{{ list.game_count }} game{{ list.game_count !== 1 ? 's' : '' }}</span>
+                </div>
+              </div>
+            </RouterLink>
+          </div>
+        </section>
+
         <!-- People You May Know -->
         <section v-if="suggestions.length > 0" class="game-section">
           <div class="section-header">
@@ -212,7 +264,7 @@
 <script setup>
 import { logger } from '@/utils/logger';
 import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, RouterLink } from 'vue-router';
 import api from '@/api/axios';
 import { useUserStore } from '@/stores/userStore';
 import { socket } from '@/realtime/socket.js';
@@ -233,6 +285,7 @@ const popularGames = ref([]);
 const friendsActivity = ref([]);
 const recommendedGames = ref([]);
 const suggestions = ref([]);
+const popularLists = ref([]);
 const followingSet = ref(new Set());
 const streak = ref(0);
 const activeGenre = ref(null);
@@ -343,6 +396,7 @@ const fetchData = async () => {
       api.get('/games/recommended?limit=20'),
       api.get('/users/suggestions?limit=6'),
       api.get('/activity/streak'),
+      api.get('/lists/popular?limit=9'),
     ]);
 
     if (results[0].status === 'fulfilled') newGames.value = results[0].value.data;
@@ -351,6 +405,7 @@ const fetchData = async () => {
     if (results[3].status === 'fulfilled') recommendedGames.value = results[3].value.data;
     if (results[4].status === 'fulfilled') suggestions.value = results[4].value.data;
     if (results[5].status === 'fulfilled') streak.value = results[5].value.data.streak ?? 0;
+    if (results[6].status === 'fulfilled') popularLists.value = results[6].value.data;
 
   } catch (error) {
     logger.error('Error loading feed:', error);
@@ -696,11 +751,140 @@ h3 {
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
+/* Popular Lists */
+.lists-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.list-card {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+
+.list-card:hover {
+  box-shadow: 0 6px 18px rgba(0,0,0,0.13);
+  transform: translateY(-2px);
+}
+
+.list-covers {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  height: 140px;
+  gap: 2px;
+  background: #e5e7eb;
+}
+
+.list-cover-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.list-cover-empty {
+  background: #d1d5db;
+}
+
+.list-info {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.list-title {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #2D2D2D;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.list-desc {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.78rem;
+  color: #777;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.list-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.list-author {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
+  color: #555;
+  font-weight: 600;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.list-author-avatar {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.list-likes {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #e74c3c;
+  flex-shrink: 0;
+}
+
+.list-heart-icon {
+  width: 13px;
+  height: 13px;
+  color: #e74c3c;
+}
+
+.list-game-count {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.72rem;
+  color: #999;
+  flex-shrink: 0;
+}
+
 @media (max-width: 768px) {
   h1 { font-size: 1.8rem; }
   .nav-btn { display: none; }
   .fade-left, .fade-right { width: 30px; }
   .header-top { flex-direction: column; align-items: flex-start; }
   .suggestions-grid { grid-template-columns: 1fr; }
+  .lists-grid { grid-template-columns: 1fr; }
 }
 </style>
