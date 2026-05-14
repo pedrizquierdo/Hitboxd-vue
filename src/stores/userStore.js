@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import api from '@/api/axios.js'
 import router from '@/router'
+import { connectSocket, disconnectSocket } from '@/realtime/socket.js'
 
 export const useUserStore = defineStore('user', {
   state: () => ({
@@ -14,6 +15,7 @@ export const useUserStore = defineStore('user', {
         const { data } = await api.get('/users/me')
         this.user = data
         this.isLoaded = true
+        connectSocket()
       } catch (error) {
         if (error.response?.status === 401) {
           this.isLoaded = true
@@ -23,6 +25,7 @@ export const useUserStore = defineStore('user', {
       }
     },
     clearUser() {
+      disconnectSocket()
       this.user = null
       this.isLoaded = false
     },

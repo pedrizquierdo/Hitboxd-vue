@@ -1,10 +1,18 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import PageLoader from '@/components/common/PageLoader.vue'
+import { connectSocket } from '@/realtime/socket.js'
 
 const router = useRouter()
 const isLoading = ref(false)
+
+onMounted(() => {
+  const stored =
+    localStorage.getItem(import.meta.env.VITE_KEY_STORAGE) ||
+    sessionStorage.getItem(import.meta.env.VITE_KEY_STORAGE)
+  if (stored) connectSocket()
+})
 
 router.beforeEach(() => {
   isLoading.value = true

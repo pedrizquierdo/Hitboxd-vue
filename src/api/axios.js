@@ -1,5 +1,6 @@
 import router from '../router'
 import axios from 'axios'
+import { disconnectSocket } from '@/realtime/socket.js'
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
@@ -9,6 +10,7 @@ const api = axios.create({
 let refreshPromise = null
 
 const logout = async () => {
+  disconnectSocket()
   localStorage.removeItem(import.meta.env.VITE_KEY_STORAGE)
   await api.post('auth/logout').catch(() => {})
   router.push('/')
