@@ -179,31 +179,27 @@
           </div>
           <div class="lists-grid">
             <RouterLink
-              v-for="(list, index) in popularLists"
+              v-for="list in popularLists"
               :key="list.id_list"
               :to="`/lists/${list.id_list}`"
               class="list-card"
             >
               <div class="list-covers">
                 <div
-                  v-for="(cover, i) in list.covers.slice(0, 4)"
+                  v-for="(cover, i) in list.covers.slice(0, 5)"
                   :key="i"
                   class="list-cover-cell"
                 >
                   <img :src="cover" alt="" class="list-cover-thumb" />
                 </div>
                 <div
-                  v-for="i in Math.max(0, 4 - list.covers.length)"
+                  v-for="i in Math.max(0, 5 - list.covers.length)"
                   :key="'empty-' + i"
                   class="list-cover-cell list-cover-empty"
                 ></div>
-                <span class="list-rank-badge" :class="index < 3 ? `rank-top-${index + 1}` : 'rank-default'">#{{ index + 1 }}</span>
               </div>
               <div class="list-bottom">
-                <div class="list-bottom-header">
-                  <span class="list-title">{{ list.title }}</span>
-                  <span class="list-type-pill" :class="`type-${list.list_type}`">{{ list.list_type }}</span>
-                </div>
+                <span class="list-title">{{ list.title }}</span>
                 <div class="list-meta">
                   <img
                     :src="list.avatar_url || '/assets/default-avatar.svg'"
@@ -212,14 +208,14 @@
                   />
                   <span class="list-author-name">{{ list.username }}</span>
                   <span class="list-meta-dot">·</span>
+                  <span class="list-game-count">{{ list.game_count }} game{{ list.game_count !== 1 ? 's' : '' }}</span>
+                  <span class="list-meta-dot">·</span>
                   <span class="list-likes">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="list-heart-icon" aria-hidden="true">
                       <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
                     </svg>
                     {{ list.like_count }}
                   </span>
-                  <span class="list-meta-dot">·</span>
-                  <span class="list-game-count">{{ list.game_count }}g</span>
                 </div>
               </div>
             </RouterLink>
@@ -757,7 +753,7 @@ h3 {
 /* Popular Lists */
 .lists-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 20px;
   position: relative;
   z-index: 1;
@@ -768,33 +764,32 @@ h3 {
   flex-direction: column;
   border-radius: 4px;
   overflow: hidden;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  background: #1e1e1e;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.35);
   text-decoration: none;
   color: inherit;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s;
-  border: 2px solid transparent;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   will-change: transform;
 }
 
 .list-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 12px 20px rgba(0,0,0,0.5);
-  border-color: #00AEEF;
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.5);
 }
 
-/* Cover collage */
+/* Horizontal filmstrip */
 .list-covers {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-  aspect-ratio: 1 / 1;
+  display: flex;
+  height: 160px;
   gap: 2px;
-  background: #333;
-  position: relative;
+  background: #111;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .list-cover-cell {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
 }
 
@@ -803,138 +798,91 @@ h3 {
   height: 100%;
   object-fit: cover;
   display: block;
-  transition: transform 0.2s ease;
+  transition: transform 0.3s ease;
 }
 
 .list-card:hover .list-cover-thumb {
-  transform: scale(1.06);
+  transform: scale(1.05);
 }
 
 .list-cover-empty {
-  background: #555;
+  background: #2a2a2a;
 }
 
-/* Rank badge */
-.list-rank-badge {
-  position: absolute;
-  top: 6px;
-  left: 6px;
-  font-family: 'Courier Prime', monospace;
-  font-size: 0.65rem;
-  font-weight: 700;
-  padding: 1px 6px;
-  border-radius: 20px;
-  letter-spacing: 0.03em;
-  line-height: 1.6;
-  pointer-events: none;
-}
-
-.rank-top-1 { background: #f59e0b; color: #fff; }
-.rank-top-2 { background: #94a3b8; color: #fff; }
-.rank-top-3 { background: #b07850; color: #fff; }
-.rank-default { background: rgba(0,0,0,0.55); color: #fff; }
-
-/* Solid bottom panel */
+/* Solid dark bottom */
 .list-bottom {
-  background: #1e1e1e;
-  padding: 9px 10px 8px;
+  padding: 12px 14px 13px;
   display: flex;
   flex-direction: column;
-  gap: 5px;
-}
-
-.list-bottom-header {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
+  gap: 7px;
 }
 
 .list-title {
   font-family: 'Inter', sans-serif;
   font-weight: 700;
-  font-size: 0.82rem;
+  font-size: 1rem;
   color: #fff;
-  line-height: 1.25;
+  line-height: 1.3;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  flex: 1;
-  min-width: 0;
 }
-
-.list-type-pill {
-  flex-shrink: 0;
-  font-family: 'Inter', sans-serif;
-  font-size: 0.55rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding: 2px 5px;
-  border-radius: 3px;
-  margin-top: 2px;
-}
-
-.type-collection { background: #0ea5e9; color: #fff; }
-.type-ranking    { background: #f59e0b; color: #fff; }
-.type-wishlist   { background: #22c55e; color: #fff; }
 
 .list-meta {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   flex-wrap: nowrap;
   overflow: hidden;
 }
 
 .list-author-avatar {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
-  opacity: 0.8;
 }
 
 .list-author-name {
   font-family: 'Inter', sans-serif;
-  font-size: 0.68rem;
-  color: #aaa;
+  font-size: 0.75rem;
+  color: #bbb;
   font-weight: 600;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
   min-width: 0;
-  flex: 1;
 }
 
 .list-meta-dot {
-  color: #555;
-  font-size: 0.7rem;
+  color: #444;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+.list-game-count {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
+  color: #888;
   flex-shrink: 0;
 }
 
 .list-likes {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
   font-family: 'Inter', sans-serif;
-  font-size: 0.68rem;
-  font-weight: 700;
+  font-size: 0.75rem;
+  font-weight: 600;
   color: #e74c3c;
   flex-shrink: 0;
 }
 
 .list-heart-icon {
-  width: 10px;
-  height: 10px;
-}
-
-.list-game-count {
-  font-family: 'Inter', sans-serif;
-  font-size: 0.68rem;
-  color: #666;
-  flex-shrink: 0;
+  width: 11px;
+  height: 11px;
 }
 
 @media (max-width: 768px) {
