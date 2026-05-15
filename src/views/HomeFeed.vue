@@ -171,6 +171,60 @@
           </div>
         </section>
 
+        <!-- Popular Reviews This Week -->
+        <section v-if="popularReviews.length > 0" class="game-section">
+          <div class="section-header">
+            <h3>Popular Reviews This Week</h3>
+            <span class="line"></span>
+          </div>
+          <div class="reviews-grid">
+            <article
+              v-for="review in popularReviews"
+              :key="review.id_review"
+              class="review-card"
+              @click="router.push(`/game/${review.game_slug}`)"
+            >
+              <div class="review-card-inner">
+                <img
+                  :src="review.cover_url || '/assets/placeholder-game.png'"
+                  :alt="review.game_title"
+                  class="review-cover"
+                />
+                <div class="review-body">
+                  <div class="review-author-row">
+                    <img
+                      :src="review.avatar_url || '/assets/default-avatar.svg'"
+                      :alt="review.username"
+                      class="review-avatar"
+                    />
+                    <span class="review-username">{{ review.username }}</span>
+                  </div>
+                  <span class="review-game-title">{{ review.game_title }}</span>
+                  <div class="review-stars" v-if="review.rating">
+                    <span
+                      v-for="pos in 5"
+                      :key="pos"
+                      class="star"
+                      :class="starClass(review.rating, pos)"
+                    >★</span>
+                  </div>
+                  <p class="review-content">{{ review.content }}</p>
+                  <button
+                    class="review-like-btn"
+                    :class="{ liked: likedReviewIds.has(review.id_review) }"
+                    @click.stop="toggleReviewLike(review)"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="review-heart-icon" aria-hidden="true">
+                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                    </svg>
+                    {{ review.like_count.toLocaleString() }}
+                  </button>
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
+
         <!-- Popular Lists -->
         <section v-if="popularLists.length > 0" class="game-section">
           <div class="section-header">
@@ -285,6 +339,8 @@ const friendsActivity = ref([]);
 const recommendedGames = ref([]);
 const suggestions = ref([]);
 const popularLists = ref([]);
+const popularReviews = ref([]);
+const likedReviewIds = ref(new Set());
 const followingSet = ref(new Set());
 const streak = ref(0);
 const activeGenre = ref(null);
@@ -380,6 +436,38 @@ const toggleFollow = async (user) => {
   }
 };
 
+const starClass = (rating, pos) => {
+  if (!rating) return 'star-empty';
+  if (rating >= pos) return 'star-full';
+  if (rating >= pos - 0.5) return 'star-half';
+  return 'star-empty';
+};
+
+const toggleReviewLike = async (review) => {
+  const id = review.id_review;
+  const wasLiked = likedReviewIds.value.has(id);
+  if (wasLiked) {
+    likedReviewIds.value = new Set([...likedReviewIds.value].filter(x => x !== id));
+    review.like_count--;
+  } else {
+    likedReviewIds.value = new Set([...likedReviewIds.value, id]);
+    review.like_count++;
+  }
+  try {
+    await api.post(`/reviews/${id}/like`);
+  } catch (e) {
+    // rollback
+    if (wasLiked) {
+      likedReviewIds.value = new Set([...likedReviewIds.value, id]);
+      review.like_count++;
+    } else {
+      likedReviewIds.value = new Set([...likedReviewIds.value].filter(x => x !== id));
+      review.like_count--;
+    }
+    logger.error('Error toggling review like:', e);
+  }
+};
+
 const fetchData = async () => {
   loading.value = true;
   try {
@@ -396,6 +484,7 @@ const fetchData = async () => {
       api.get('/users/suggestions?limit=6'),
       api.get('/activity/streak'),
       api.get('/lists/popular?limit=6'),
+      api.get('/reviews/popular'),
     ]);
 
     if (results[0].status === 'fulfilled') newGames.value = results[0].value.data;
@@ -405,6 +494,7 @@ const fetchData = async () => {
     if (results[4].status === 'fulfilled') suggestions.value = results[4].value.data;
     if (results[5].status === 'fulfilled') streak.value = results[5].value.data.streak ?? 0;
     if (results[6].status === 'fulfilled') popularLists.value = results[6].value.data;
+    if (results[7].status === 'fulfilled') popularReviews.value = results[7].value.data;
 
   } catch (error) {
     logger.error('Error loading feed:', error);
@@ -885,6 +975,164 @@ h3 {
   height: 11px;
 }
 
+/* Popular Reviews This Week */
+.reviews-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0;
+  position: relative;
+  z-index: 1;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+}
+
+.review-card {
+  padding: 18px 20px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.review-card:hover {
+  background: #fafafa;
+}
+
+.reviews-grid .review-card:nth-child(odd) {
+  border-right: 1px solid #f0f0f0;
+}
+
+.reviews-grid .review-card:nth-last-child(-n+2) {
+  border-bottom: none;
+}
+
+.review-card-inner {
+  display: flex;
+  gap: 14px;
+}
+
+.review-cover {
+  width: 64px;
+  height: 88px;
+  object-fit: cover;
+  border-radius: 3px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.review-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.review-author-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.review-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.review-username {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #444;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.review-game-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #1a1a1a;
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.review-stars {
+  display: flex;
+  gap: 1px;
+}
+
+.star {
+  font-size: 0.85rem;
+  line-height: 1;
+  color: #d1d5db;
+}
+
+.star.star-full {
+  color: #22c55e;
+}
+
+.star.star-half {
+  position: relative;
+  color: #d1d5db;
+}
+
+.star.star-half::before {
+  content: '★';
+  position: absolute;
+  left: 0;
+  width: 50%;
+  overflow: hidden;
+  color: #22c55e;
+  display: inline-block;
+}
+
+.review-content {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8rem;
+  color: #555;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0;
+}
+
+.review-like-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #aaa;
+  transition: color 0.15s;
+  margin-top: 2px;
+}
+
+.review-like-btn:hover,
+.review-like-btn.liked {
+  color: #e74c3c;
+}
+
+.review-heart-icon {
+  width: 13px;
+  height: 13px;
+}
+
 @media (max-width: 768px) {
   h1 { font-size: 1.8rem; }
   .nav-btn { display: none; }
@@ -892,5 +1140,9 @@ h3 {
   .header-top { flex-direction: column; align-items: flex-start; }
   .suggestions-grid { grid-template-columns: 1fr; }
   .lists-grid { grid-template-columns: 1fr; }
+  .reviews-grid { grid-template-columns: 1fr; }
+  .reviews-grid .review-card:nth-child(odd) { border-right: none; }
+  .reviews-grid .review-card:nth-last-child(-n+2) { border-bottom: 1px solid #f0f0f0; }
+  .reviews-grid .review-card:last-child { border-bottom: none; }
 }
 </style>
