@@ -331,8 +331,16 @@ const markAllRead = () => {
 
 const handleNotifClick = (n) => {
     showNotifDropdown.value = false;
+
     if (n.type === 'follow' && n.actor_username) {
-        router.push(`/user/${n.actor_username}`);
+        router.push(`/u/${n.actor_username}`);
+        return;
+    }
+
+    if (n.type === 'review_like') {
+        if (n.target_slug) {
+            router.push(`/game/${n.target_slug}`);
+        }
     }
 };
 
