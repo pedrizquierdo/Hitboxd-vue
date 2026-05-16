@@ -280,6 +280,7 @@ const onNotificationNew = (notif) => {
   if (notifications.value.length > 30) {
     notifications.value = notifications.value.slice(0, 30);
   }
+  unreadCount.value += 1;
   if (!showNotifDropdown.value) {
     badgePulse.value = true;
     setTimeout(() => { badgePulse.value = false; }, 300);
@@ -317,14 +318,11 @@ const toggleNotifDropdown = async () => {
         notifLoading.value = true;
         await fetchNotifications();
         notifLoading.value = false;
-        if (unreadCount.value > 0) {
-            unreadCount.value = 0;
-            api.put('/notifications/read-all').catch(() => {});
-        }
     }
 };
 
 const markAllRead = () => {
+    notifications.value = notifications.value.map(n => ({ ...n, is_read: true }));
     unreadCount.value = 0;
     api.put('/notifications/read-all').catch(() => {});
 };
